@@ -110,3 +110,16 @@ npm run dev:postgres
 3. Add parcel ownership, scripts, and permission graphs.
 4. Introduce asset storage and CDN delivery.
 5. Add federation or shard-to-shard travel.
+
+## Current roadmap
+
+1. Add instant parcel permission refresh for every open client view.
+2. Add stronger moderation tools for parcel reassignment and object cleanup.
+3. Add native login persistence with account switching instead of guest-only flow.
+4. Replace placeholder/native fallback props with fully imported Godot scene assets.
+5. Add animated avatar state machines, emotes, and equipable wearables in Godot.
+6. Add native build gizmos with proper axis dragging, snapping, and rotation handles.
+7. Add in-world scriptable objects and permissions tied to parcel ownership.
+8. Add voice/chat channels, chat history, and social presence systems.
+9. Add desktop export automation and per-platform packaging/signing workflow.
+10. Add region-worker scaling, persistence hardening, and production deployment setup.
