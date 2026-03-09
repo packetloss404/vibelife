@@ -40,6 +40,8 @@ current = true
 
 [node name="Avatars" type="Node3D" parent="."]
 
+[node name="Gizmos" type="Node3D" parent="."]
+
 [node name="Network" type="Node" parent="."]
 
 [node name="RegionsRequest" type="HTTPRequest" parent="Network"]
@@ -66,11 +68,38 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Sidebar" type="PanelContainer" parent="CanvasLayer/UI"]
+[node name="TopBar" type="PanelContainer" parent="CanvasLayer/UI"]
 offset_left = 16.0
 offset_top = 16.0
+offset_right = 1584.0
+offset_bottom = 74.0
+
+[node name="TopMargin" type="MarginContainer" parent="CanvasLayer/UI/TopBar"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="TopRow" type="HBoxContainer" parent="CanvasLayer/UI/TopBar/TopMargin"]
+theme_override_constants/separation = 14
+
+[node name="TopTitle" type="Label" parent="CanvasLayer/UI/TopBar/TopMargin/TopRow"]
+text = "ThirdLife Native Client"
+
+[node name="StatusPill" type="Label" parent="CanvasLayer/UI/TopBar/TopMargin/TopRow"]
+text = "Disconnected"
+
+[node name="Spacer" type="Control" parent="CanvasLayer/UI/TopBar/TopMargin/TopRow"]
+size_flags_horizontal = 3
+
+[node name="TopHelp" type="Label" parent="CanvasLayer/UI/TopBar/TopMargin/TopRow"]
+text = "WASD move, RMB orbit, wheel zoom, build mode for native editing"
+
+[node name="Sidebar" type="PanelContainer" parent="CanvasLayer/UI"]
+offset_left = 16.0
+offset_top = 90.0
 offset_right = 380.0
-offset_bottom = 340.0
+offset_bottom = 430.0
 
 [node name="Margin" type="MarginContainer" parent="CanvasLayer/UI/Sidebar"]
 theme_override_constants/margin_left = 16
@@ -80,9 +109,6 @@ theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/UI/Sidebar/Margin"]
 theme_override_constants/separation = 10
-
-[node name="Title" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-text = "ThirdLife Native Client"
 
 [node name="BackendLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
 text = "Backend URL"
@@ -111,42 +137,11 @@ text = "Join world"
 text = "Fetching regions..."
 autowrap_mode = 3
 
-[node name="InventoryLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-text = "Inventory"
-
-[node name="InventoryList" type="ItemList" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-custom_minimum_size = Vector2(0, 120)
-
-[node name="ChatLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-text = "Region chat"
-
-[node name="ChatLog" type="RichTextLabel" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-custom_minimum_size = Vector2(0, 120)
-bbcode_enabled = false
-scroll_following = true
-
-[node name="ChatInputRow" type="HBoxContainer" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
-
-[node name="ChatInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow"]
-size_flags_horizontal = 3
-placeholder_text = "Say something"
-
-[node name="SendChatButton" type="Button" parent="CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow"]
-text = "Send"
-
-[node name="Help" type="Label" parent="CanvasLayer/UI"]
-offset_left = 410.0
-offset_top = 20.0
-offset_right = 1000.0
-offset_bottom = 56.0
-text = "WASD move, hold right mouse to orbit, mouse wheel zoom. This is the primary native 3D client scaffold."
-autowrap_mode = 3
-
 [node name="BuildPanel" type="PanelContainer" parent="CanvasLayer/UI"]
 offset_left = 16.0
-offset_top = 360.0
+offset_top = 446.0
 offset_right = 380.0
-offset_bottom = 610.0
+offset_bottom = 760.0
 
 [node name="BuildMargin" type="MarginContainer" parent="CanvasLayer/UI/BuildPanel"]
 theme_override_constants/margin_left = 16
@@ -191,3 +186,41 @@ text = "Delete selected"
 [node name="BuildHelp" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 text = "In build mode, left click places or selects. Arrow keys move, Q/E rotate, R/F scale."
 autowrap_mode = 3
+
+[node name="RightDock" type="PanelContainer" parent="CanvasLayer/UI"]
+offset_left = 1210.0
+offset_top = 90.0
+offset_right = 1584.0
+offset_bottom = 760.0
+
+[node name="RightMargin" type="MarginContainer" parent="CanvasLayer/UI/RightDock"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="RightVBox" type="VBoxContainer" parent="CanvasLayer/UI/RightDock/RightMargin"]
+theme_override_constants/separation = 12
+
+[node name="InventoryLabel" type="Label" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+text = "Inventory"
+
+[node name="InventoryList" type="ItemList" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 180)
+
+[node name="ChatLabel" type="Label" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+text = "Region chat"
+
+[node name="ChatLog" type="RichTextLabel" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 260)
+bbcode_enabled = false
+scroll_following = true
+
+[node name="ChatInputRow" type="HBoxContainer" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+
+[node name="ChatInput" type="LineEdit" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow"]
+size_flags_horizontal = 3
+placeholder_text = "Say something"
+
+[node name="SendChatButton" type="Button" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow"]
+text = "Send"

@@ -10,6 +10,7 @@ const WS_SNAPSHOT := "snapshot"
 @onready var static_world: Node3D = $StaticWorld
 @onready var dynamic_world: Node3D = $DynamicWorld
 @onready var avatars_root: Node3D = $Avatars
+@onready var gizmos_root: Node3D = $Gizmos
 @onready var regions_request: HTTPRequest = $Network/RegionsRequest
 @onready var auth_request: HTTPRequest = $Network/AuthRequest
 @onready var scene_request: HTTPRequest = $Network/SceneRequest
@@ -23,10 +24,11 @@ const WS_SNAPSHOT := "snapshot"
 @onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
 @onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/JoinButton
 @onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/VBox/StatusLabel
-@onready var inventory_list: ItemList = $CanvasLayer/UI/Sidebar/Margin/VBox/InventoryList
-@onready var chat_log: RichTextLabel = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatLog
-@onready var chat_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/ChatInput
-@onready var send_chat_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/SendChatButton
+@onready var status_pill: Label = $CanvasLayer/UI/TopBar/TopMargin/TopRow/StatusPill
+@onready var inventory_list: ItemList = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryList
+@onready var chat_log: RichTextLabel = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatLog
+@onready var chat_input: LineEdit = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/ChatInput
+@onready var send_chat_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/SendChatButton
 @onready var build_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildModeButton
 @onready var build_asset_select: OptionButton = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildAssetSelect
 @onready var move_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/MoveModeButton
@@ -55,6 +57,7 @@ var selected_object_id := ""
 var gizmo_mode := "move"
 var drag_selected := false
 var active_parcel: Dictionary = {}
+var gizmo_handles := {}
 var build_assets := [
 	"/assets/models/market-hall.gltf",
 	"/assets/models/skyport-tower.gltf",
@@ -83,12 +86,14 @@ func _ready() -> void:
 	_fetch_regions()
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
+	_set_gizmo_mode("move")
 
 
 func _process(delta: float) -> void:
 	_poll_websocket()
 	_update_local_movement(delta)
 	_update_camera(delta)
+	_update_gizmo_handles()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -142,6 +147,7 @@ func _setup_ground() -> void:
 
 func _fetch_regions() -> void:
 	status_label.text = "Fetching regions..."
+	status_pill.text = "Loading regions"
 	region_select.clear()
 	var url := "%s/api/regions" % backend_url_input.text.rstrip("/")
 	var error := regions_request.request(url)
@@ -160,6 +166,7 @@ func _on_regions_loaded(_result: int, response_code: int, _headers: PackedString
 	for region in regions:
 		region_select.add_item("%s - %s/%s" % [region.name, region.population, region.capacity])
 	status_label.text = "Ready to join."
+	status_pill.text = "Ready"
 
 
 func _join_world() -> void:
@@ -189,6 +196,7 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	avatar_states.clear()
 	avatar_states[payload.avatar.avatarId] = payload.avatar
 	status_label.text = "Connected as %s" % session.displayName
+	status_pill.text = "Connected"
 	inventory = payload.get("inventory", [])
 	parcels = payload.get("parcels", [])
 	_render_inventory()
@@ -242,6 +250,7 @@ func _on_objects_loaded(_result: int, response_code: int, _headers: PackedString
 		var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
 		dynamic_world.add_child(node)
 		object_nodes[item.id] = node
+	_update_selection_state()
 
 
 func _connect_websocket() -> void:
@@ -252,10 +261,13 @@ func _connect_websocket() -> void:
 	var error := websocket.connect_to_url(ws_url)
 	if error != OK:
 		status_label.text = "WebSocket failed: %s" % error
+		status_pill.text = "Socket failed"
 
 
 func _poll_websocket() -> void:
 	if websocket.get_ready_state() == WebSocketPeer.STATE_CLOSED:
+		if not session.is_empty():
+			status_pill.text = "Disconnected"
 		return
 
 	websocket.poll()
@@ -714,6 +726,7 @@ func _update_selection_state() -> void:
 	else:
 		active_parcel = {}
 	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+	_update_gizmo_handles()
 
 
 func _apply_selection_visual(node: Node3D, selected: bool) -> void:
@@ -724,6 +737,50 @@ func _apply_selection_visual(node: Node3D, selected: bool) -> void:
 			if material is StandardMaterial3D:
 				(material as StandardMaterial3D).emission_enabled = selected
 				(material as StandardMaterial3D).emission = Color("ffb36a")
+
+
+func _rebuild_gizmo_handles() -> void:
+	for child in gizmos_root.get_children():
+		child.queue_free()
+	gizmo_handles.clear()
+	for axis in ["x", "y", "z"]:
+		var handle := MeshInstance3D.new()
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.04
+		mesh.bottom_radius = 0.04
+		mesh.height = 1.3
+		handle.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.emission_enabled = true
+		material.albedo_color = axis == "x" ? Color("ff6b6b") : axis == "y" ? Color("66ffd1") : Color("6aa8ff")
+		material.emission = material.albedo_color
+		handle.set_surface_override_material(0, material)
+		handle.visible = false
+		gizmos_root.add_child(handle)
+		gizmo_handles[axis] = handle
+
+
+func _update_gizmo_handles() -> void:
+	if gizmo_handles.is_empty():
+		_rebuild_gizmo_handles()
+	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
+		for handle in gizmo_handles.values():
+			handle.visible = false
+		return
+
+	var target := object_nodes[selected_object_id].position
+	var x_handle: MeshInstance3D = gizmo_handles["x"]
+	var y_handle: MeshInstance3D = gizmo_handles["y"]
+	var z_handle: MeshInstance3D = gizmo_handles["z"]
+	x_handle.visible = true
+	y_handle.visible = true
+	z_handle.visible = true
+	x_handle.position = target + Vector3(1.0, 0.65, 0.0)
+	z_handle.position = target + Vector3(0.0, 0.65, 1.0)
+	y_handle.position = target + Vector3(0.0, 1.2, 0.0)
+	x_handle.rotation_degrees.z = 90
+	z_handle.rotation_degrees.x = 90
+	y_handle.rotation = Vector3.ZERO
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
