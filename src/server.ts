@@ -6,15 +6,19 @@ import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
 import {
   claimParcel,
+  createRegionObject,
   createGuestSession,
+  deleteRegionObject,
   getPersistenceMode,
   getRegionPopulation,
   getSession,
   initializeWorldStore,
   listParcels,
+  listRegionObjects,
   listRegions,
   moveAvatar,
   removeAvatar
+  , updateRegionObject
 } from "./world/store.js";
 import { broadcastRegion, joinRegion, leaveRegion } from "./world/region.js";
 
@@ -51,6 +55,10 @@ app.get<{ Params: { regionId: string } }>("/api/regions/:regionId/parcels", asyn
   parcels: await listParcels(request.params.regionId)
 }));
 
+app.get<{ Params: { regionId: string } }>("/api/regions/:regionId/objects", async (request) => ({
+  objects: await listRegionObjects(request.params.regionId)
+}));
+
 app.post<{ Body: { displayName?: string; regionId?: string } }>("/api/auth/guest", async (request, reply) => {
   const displayName = (request.body.displayName ?? "Guest Voyager").trim().slice(0, 32) || "Guest Voyager";
   const { account, inventory, parcels, session, avatar } = await createGuestSession(displayName, request.body.regionId);
@@ -80,6 +88,70 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", 
   }
 
   return reply.send({ parcel });
+});
+
+app.post<{
+  Params: { regionId: string };
+  Body: { token?: string; asset?: string; x?: number; y?: number; z?: number; rotationY?: number; scale?: number };
+}>("/api/regions/:regionId/objects", async (request, reply) => {
+  const { token, asset, x, y, z, rotationY, scale } = request.body;
+
+  if (!token || !asset || x === undefined || y === undefined || z === undefined) {
+    return reply.code(400).send({ error: "token, asset, x, y, and z are required" });
+  }
+
+  const object = await createRegionObject(token, {
+    asset,
+    x,
+    y,
+    z,
+    rotationY: rotationY ?? 0,
+    scale: scale ?? 1
+  });
+
+  if (!object || object.regionId !== request.params.regionId) {
+    return reply.code(403).send({ error: "unable to create object in region" });
+  }
+
+  return reply.send({ object });
+});
+
+app.patch<{
+  Params: { objectId: string };
+  Body: { token?: string; x?: number; y?: number; z?: number; rotationY?: number; scale?: number };
+}>("/api/objects/:objectId", async (request, reply) => {
+  const { token, x, y, z, rotationY, scale } = request.body;
+
+  if (!token || x === undefined || y === undefined || z === undefined || rotationY === undefined || scale === undefined) {
+    return reply.code(400).send({ error: "token, x, y, z, rotationY, and scale are required" });
+  }
+
+  const object = await updateRegionObject(token, request.params.objectId, { x, y, z, rotationY, scale });
+
+  if (!object) {
+    return reply.code(404).send({ error: "object not found or not owned" });
+  }
+
+  return reply.send({ object });
+});
+
+app.delete<{
+  Params: { objectId: string };
+  Body: { token?: string };
+}>("/api/objects/:objectId", async (request, reply) => {
+  const token = request.body.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const deleted = await deleteRegionObject(token, request.params.objectId);
+
+  if (!deleted) {
+    return reply.code(404).send({ error: "object not found or not owned" });
+  }
+
+  return reply.send({ ok: true });
 });
 
 app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {

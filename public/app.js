@@ -13,7 +13,11 @@ const elements = {
   chatInput: document.querySelector("#chatInput"),
   chatButton: document.querySelector("#chatButton"),
   inventoryList: document.querySelector("#inventoryList"),
-  parcelList: document.querySelector("#parcelList")
+  parcelList: document.querySelector("#parcelList"),
+  buildModeButton: document.querySelector("#buildModeButton"),
+  buildAssetSelect: document.querySelector("#buildAssetSelect"),
+  builderHelp: document.querySelector("#builderHelp"),
+  builderObjectList: document.querySelector("#builderObjectList")
 };
 
 const loader = new GLTFLoader();
@@ -27,8 +31,12 @@ const state = {
   parcels: [],
   avatars: new Map(),
   avatarMeshes: new Map(),
+  regionObjects: [],
+  buildMode: false,
+  selectedObjectId: null,
   keys: new Set(),
   pointerActive: false,
+  pointerMoved: false,
   yaw: 0,
   pitch: 0.45,
   lastSentAt: 0,
@@ -45,14 +53,19 @@ const viewer = {
   camera: null,
   terrain: null,
   avatarRoot: null,
-  decorRoot: null,
+  staticRoot: null,
+  dynamicRoot: null,
   parcelLines: new Map(),
+  dynamicObjects: new Map(),
+  selectionHelper: null,
   terrainBounds: 30,
   assetCache: new Map()
 };
 
 const tempVectorA = new THREE.Vector3();
 const tempVectorB = new THREE.Vector3();
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 
 const status = (message, isError = false) => {
   elements.status.textContent = message;
@@ -101,6 +114,33 @@ const renderParcels = () => {
   syncParcelLines();
 };
 
+const renderBuilderList = () => {
+  if (!state.session) {
+    elements.builderObjectList.textContent = "Join a region to load buildable objects.";
+    return;
+  }
+
+  const mine = state.regionObjects.filter((item) => item.ownerAccountId === state.session.accountId);
+
+  if (!mine.length) {
+    elements.builderObjectList.textContent = "No editable objects yet.";
+    return;
+  }
+
+  elements.builderObjectList.innerHTML = mine
+    .map((item) => {
+      const assetName = item.asset.split("/").pop().replace(".gltf", "").replaceAll("-", " ");
+      const activeClass = item.id === state.selectedObjectId ? " active" : "";
+      return `
+        <button class="card compact-card${activeClass}" data-select-object="${item.id}">
+          <strong>${assetName}</strong>
+          <div>x ${item.x.toFixed(1)} / z ${item.z.toFixed(1)}</div>
+        </button>
+      `;
+    })
+    .join("");
+};
+
 const loadParcels = async (regionId) => {
   const response = await fetch(`/api/regions/${regionId}/parcels`);
   const data = await response.json();
@@ -132,7 +172,6 @@ const makeLabelSprite = (text) => {
   canvas.width = 256;
   canvas.height = 64;
   const context = canvas.getContext("2d");
-
   context.fillStyle = "rgba(5, 12, 16, 0.72)";
   context.beginPath();
   context.roundRect(8, 8, 240, 48, 18);
@@ -276,19 +315,22 @@ const createLanternGlow = () => {
   return light;
 };
 
-const applySceneObject = async (item) => {
+const buildRenderableObject = async (item, editable = false) => {
   const object = await loadGltfAsset(item.asset);
-  const [x, y = 0, z] = item.position;
-  const [rx = 0, ry = 0, rz = 0] = item.rotation ?? [0, 0, 0];
-  const [sx = 1, sy = 1, sz = 1] = item.scale ?? [1, 1, 1];
+  object.position.set(item.x, item.y, item.z);
+  object.rotation.y = item.rotationY ?? 0;
+  object.scale.setScalar(item.scale ?? 1);
+  object.userData.objectId = item.id;
+  object.userData.editable = editable;
+  object.userData.ownerAccountId = item.ownerAccountId ?? null;
+  object.userData.asset = item.asset;
 
-  object.position.set(x, getTerrainHeight(x, z) + y, z);
-  object.rotation.set(rx, ry, rz);
-  object.scale.set(sx, sy, sz);
   object.traverse((child) => {
     if (child.isMesh) {
       child.castShadow = true;
       child.receiveShadow = true;
+      child.userData.objectId = item.id;
+      child.userData.editable = editable;
     }
   });
 
@@ -296,23 +338,94 @@ const applySceneObject = async (item) => {
     object.add(createLanternGlow());
   }
 
-  viewer.decorRoot.add(object);
+  return object;
+};
+
+const selectObject = (objectId) => {
+  state.selectedObjectId = objectId;
+
+  if (viewer.selectionHelper) {
+    viewer.scene.remove(viewer.selectionHelper);
+    viewer.selectionHelper = null;
+  }
+
+  if (objectId && viewer.dynamicObjects.has(objectId)) {
+    viewer.selectionHelper = new THREE.BoxHelper(viewer.dynamicObjects.get(objectId), 0xffb36a);
+    viewer.scene.add(viewer.selectionHelper);
+  }
+
+  renderBuilderList();
+};
+
+const refreshSelectionHelper = () => {
+  if (viewer.selectionHelper) {
+    viewer.selectionHelper.update();
+  }
 };
 
 const loadRegionScene = async (regionId) => {
-  if (!viewer.decorRoot) {
+  if (!viewer.staticRoot) {
     return;
   }
 
-  viewer.decorRoot.clear();
-
+  viewer.staticRoot.clear();
   const response = await fetch(`/scenes/${regionId}.json`);
   if (!response.ok) {
     throw new Error(`Scene manifest missing for ${regionId}`);
   }
 
   state.regionScene = await response.json();
-  await Promise.all(state.regionScene.assets.map((item) => applySceneObject(item)));
+  await Promise.all(
+    state.regionScene.assets.map(async (item) => {
+      const instance = await buildRenderableObject({
+        id: item.id,
+        asset: item.asset,
+        x: item.position[0],
+        y: getTerrainHeight(item.position[0], item.position[2]) + (item.position[1] ?? 0),
+        z: item.position[2],
+        rotationY: item.rotation?.[1] ?? 0,
+        scale: item.scale?.[0] ?? 1
+      });
+      viewer.staticRoot.add(instance);
+    })
+  );
+};
+
+const syncRegionObjects = async () => {
+  if (!state.session) {
+    return;
+  }
+
+  const response = await fetch(`/api/regions/${state.session.regionId}/objects`);
+  const data = await response.json();
+  state.regionObjects = data.objects;
+
+  for (const [objectId, mesh] of viewer.dynamicObjects.entries()) {
+    if (!state.regionObjects.some((item) => item.id === objectId)) {
+      viewer.dynamicRoot.remove(mesh);
+      viewer.dynamicObjects.delete(objectId);
+    }
+  }
+
+  for (const item of state.regionObjects) {
+    const mesh = viewer.dynamicObjects.get(item.id);
+    if (!mesh) {
+      const instance = await buildRenderableObject(item, true);
+      viewer.dynamicRoot.add(instance);
+      viewer.dynamicObjects.set(item.id, instance);
+    } else {
+      mesh.position.set(item.x, item.y, item.z);
+      mesh.rotation.y = item.rotationY;
+      mesh.scale.setScalar(item.scale);
+      mesh.userData.asset = item.asset;
+    }
+  }
+
+  if (state.selectedObjectId && !state.regionObjects.some((item) => item.id === state.selectedObjectId)) {
+    selectObject(null);
+  }
+
+  renderBuilderList();
 };
 
 const ensureViewer = () => {
@@ -358,9 +471,10 @@ const ensureViewer = () => {
   viewer.scene.add(sky);
 
   viewer.terrain = makeTerrain();
-  viewer.decorRoot = new THREE.Group();
+  viewer.staticRoot = new THREE.Group();
+  viewer.dynamicRoot = new THREE.Group();
   viewer.avatarRoot = new THREE.Group();
-  viewer.scene.add(viewer.terrain, viewer.decorRoot, viewer.avatarRoot);
+  viewer.scene.add(viewer.terrain, viewer.staticRoot, viewer.dynamicRoot, viewer.avatarRoot);
 
   const waterRing = new THREE.Mesh(
     new THREE.RingGeometry(28, 38, 80),
@@ -386,6 +500,7 @@ const ensureViewer = () => {
     updateLocalMovement();
     updateCamera();
     animateAvatars();
+    refreshSelectionHelper();
     viewer.renderer.render(viewer.scene, viewer.camera);
   };
 
@@ -509,6 +624,116 @@ const updateLocalMovement = () => {
   }
 };
 
+const screenToNdc = (event) => {
+  const rect = elements.viewport.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+};
+
+const pickBuildTarget = (event) => {
+  screenToNdc(event);
+  raycaster.setFromCamera(pointer, viewer.camera);
+
+  const editableHits = raycaster.intersectObjects([...viewer.dynamicObjects.values()], true);
+  const objectHit = editableHits.find((hit) => hit.object.userData.editable);
+  if (objectHit) {
+    let current = objectHit.object;
+    while (current && !current.userData.objectId) {
+      current = current.parent;
+    }
+    return { type: "object", objectId: current?.userData.objectId ?? null };
+  }
+
+  const [terrainHit] = raycaster.intersectObject(viewer.terrain);
+  if (!terrainHit) {
+    return null;
+  }
+
+  return { type: "terrain", point: terrainHit.point };
+};
+
+const createObject = async (point) => {
+  const response = await fetch(`/api/regions/${state.session.regionId}/objects`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token: state.session.token,
+      asset: elements.buildAssetSelect.value,
+      x: Number(point.x.toFixed(2)),
+      y: Number(getTerrainHeight(point.x, point.z).toFixed(2)),
+      z: Number(point.z.toFixed(2)),
+      rotationY: 0,
+      scale: 1
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error ?? "Unable to place object");
+  }
+
+  const data = await response.json();
+  await syncRegionObjects();
+  selectObject(data.object.id);
+  status("Object placed.");
+};
+
+const updateSelectedObject = async (updates) => {
+  if (!state.selectedObjectId) {
+    return;
+  }
+
+  const current = state.regionObjects.find((item) => item.id === state.selectedObjectId);
+  if (!current) {
+    return;
+  }
+
+  const next = {
+    x: updates.x ?? current.x,
+    y: updates.y ?? current.y,
+    z: updates.z ?? current.z,
+    rotationY: updates.rotationY ?? current.rotationY,
+    scale: updates.scale ?? current.scale
+  };
+
+  const response = await fetch(`/api/objects/${current.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, ...next })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    status(error.error ?? "Unable to update object.", true);
+    return;
+  }
+
+  await syncRegionObjects();
+  selectObject(current.id);
+};
+
+const deleteSelectedObject = async () => {
+  if (!state.selectedObjectId) {
+    return;
+  }
+
+  const response = await fetch(`/api/objects/${state.selectedObjectId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    status(error.error ?? "Unable to delete object.", true);
+    return;
+  }
+
+  await syncRegionObjects();
+  selectObject(null);
+  status("Object deleted.");
+};
+
 const loadRegions = async () => {
   const response = await fetch("/api/regions");
   const data = await response.json();
@@ -543,9 +768,11 @@ const connect = async () => {
   renderParcels();
   syncAvatarMeshes();
   await loadRegionScene(state.session.regionId);
+  await syncRegionObjects();
 
   elements.activeRegion.textContent = state.regions.find((region) => region.id === state.session.regionId)?.name ?? state.session.regionId;
   elements.viewerHint.textContent = `Scene streaming live - ${state.session.regionId}`;
+  elements.builderHelp.textContent = "Enable build mode, click terrain to place, click your object to select, arrows move, Q/E rotate, R/F scale, Delete removes.";
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
@@ -595,6 +822,26 @@ elements.joinButton.addEventListener("click", () => {
   connect().catch((error) => status(error.message, true));
 });
 
+elements.buildModeButton.addEventListener("click", () => {
+  state.buildMode = !state.buildMode;
+  elements.buildModeButton.textContent = state.buildMode ? "Disable build mode" : "Enable build mode";
+  status(state.buildMode ? "Build mode enabled." : "Build mode disabled.");
+});
+
+elements.builderObjectList.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const button = target.closest("[data-select-object]");
+  if (!(button instanceof HTMLElement)) {
+    return;
+  }
+
+  selectObject(button.dataset.selectObject ?? null);
+});
+
 elements.parcelList.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
@@ -629,9 +876,42 @@ elements.chatInput.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", async (event) => {
   if (event.target === elements.chatInput || event.target === elements.displayName) {
     return;
+  }
+
+  if (state.buildMode && state.selectedObjectId) {
+    const current = state.regionObjects.find((item) => item.id === state.selectedObjectId);
+    if (current) {
+      if (event.code === "Delete") {
+        await deleteSelectedObject();
+        return;
+      }
+
+      const moveStep = 0.8;
+      const next = { ...current };
+      if (event.code === "ArrowUp") next.z -= moveStep;
+      if (event.code === "ArrowDown") next.z += moveStep;
+      if (event.code === "ArrowLeft") next.x -= moveStep;
+      if (event.code === "ArrowRight") next.x += moveStep;
+      if (event.code === "PageUp") next.y += 0.4;
+      if (event.code === "PageDown") next.y = Math.max(getTerrainHeight(next.x, next.z), next.y - 0.4);
+      if (event.code === "KeyQ") next.rotationY -= 0.2;
+      if (event.code === "KeyE") next.rotationY += 0.2;
+      if (event.code === "KeyR") next.scale = Math.min(3, next.scale + 0.1);
+      if (event.code === "KeyF") next.scale = Math.max(0.4, next.scale - 0.1);
+
+      if (next.x !== current.x || next.y !== current.y || next.z !== current.z || next.rotationY !== current.rotationY || next.scale !== current.scale) {
+        tempVectorA.set(next.x, next.y, next.z);
+        clampToWorld(tempVectorA);
+        next.x = Number(tempVectorA.x.toFixed(2));
+        next.y = Number(Math.max(tempVectorA.y, next.y).toFixed(2));
+        next.z = Number(tempVectorA.z.toFixed(2));
+        await updateSelectedObject(next);
+        return;
+      }
+    }
   }
 
   state.keys.add(event.code);
@@ -643,15 +923,48 @@ window.addEventListener("keyup", (event) => {
 
 elements.viewport.addEventListener("pointerdown", () => {
   state.pointerActive = true;
+  state.pointerMoved = false;
 });
 
-window.addEventListener("pointerup", () => {
+window.addEventListener("pointerup", async (event) => {
+  if (!state.pointerActive) {
+    return;
+  }
+
   state.pointerActive = false;
+
+  if (!state.pointerMoved || (Math.abs(event.movementX) < 2 && Math.abs(event.movementY) < 2)) {
+    if (state.buildMode && state.session) {
+      const target = pickBuildTarget(event);
+      if (!target) {
+        return;
+      }
+
+      if (target.type === "object") {
+        const ownedObject = state.regionObjects.find((item) => item.id === target.objectId && item.ownerAccountId === state.session.accountId);
+        selectObject(ownedObject ? ownedObject.id : null);
+        if (!ownedObject) {
+          status("You can only edit your own objects.", true);
+        }
+        return;
+      }
+
+      try {
+        await createObject(target.point);
+      } catch (error) {
+        status(error.message, true);
+      }
+    }
+  }
 });
 
 window.addEventListener("pointermove", (event) => {
   if (!state.pointerActive) {
     return;
+  }
+
+  if (Math.abs(event.movementX) > 1 || Math.abs(event.movementY) > 1) {
+    state.pointerMoved = true;
   }
 
   state.yaw -= event.movementX * 0.005;
@@ -668,4 +981,5 @@ elements.viewport.addEventListener(
 );
 
 ensureViewer();
+renderBuilderList();
 loadRegions().catch((error) => status(error.message, true));

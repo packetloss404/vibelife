@@ -10,6 +10,7 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - WebSocket region presence and chat
 - browser 3D viewer with click-to-move avatar sync
 - region scene manifests and generated glTF assets
+- in-world object placement, selection, transform, and deletion tools
 
 ## Why this is a good 2026-style starting point
 
@@ -54,6 +55,13 @@ npm run dev:postgres
 - region layouts live in `public/scenes/*.json`
 - reusable world assets live in `public/assets/models/*.gltf`
 - regenerate assets with `npm run generate:assets`
+
+## Building tools
+
+- enable build mode in the sidebar after joining a region
+- click terrain to place the selected asset
+- click one of your placed objects to select it
+- use arrow keys to move, `Q` and `E` to rotate, `R` and `F` to scale, and `Delete` to remove it
 
 ## Suggested next milestones
 

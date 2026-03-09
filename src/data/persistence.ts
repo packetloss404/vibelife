@@ -50,6 +50,21 @@ export type ParcelRecord = {
   tier: string;
 };
 
+export type RegionObjectRecord = {
+  id: string;
+  regionId: string;
+  ownerAccountId: string;
+  ownerDisplayName: string | null;
+  asset: string;
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  scale: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PersistenceLayer = {
   mode: "memory" | "postgres";
   listRegions(): Promise<RegionRecord[]>;
@@ -59,6 +74,10 @@ export type PersistenceLayer = {
   saveAvatarPosition(position: AvatarPositionRecord): Promise<void>;
   listParcels(regionId: string): Promise<ParcelRecord[]>;
   claimParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
+  listRegionObjects(regionId: string): Promise<RegionObjectRecord[]>;
+  createRegionObject(object: Omit<RegionObjectRecord, "ownerDisplayName">): Promise<RegionObjectRecord>;
+  updateRegionObject(objectId: string, ownerAccountId: string, updates: Pick<RegionObjectRecord, "x" | "y" | "z" | "rotationY" | "scale" | "updatedAt">): Promise<RegionObjectRecord | undefined>;
+  deleteRegionObject(objectId: string, ownerAccountId: string): Promise<boolean>;
 };
 
 const seededRegions: RegionRecord[] = [
@@ -156,6 +175,7 @@ function createMemoryPersistence(): PersistenceLayer {
   const parcels = new Map<string, ParcelRecord>(
     seededParcels.map((parcel) => [parcel.id, { ...parcel, ownerDisplayName: null }])
   );
+  const regionObjects = new Map<string, RegionObjectRecord>();
 
   return {
     mode: "memory",
@@ -221,6 +241,37 @@ function createMemoryPersistence(): PersistenceLayer {
 
       parcels.set(parcelId, updatedParcel);
       return updatedParcel;
+    },
+    async listRegionObjects(regionId) {
+      return [...regionObjects.values()].filter((item) => item.regionId === regionId);
+    },
+    async createRegionObject(object) {
+      const owner = accountsById.get(object.ownerAccountId);
+      const record: RegionObjectRecord = {
+        ...object,
+        ownerDisplayName: owner?.displayName ?? null
+      };
+      regionObjects.set(record.id, record);
+      return record;
+    },
+    async updateRegionObject(objectId, ownerAccountId, updates) {
+      const current = regionObjects.get(objectId);
+      if (!current || current.ownerAccountId !== ownerAccountId) {
+        return undefined;
+      }
+
+      const next = { ...current, ...updates };
+      regionObjects.set(objectId, next);
+      return next;
+    },
+    async deleteRegionObject(objectId, ownerAccountId) {
+      const current = regionObjects.get(objectId);
+      if (!current || current.ownerAccountId !== ownerAccountId) {
+        return false;
+      }
+
+      regionObjects.delete(objectId);
+      return true;
     }
   };
 }
@@ -283,6 +334,22 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       min_z DOUBLE PRECISION NOT NULL,
       max_z DOUBLE PRECISION NOT NULL,
       tier TEXT NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS region_objects (
+      id UUID PRIMARY KEY,
+      region_id TEXT NOT NULL REFERENCES regions(id) ON DELETE CASCADE,
+      owner_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      asset TEXT NOT NULL,
+      x DOUBLE PRECISION NOT NULL,
+      y DOUBLE PRECISION NOT NULL,
+      z DOUBLE PRECISION NOT NULL,
+      rotation_y DOUBLE PRECISION NOT NULL,
+      scale DOUBLE PRECISION NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
     )
   `);
 
@@ -556,6 +623,115 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         maxZ: row.max_z,
         tier: row.tier
       };
+    },
+    async listRegionObjects(regionId) {
+      const result = await pool.query<{
+        id: string;
+        region_id: string;
+        owner_account_id: string;
+        owner_display_name: string | null;
+        asset: string;
+        x: number;
+        y: number;
+        z: number;
+        rotation_y: number;
+        scale: number;
+        created_at: string;
+        updated_at: string;
+      }>(
+        `
+          SELECT region_objects.id, region_objects.region_id, region_objects.owner_account_id,
+            accounts.display_name AS owner_display_name, region_objects.asset, region_objects.x,
+            region_objects.y, region_objects.z, region_objects.rotation_y, region_objects.scale,
+            region_objects.created_at, region_objects.updated_at
+          FROM region_objects
+          JOIN accounts ON accounts.id = region_objects.owner_account_id
+          WHERE region_objects.region_id = $1
+          ORDER BY region_objects.created_at ASC
+        `,
+        [regionId]
+      );
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        regionId: row.region_id,
+        ownerAccountId: row.owner_account_id,
+        ownerDisplayName: row.owner_display_name,
+        asset: row.asset,
+        x: row.x,
+        y: row.y,
+        z: row.z,
+        rotationY: row.rotation_y,
+        scale: row.scale,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+    },
+    async createRegionObject(object) {
+      await pool.query(
+        `
+          INSERT INTO region_objects (id, region_id, owner_account_id, asset, x, y, z, rotation_y, scale, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `,
+        [object.id, object.regionId, object.ownerAccountId, object.asset, object.x, object.y, object.z, object.rotationY, object.scale, object.createdAt, object.updatedAt]
+      );
+
+      const owner = await pool.query<{ display_name: string }>("SELECT display_name FROM accounts WHERE id = $1", [object.ownerAccountId]);
+
+      return {
+        ...object,
+        ownerDisplayName: owner.rows[0]?.display_name ?? null
+      };
+    },
+    async updateRegionObject(objectId, ownerAccountId, updates) {
+      const result = await pool.query<{
+        id: string;
+        region_id: string;
+        owner_account_id: string;
+        owner_display_name: string | null;
+        asset: string;
+        x: number;
+        y: number;
+        z: number;
+        rotation_y: number;
+        scale: number;
+        created_at: string;
+        updated_at: string;
+      }>(
+        `
+          UPDATE region_objects
+          SET x = $3, y = $4, z = $5, rotation_y = $6, scale = $7, updated_at = $8
+          WHERE id = $1 AND owner_account_id = $2
+          RETURNING id, region_id, owner_account_id,
+            (SELECT display_name FROM accounts WHERE id = owner_account_id) AS owner_display_name,
+            asset, x, y, z, rotation_y, scale, created_at, updated_at
+        `,
+        [objectId, ownerAccountId, updates.x, updates.y, updates.z, updates.rotationY, updates.scale, updates.updatedAt]
+      );
+
+      const row = result.rows[0];
+      if (!row) {
+        return undefined;
+      }
+
+      return {
+        id: row.id,
+        regionId: row.region_id,
+        ownerAccountId: row.owner_account_id,
+        ownerDisplayName: row.owner_display_name,
+        asset: row.asset,
+        x: row.x,
+        y: row.y,
+        z: row.z,
+        rotationY: row.rotation_y,
+        scale: row.scale,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+    },
+    async deleteRegionObject(objectId, ownerAccountId) {
+      const result = await pool.query("DELETE FROM region_objects WHERE id = $1 AND owner_account_id = $2", [objectId, ownerAccountId]);
+      return (result.rowCount ?? 0) > 0;
     }
   };
 }

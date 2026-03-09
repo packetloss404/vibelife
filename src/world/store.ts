@@ -5,6 +5,7 @@ import {
   type AvatarPositionRecord,
   type InventoryItemRecord,
   type ParcelRecord,
+  type RegionObjectRecord,
   type RegionRecord
 } from "../data/persistence.js";
 
@@ -15,6 +16,8 @@ export type Account = AccountRecord;
 export type InventoryItem = InventoryItemRecord;
 
 export type Parcel = ParcelRecord;
+
+export type RegionObject = RegionObjectRecord;
 
 export type Session = {
   token: string;
@@ -166,6 +169,68 @@ export async function claimParcel(token: string, parcelId: string): Promise<Parc
   }
 
   return persistence.claimParcel(parcelId, session.accountId);
+}
+
+export async function listRegionObjects(regionId: string): Promise<RegionObject[]> {
+  return persistence.listRegionObjects(regionId);
+}
+
+export async function createRegionObject(token: string, input: {
+  asset: string;
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  scale: number;
+}): Promise<RegionObject | undefined> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  return persistence.createRegionObject({
+    id: randomUUID(),
+    regionId: session.regionId,
+    ownerAccountId: session.accountId,
+    asset: input.asset,
+    x: input.x,
+    y: input.y,
+    z: input.z,
+    rotationY: input.rotationY,
+    scale: input.scale,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+}
+
+export async function updateRegionObject(token: string, objectId: string, updates: {
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  scale: number;
+}): Promise<RegionObject | undefined> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  return persistence.updateRegionObject(objectId, session.accountId, {
+    ...updates,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+export async function deleteRegionObject(token: string, objectId: string): Promise<boolean> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return false;
+  }
+
+  return persistence.deleteRegionObject(objectId, session.accountId);
 }
 
 export function removeAvatar(token: string): { regionId: string; avatarId: string } | undefined {

@@ -83,6 +83,11 @@
         padding: 12px;
       }
 
+      .compact-card.active {
+        border-color: rgba(255, 179, 106, 0.65);
+        box-shadow: inset 0 0 0 1px rgba(255, 179, 106, 0.25);
+      }
+
       label {
         display: grid;
         gap: 6px;
@@ -231,6 +236,27 @@
             <h2>Region parcels</h2>
           </div>
           <div id="parcelList" class="stack muted">Join a region to load parcels.</div>
+        </div>
+
+        <div class="card stack">
+          <div>
+            <p class="muted">Build tools</p>
+            <h2>Sandbox editor</h2>
+          </div>
+          <button id="buildModeButton">Enable build mode</button>
+          <label>
+            Asset
+            <select id="buildAssetSelect">
+              <option value="/assets/models/market-hall.gltf">Market hall</option>
+              <option value="/assets/models/skyport-tower.gltf">Skyport tower</option>
+              <option value="/assets/models/garden-tree.gltf">Garden tree</option>
+              <option value="/assets/models/park-bench.gltf">Park bench</option>
+              <option value="/assets/models/street-lantern.gltf">Street lantern</option>
+              <option value="/assets/models/dock-crate.gltf">Dock crate</option>
+            </select>
+          </label>
+          <div id="builderHelp" class="muted">Join a region to place and edit objects.</div>
+          <div id="builderObjectList" class="stack muted">No editable objects yet.</div>
         </div>
       </section>
 
