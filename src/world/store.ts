@@ -27,6 +27,17 @@ export type BuildPermission = {
   reason?: string;
 };
 
+function applyEquippedWearables(appearance: AvatarAppearance, inventory: InventoryItem[]): AvatarAppearance {
+  const outfit = inventory.find((item) => item.slot === "outfit" && item.equipped && item.appearanceKey)?.appearanceKey;
+  const accessory = inventory.find((item) => item.slot === "accessory" && item.equipped && item.appearanceKey)?.appearanceKey;
+
+  return {
+    ...appearance,
+    outfit: outfit ?? appearance.outfit,
+    accessory: accessory ?? appearance.accessory
+  };
+}
+
 export type Session = {
   token: string;
   accountId: string;
@@ -81,7 +92,7 @@ export async function createGuestSession(displayName: string, regionId?: string)
   const region = regions.find((entry) => entry.id === regionId) ?? regions[0];
   const { account } = await persistence.getOrCreateGuestAccount(displayName);
   const inventory = await persistence.getInventory(account.id);
-  const appearance = await persistence.getAvatarAppearance(account.id);
+  const appearance = applyEquippedWearables(await persistence.getAvatarAppearance(account.id), inventory);
   const parcels = await persistence.listParcels(region.id);
   const savedPosition = await persistence.getAvatarPosition(account.id, region.id);
   const avatarId = randomUUID();
@@ -197,6 +208,35 @@ export async function updateAvatarAppearance(token: string, updates: Omit<Avatar
 
   region.set(session.avatarId, nextState);
   return nextState;
+}
+
+export async function equipInventoryItem(token: string, itemId: string): Promise<{ inventory: InventoryItem[]; avatar?: AvatarState }> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return { inventory: [] };
+  }
+
+  const inventory = await persistence.equipInventoryItem(session.accountId, itemId);
+  const baseAppearance = await persistence.getAvatarAppearance(session.accountId);
+  const appearance = applyEquippedWearables(baseAppearance, inventory);
+  await persistence.saveAvatarAppearance({ ...appearance, accountId: session.accountId, updatedAt: new Date().toISOString() });
+
+  const region = avatarsByRegion.get(session.regionId);
+  const avatar = region?.get(session.avatarId);
+
+  if (!region || !avatar) {
+    return { inventory };
+  }
+
+  const nextAvatar: AvatarState = {
+    ...avatar,
+    appearance,
+    updatedAt: new Date().toISOString()
+  };
+
+  region.set(session.avatarId, nextAvatar);
+  return { inventory, avatar: nextAvatar };
 }
 
 export async function listParcels(regionId: string): Promise<Parcel[]> {

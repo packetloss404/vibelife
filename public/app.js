@@ -22,10 +22,9 @@ const elements = {
   bodyColor: document.querySelector("#bodyColor"),
   accentColor: document.querySelector("#accentColor"),
   hairColor: document.querySelector("#hairColor"),
-  outfitSelect: document.querySelector("#outfitSelect"),
-  accessorySelect: document.querySelector("#accessorySelect"),
   saveAvatarButton: document.querySelector("#saveAvatarButton"),
-  gizmoModeButtons: document.querySelector("#gizmoModeButtons")
+  gizmoModeButtons: document.querySelector("#gizmoModeButtons"),
+  snapSizeSelect: document.querySelector("#snapSizeSelect")
 };
 
 const loader = new GLTFLoader();
@@ -36,6 +35,7 @@ const state = {
   account: null,
   regions: [],
   persistence: "memory",
+  inventory: [],
   parcels: [],
   avatars: new Map(),
   avatarMeshes: new Map(),
@@ -44,6 +44,8 @@ const state = {
   selectedObjectId: null,
   appearance: null,
   gizmoMode: "translate",
+  snapSize: 1,
+  activeParcelId: null,
   keys: new Set(),
   pointerActive: false,
   pointerMoved: false,
@@ -71,7 +73,9 @@ const viewer = {
   transformControls: null,
   terrainBounds: 30,
   assetCache: new Map(),
-  avatarMixers: new Map()
+  avatarMixers: new Map(),
+  parcelFills: new Map(),
+  previewObject: null
 };
 
 const tempVectorA = new THREE.Vector3();
@@ -98,7 +102,17 @@ const renderInventory = (items = []) => {
   }
 
   elements.inventoryList.innerHTML = items
-    .map((item) => `<div>${item.name} - ${item.kind} - ${item.rarity}</div>`)
+    .map((item) => {
+      const equipable = item.slot && item.appearanceKey;
+      const equipped = item.equipped ? "equipped" : "stored";
+      return `
+        <div class="card compact-card">
+          <strong>${item.name}</strong>
+          <div>${item.kind} - ${item.rarity} - ${equipped}</div>
+          ${equipable ? `<button data-equip-item="${item.id}" style="margin-top:10px;">Equip ${item.slot}</button>` : ""}
+        </div>
+      `;
+    })
     .join("");
 };
 
@@ -107,8 +121,8 @@ const getAppearanceFormValue = () => ({
   accentColor: elements.accentColor.value,
   headColor: "#f2c7a8",
   hairColor: elements.hairColor.value,
-  outfit: elements.outfitSelect.value,
-  accessory: elements.accessorySelect.value
+  outfit: state.appearance?.outfit ?? "voyager",
+  accessory: state.appearance?.accessory ?? "none"
 });
 
 const renderAppearanceControls = (appearance) => {
@@ -119,8 +133,6 @@ const renderAppearanceControls = (appearance) => {
   elements.bodyColor.value = appearance.bodyColor;
   elements.accentColor.value = appearance.accentColor;
   elements.hairColor.value = appearance.hairColor;
-  elements.outfitSelect.value = appearance.outfit;
-  elements.accessorySelect.value = appearance.accessory;
 };
 
 const renderParcels = () => {
@@ -179,6 +191,22 @@ const loadParcels = async (regionId) => {
   const data = await response.json();
   state.parcels = data.parcels;
   renderParcels();
+};
+
+const getParcelAt = (x, z) => state.parcels.find((parcel) => x >= parcel.minX && x <= parcel.maxX && z >= parcel.minZ && z <= parcel.maxZ) ?? null;
+
+const snapValue = (value) => {
+  if (!state.snapSize) {
+    return value;
+  }
+
+  return Math.round(value / state.snapSize) * state.snapSize;
+};
+
+const snapPoint = (point) => {
+  const x = snapValue(point.x);
+  const z = snapValue(point.z);
+  return new THREE.Vector3(x, getTerrainHeight(x, z), z);
 };
 
 const hashNoise = (x, z) => {
@@ -286,11 +314,17 @@ const syncParcelLines = () => {
     if (!state.parcels.some((parcel) => parcel.id === parcelId)) {
       viewer.scene.remove(line);
       viewer.parcelLines.delete(parcelId);
+      const fill = viewer.parcelFills.get(parcelId);
+      if (fill) {
+        viewer.scene.remove(fill);
+        viewer.parcelFills.delete(parcelId);
+      }
     }
   }
 
   for (const parcel of state.parcels) {
     let line = viewer.parcelLines.get(parcel.id);
+    let fill = viewer.parcelFills.get(parcel.id);
 
     if (!line) {
       const geometry = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 5 }, () => new THREE.Vector3()));
@@ -298,6 +332,16 @@ const syncParcelLines = () => {
       line = new THREE.Line(geometry, material);
       viewer.scene.add(line);
       viewer.parcelLines.set(parcel.id, line);
+    }
+
+    if (!fill) {
+      fill = new THREE.Mesh(
+        new THREE.PlaneGeometry(parcel.maxX - parcel.minX, parcel.maxZ - parcel.minZ),
+        new THREE.MeshBasicMaterial({ color: 0x66ffd1, transparent: true, opacity: 0.04, side: THREE.DoubleSide })
+      );
+      fill.rotation.x = -Math.PI / 2;
+      viewer.scene.add(fill);
+      viewer.parcelFills.set(parcel.id, fill);
     }
 
     const positions = line.geometry.attributes.position;
@@ -310,7 +354,13 @@ const syncParcelLines = () => {
     ];
     coords.forEach(([x, z], index) => positions.setXYZ(index, x, getTerrainHeight(x, z) + 0.14, z));
     positions.needsUpdate = true;
-    line.material.color.setHex(parcel.ownerAccountId ? 0xffb36a : 0x66ffd1);
+    const active = parcel.id === state.activeParcelId;
+    line.material.color.setHex(active ? 0xfff18a : parcel.ownerAccountId ? 0xffb36a : 0x66ffd1);
+    line.material.linewidth = active ? 2 : 1;
+
+    fill.position.set((parcel.minX + parcel.maxX) / 2, getTerrainHeight((parcel.minX + parcel.maxX) / 2, (parcel.minZ + parcel.maxZ) / 2) + 0.03, (parcel.minZ + parcel.maxZ) / 2);
+    fill.material.color.setHex(active ? 0xfff18a : parcel.ownerAccountId ? 0xffb36a : 0x66ffd1);
+    fill.material.opacity = active ? 0.16 : 0.05;
   }
 };
 
@@ -500,6 +550,68 @@ const buildRenderableObject = async (item, editable = false) => {
   return object;
 };
 
+const ensurePreviewObject = async () => {
+  const asset = elements.buildAssetSelect.value;
+
+  if (viewer.previewObject?.userData.asset === asset) {
+    return viewer.previewObject;
+  }
+
+  if (viewer.previewObject) {
+    viewer.scene.remove(viewer.previewObject);
+    viewer.previewObject = null;
+  }
+
+  const preview = await buildRenderableObject({
+    id: "preview",
+    asset,
+    x: 0,
+    y: 0,
+    z: 0,
+    rotationY: 0,
+    scale: 1
+  });
+  preview.userData.asset = asset;
+  preview.traverse((child) => {
+    if (child.isMesh && child.material) {
+      child.material = child.material.clone();
+      child.material.transparent = true;
+      child.material.opacity = 0.45;
+    }
+  });
+  viewer.previewObject = preview;
+  viewer.scene.add(preview);
+  return preview;
+};
+
+const hidePreviewObject = () => {
+  if (viewer.previewObject) {
+    viewer.previewObject.visible = false;
+  }
+  state.activeParcelId = null;
+  syncParcelLines();
+};
+
+const updatePreviewObject = async (event) => {
+  if (!state.buildMode || !state.session) {
+    hidePreviewObject();
+    return;
+  }
+
+  const target = pickBuildTarget(event);
+  if (!target || target.type !== "terrain") {
+    hidePreviewObject();
+    return;
+  }
+
+  const snapped = snapPoint(target.point);
+  const preview = await ensurePreviewObject();
+  preview.visible = true;
+  preview.position.copy(snapped);
+  state.activeParcelId = getParcelAt(snapped.x, snapped.z)?.id ?? null;
+  syncParcelLines();
+};
+
 const selectObject = (objectId) => {
   state.selectedObjectId = objectId;
 
@@ -529,12 +641,23 @@ const syncTransformSelection = () => {
     return;
   }
 
+  viewer.transformControls.setTranslationSnap(state.snapSize || null);
+  viewer.transformControls.setRotationSnap(state.snapSize ? Math.PI / 8 : null);
+  viewer.transformControls.setScaleSnap(state.snapSize ? Math.max(0.1, state.snapSize / 2) : null);
+
   if (state.selectedObjectId && viewer.dynamicObjects.has(state.selectedObjectId)) {
-    viewer.transformControls.attach(viewer.dynamicObjects.get(state.selectedObjectId));
+    const selected = viewer.dynamicObjects.get(state.selectedObjectId);
+    viewer.transformControls.attach(selected);
     viewer.transformControls.setMode(state.gizmoMode);
+    state.activeParcelId = getParcelAt(selected.position.x, selected.position.z)?.id ?? null;
   } else {
     viewer.transformControls.detach();
+    if (!state.buildMode) {
+      state.activeParcelId = null;
+    }
   }
+
+  syncParcelLines();
 };
 
 const loadRegionScene = async (regionId) => {
@@ -657,10 +780,17 @@ const ensureViewer = () => {
 
   viewer.transformControls = new TransformControls(viewer.camera, viewer.renderer.domElement);
   viewer.transformControls.setMode(state.gizmoMode);
+  viewer.transformControls.setTranslationSnap(state.snapSize || null);
+  viewer.transformControls.setRotationSnap(state.snapSize ? Math.PI / 8 : null);
+  viewer.transformControls.setScaleSnap(state.snapSize ? Math.max(0.1, state.snapSize / 2) : null);
   viewer.transformControls.addEventListener("dragging-changed", (event) => {
     state.pointerActive = event.value;
   });
   viewer.transformControls.addEventListener("objectChange", () => {
+    if (viewer.transformControls.object) {
+      state.activeParcelId = getParcelAt(viewer.transformControls.object.position.x, viewer.transformControls.object.position.z)?.id ?? null;
+      syncParcelLines();
+    }
     refreshSelectionHelper();
   });
   viewer.transformControls.addEventListener("mouseUp", async () => {
@@ -874,15 +1004,16 @@ const pickBuildTarget = (event) => {
 };
 
 const createObject = async (point) => {
+  const snapped = snapPoint(point);
   const response = await fetch(`/api/regions/${state.session.regionId}/objects`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       token: state.session.token,
       asset: elements.buildAssetSelect.value,
-      x: Number(point.x.toFixed(2)),
-      y: Number(getTerrainHeight(point.x, point.z).toFixed(2)),
-      z: Number(point.z.toFixed(2)),
+      x: Number(snapped.x.toFixed(2)),
+      y: Number(snapped.y.toFixed(2)),
+      z: Number(snapped.z.toFixed(2)),
       rotationY: 0,
       scale: 1
     })
@@ -984,9 +1115,10 @@ const connect = async () => {
   state.account = data.account;
   state.appearance = data.appearance;
   state.persistence = data.persistence;
+  state.inventory = data.inventory;
   state.parcels = data.parcels;
   state.avatars = new Map([[data.avatar.avatarId, data.avatar]]);
-  renderInventory(data.inventory);
+  renderInventory(state.inventory);
   renderAppearanceControls(data.appearance);
   renderParcels();
   await syncAvatarMeshes();
@@ -1015,6 +1147,13 @@ const connect = async () => {
     }
     if (message.type === "avatar:joined" || message.type === "avatar:moved") {
       state.avatars.set(message.avatar.avatarId, message.avatar);
+    }
+    if (message.type === "avatar:updated") {
+      state.avatars.set(message.avatar.avatarId, message.avatar);
+      if (message.avatar.avatarId === state.session?.avatarId) {
+        state.appearance = message.avatar.appearance;
+        renderAppearanceControls(state.appearance);
+      }
     }
     if (message.type === "avatar:left") {
       state.avatars.delete(message.avatarId);
@@ -1065,6 +1204,10 @@ elements.joinButton.addEventListener("click", () => {
 elements.buildModeButton.addEventListener("click", () => {
   state.buildMode = !state.buildMode;
   elements.buildModeButton.textContent = state.buildMode ? "Disable build mode" : "Enable build mode";
+  if (!state.buildMode) {
+    hidePreviewObject();
+  }
+  syncTransformSelection();
   status(state.buildMode ? "Build mode enabled." : "Build mode disabled.");
 });
 
@@ -1104,6 +1247,11 @@ elements.gizmoModeButtons.addEventListener("click", (event) => {
   }
 
   state.gizmoMode = modeButton.dataset.gizmoMode;
+  syncTransformSelection();
+});
+
+elements.snapSizeSelect.addEventListener("change", () => {
+  state.snapSize = Number(elements.snapSizeSelect.value);
   syncTransformSelection();
 });
 
@@ -1148,6 +1296,40 @@ elements.parcelList.addEventListener("click", async (event) => {
   status("Parcel claimed.");
 });
 
+elements.inventoryList.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const itemId = target.dataset.equipItem;
+  if (!itemId || !state.session) {
+    return;
+  }
+
+  const response = await fetch("/api/inventory/equip", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, itemId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    status(error.error ?? "Unable to equip item.", true);
+    return;
+  }
+
+  const data = await response.json();
+  state.inventory = data.inventory;
+  renderInventory(state.inventory);
+  if (data.avatar) {
+    state.appearance = data.avatar.appearance;
+    state.avatars.set(data.avatar.avatarId, data.avatar);
+    await syncAvatarMeshes();
+  }
+  status("Wearable equipped.");
+});
+
 elements.chatButton.addEventListener("click", sendChat);
 elements.chatInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -1184,9 +1366,9 @@ window.addEventListener("keydown", async (event) => {
       if (next.x !== current.x || next.y !== current.y || next.z !== current.z || next.rotationY !== current.rotationY || next.scale !== current.scale) {
         tempVectorA.set(next.x, next.y, next.z);
         clampToWorld(tempVectorA);
-        next.x = Number(tempVectorA.x.toFixed(2));
+        next.x = Number(snapValue(tempVectorA.x).toFixed(2));
         next.y = Number(Math.max(tempVectorA.y, next.y).toFixed(2));
-        next.z = Number(tempVectorA.z.toFixed(2));
+        next.z = Number(snapValue(tempVectorA.z).toFixed(2));
         await updateSelectedObject(next);
         return;
       }
@@ -1238,6 +1420,8 @@ window.addEventListener("pointerup", async (event) => {
 });
 
 window.addEventListener("pointermove", (event) => {
+  void updatePreviewObject(event);
+
   if (!state.pointerActive) {
     return;
   }

@@ -9,6 +9,7 @@ import {
   createRegionObject,
   createGuestSession,
   deleteRegionObject,
+  equipInventoryItem,
   getPersistenceMode,
   getRegionPopulation,
   getSession,
@@ -104,6 +105,24 @@ app.patch<{
   }
 
   return reply.send({ avatar });
+});
+
+app.post<{ Body: { token?: string; itemId?: string } }>("/api/inventory/equip", async (request, reply) => {
+  const { token, itemId } = request.body;
+
+  if (!token || !itemId) {
+    return reply.code(400).send({ error: "token and itemId are required" });
+  }
+
+  const result = await equipInventoryItem(token, itemId);
+  const session = getSession(token);
+
+  if (!session || !result.avatar) {
+    return reply.code(404).send({ error: "unable to equip item" });
+  }
+
+  broadcastRegion(session.regionId, { type: "avatar:updated", avatar: result.avatar });
+  return reply.send(result);
 });
 
 app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", async (request, reply) => {

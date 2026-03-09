@@ -260,23 +260,7 @@
             Hair and accessory color
             <input id="hairColor" type="color" value="#1b1d27" />
           </label>
-          <label>
-            Outfit
-            <select id="outfitSelect">
-              <option value="voyager">Voyager coat</option>
-              <option value="pilot">Pilot jacket</option>
-              <option value="formal">Formal sash</option>
-            </select>
-          </label>
-          <label>
-            Accessory
-            <select id="accessorySelect">
-              <option value="none">None</option>
-              <option value="visor">Visor</option>
-              <option value="cape">Cape</option>
-              <option value="pack">Utility pack</option>
-            </select>
-          </label>
+          <p class="muted">Outfits and accessories now equip from your inventory list.</p>
           <button id="saveAvatarButton">Save avatar style</button>
         </div>
 
@@ -302,6 +286,15 @@
             <button data-gizmo-mode="rotate">Rotate</button>
             <button data-gizmo-mode="scale">Scale</button>
           </div>
+          <label>
+            Build snap
+            <select id="snapSizeSelect">
+              <option value="0">Free</option>
+              <option value="0.5">0.5m</option>
+              <option value="1" selected>1m</option>
+              <option value="2">2m</option>
+            </select>
+          </label>
           <div id="builderHelp" class="muted">Join a region to place and edit objects.</div>
           <div id="builderObjectList" class="stack muted">No editable objects yet.</div>
         </div>

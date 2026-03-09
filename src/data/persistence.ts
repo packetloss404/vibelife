@@ -35,6 +35,9 @@ export type InventoryItemRecord = {
   accountId: string;
   name: string;
   kind: string;
+  slot: string | null;
+  appearanceKey: string | null;
+  equipped: boolean;
   rarity: string;
   createdAt: string;
 };
@@ -81,6 +84,7 @@ export type PersistenceLayer = {
   listRegions(): Promise<RegionRecord[]>;
   getOrCreateGuestAccount(displayName: string): Promise<{ account: AccountRecord; isNew: boolean }>;
   getInventory(accountId: string): Promise<InventoryItemRecord[]>;
+  equipInventoryItem(accountId: string, itemId: string): Promise<InventoryItemRecord[]>;
   getAvatarAppearance(accountId: string): Promise<AvatarAppearanceRecord>;
   saveAvatarAppearance(appearance: AvatarAppearanceRecord): Promise<AvatarAppearanceRecord>;
   getAvatarPosition(accountId: string, regionId: string): Promise<AvatarPositionRecord | undefined>;
@@ -160,9 +164,15 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
 ];
 
 const starterInventory = [
-  { name: "Starter Flight Band", kind: "wearable", rarity: "common" },
-  { name: "Parcel Builder Wand", kind: "tool", rarity: "uncommon" },
-  { name: "Welcome Drone Companion", kind: "pet", rarity: "rare" }
+  { name: "Voyager Coat", kind: "wearable", slot: "outfit", appearanceKey: "voyager", equipped: true, rarity: "common" },
+  { name: "Pilot Jacket", kind: "wearable", slot: "outfit", appearanceKey: "pilot", equipped: false, rarity: "uncommon" },
+  { name: "Formal Sash", kind: "wearable", slot: "outfit", appearanceKey: "formal", equipped: false, rarity: "rare" },
+  { name: "Visor", kind: "wearable", slot: "accessory", appearanceKey: "visor", equipped: false, rarity: "common" },
+  { name: "Cape", kind: "wearable", slot: "accessory", appearanceKey: "cape", equipped: false, rarity: "uncommon" },
+  { name: "Utility Pack", kind: "wearable", slot: "accessory", appearanceKey: "pack", equipped: false, rarity: "common" },
+  { name: "Starter Flight Band", kind: "wearable", slot: null, appearanceKey: null, equipped: false, rarity: "common" },
+  { name: "Parcel Builder Wand", kind: "tool", slot: null, appearanceKey: null, equipped: false, rarity: "uncommon" },
+  { name: "Welcome Drone Companion", kind: "pet", slot: null, appearanceKey: null, equipped: false, rarity: "rare" }
 ];
 
 function createDefaultAppearance(accountId: string): AvatarAppearanceRecord {
@@ -233,6 +243,9 @@ function createMemoryPersistence(): PersistenceLayer {
           accountId: account.id,
           name: item.name,
           kind: item.kind,
+          slot: item.slot,
+          appearanceKey: item.appearanceKey,
+          equipped: item.equipped,
           rarity: item.rarity,
           createdAt: new Date().toISOString()
         }))
@@ -243,6 +256,28 @@ function createMemoryPersistence(): PersistenceLayer {
     },
     async getInventory(accountId) {
       return inventory.get(accountId) ?? [];
+    },
+    async equipInventoryItem(accountId, itemId) {
+      const items = inventory.get(accountId) ?? [];
+      const target = items.find((item) => item.id === itemId);
+
+      if (!target || !target.slot) {
+        return items;
+      }
+
+      const nextItems = items.map((item) => {
+        if (item.slot !== target.slot) {
+          return item;
+        }
+
+        return {
+          ...item,
+          equipped: item.id === itemId
+        };
+      });
+
+      inventory.set(accountId, nextItems);
+      return nextItems;
     },
     async getAvatarAppearance(accountId) {
       if (!appearances.has(accountId)) {
@@ -318,6 +353,35 @@ function createMemoryPersistence(): PersistenceLayer {
 async function createPostgresPersistence(databaseUrl: string): Promise<PersistenceLayer> {
   const pool = new Pool({ connectionString: databaseUrl });
 
+  const readInventory = async (accountId: string): Promise<InventoryItemRecord[]> => {
+    const result = await pool.query<{
+      id: string;
+      account_id: string;
+      name: string;
+      kind: string;
+      slot: string | null;
+      appearance_key: string | null;
+      equipped: boolean;
+      rarity: string;
+      created_at: string;
+    }>(
+      "SELECT id, account_id, name, kind, slot, appearance_key, equipped, rarity, created_at FROM inventory_items WHERE account_id = $1 ORDER BY created_at ASC",
+      [accountId]
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      accountId: row.account_id,
+      name: row.name,
+      kind: row.kind,
+      slot: row.slot,
+      appearanceKey: row.appearance_key,
+      equipped: row.equipped,
+      rarity: row.rarity,
+      createdAt: row.created_at
+    }));
+  };
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS regions (
       id TEXT PRIMARY KEY,
@@ -345,10 +409,17 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       kind TEXT NOT NULL,
+      slot TEXT,
+      appearance_key TEXT,
+      equipped BOOLEAN NOT NULL DEFAULT FALSE,
       rarity TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL
     )
   `);
+
+  await pool.query("ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS slot TEXT");
+  await pool.query("ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS appearance_key TEXT");
+  await pool.query("ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS equipped BOOLEAN NOT NULL DEFAULT FALSE");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS avatar_appearances (
@@ -513,6 +584,13 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         );
       }
 
+      for (const item of starterInventory) {
+        await pool.query(
+          "UPDATE inventory_items SET slot = $3, appearance_key = $4, equipped = $5 WHERE account_id = $1 AND name = $2",
+          [account.id, item.name, item.slot, item.appearanceKey, item.equipped]
+        );
+      }
+
       const appearance = createDefaultAppearance(account.id);
       await pool.query(
         "INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
@@ -522,26 +600,24 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       return { account, isNew: true };
     },
     async getInventory(accountId) {
-      const result = await pool.query<{
-        id: string;
-        account_id: string;
-        name: string;
-        kind: string;
-        rarity: string;
-        created_at: string;
-      }>(
-        "SELECT id, account_id, name, kind, rarity, created_at FROM inventory_items WHERE account_id = $1 ORDER BY created_at ASC",
-        [accountId]
+      return readInventory(accountId);
+    },
+    async equipInventoryItem(accountId, itemId) {
+      const selected = await pool.query<{ id: string; slot: string | null }>(
+        "SELECT id, slot FROM inventory_items WHERE account_id = $1 AND id = $2 LIMIT 1",
+        [accountId, itemId]
       );
 
-      return result.rows.map((row) => ({
-        id: row.id,
-        accountId: row.account_id,
-        name: row.name,
-        kind: row.kind,
-        rarity: row.rarity,
-        createdAt: row.created_at
-      }));
+      const target = selected.rows[0];
+
+      if (!target?.slot) {
+        return readInventory(accountId);
+      }
+
+      await pool.query("UPDATE inventory_items SET equipped = FALSE WHERE account_id = $1 AND slot = $2", [accountId, target.slot]);
+      await pool.query("UPDATE inventory_items SET equipped = TRUE WHERE account_id = $1 AND id = $2", [accountId, itemId]);
+
+      return readInventory(accountId);
     },
     async getAvatarAppearance(accountId) {
       const result = await pool.query<{
