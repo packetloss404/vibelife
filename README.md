@@ -83,6 +83,7 @@ npm run dev:postgres
 - native HUD now supports parcel claims plus saved graphics and input settings
 - parcel ownership changes now propagate live over WebSocket to both native and browser debug clients
 - register/login auth endpoints now exist alongside guest access, with admin moderation controls for parcel reassignment and object cleanup
+- browser debug and Godot native clients now both support auth modes and admin parcel/object moderation flows
 
 ## Building tools
 

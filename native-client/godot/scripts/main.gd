@@ -993,7 +993,7 @@ func _on_profile_selected(index: int) -> void:
 	var profile: Dictionary = backend_profiles[index]
 	backend_url_input.text = profile.get("backendUrl", backend_url_input.text)
 	display_name_input.text = profile.get("displayName", display_name_input.text)
-auth_mode_select.select(int(profile.get("authMode", 0)))
+	auth_mode_select.select(int(profile.get("authMode", 0)))
 
 
 func _save_login_state() -> void:
