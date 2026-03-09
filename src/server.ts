@@ -146,6 +146,12 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", 
     return reply.code(409).send({ error: "parcel unavailable" });
   }
 
+  const session = getSession(token);
+
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+  }
+
   return reply.send({ parcel });
 });
 
@@ -244,7 +250,8 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
   socket.send(JSON.stringify({
     type: "snapshot",
     avatars: getRegionPopulation(regionId),
-    objects: await listRegionObjects(regionId)
+    objects: await listRegionObjects(regionId),
+    parcels: await listParcels(regionId)
   }));
 
   const joinedAvatar = getRegionPopulation(regionId).find((avatar) => avatar.avatarId === session.avatarId);

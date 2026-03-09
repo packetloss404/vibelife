@@ -80,6 +80,7 @@ npm run dev:postgres
 - native client HUD is now split into a docked layout with status, build controls, inventory, and chat
 - native inventory now supports equip/use actions and native object editing now supports axis-handle dragging
 - native client now saves backend profiles locally and renders parcel overlays with ownership colors in-world
+- native HUD now supports parcel claims plus saved graphics and input settings
 
 ## Building tools
 

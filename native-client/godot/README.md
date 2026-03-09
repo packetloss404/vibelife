@@ -18,6 +18,8 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - supports equip and use actions from the native inventory panel
 - saves backend/display-name profiles locally in the native client
 - draws parcel overlays and ownership colors directly in the 3D world
+- can claim active parcels from the native HUD
+- saves fullscreen, mouse sensitivity, invert look, FOV, and shadow settings locally
 
 ## Open it
 

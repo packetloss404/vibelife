@@ -1,4 +1,4 @@
-import type { AvatarState, RegionObject } from "./store.js";
+import type { AvatarState, Parcel, RegionObject } from "./store.js";
 
 type RegionSocket = {
   OPEN: number;
@@ -7,7 +7,7 @@ type RegionSocket = {
 };
 
 type RegionEvent =
-  | { type: "snapshot"; avatars: AvatarState[]; objects: RegionObject[] }
+  | { type: "snapshot"; avatars: AvatarState[]; objects: RegionObject[]; parcels: Parcel[] }
   | { type: "avatar:joined"; avatar: AvatarState }
   | { type: "avatar:moved"; avatar: AvatarState }
   | { type: "avatar:updated"; avatar: AvatarState }
@@ -15,7 +15,8 @@ type RegionEvent =
   | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string }
   | { type: "object:created"; object: RegionObject }
   | { type: "object:updated"; object: RegionObject }
-  | { type: "object:deleted"; objectId: string };
+  | { type: "object:deleted"; objectId: string }
+  | { type: "parcel:updated"; parcel: Parcel };
 
 type RegionPeer = {
   avatarId: string;

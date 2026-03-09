@@ -27,6 +27,13 @@ const WS_SNAPSHOT := "snapshot"
 @onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
 @onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/JoinButton
 @onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/VBox/StatusLabel
+@onready var fullscreen_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/FullscreenCheck
+@onready var mouse_sensitivity_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/MouseSensitivitySlider
+@onready var invert_look_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/InvertLookCheck
+@onready var camera_distance_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/CameraDistanceSlider
+@onready var fov_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/FovSlider
+@onready var shadows_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/ShadowsCheck
+@onready var save_settings_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/SaveSettingsButton
 @onready var status_pill: Label = $CanvasLayer/UI/TopBar/TopMargin/TopRow/StatusPill
 @onready var inventory_list: ItemList = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryList
 @onready var inventory_selection_label: Label = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventorySelectionLabel
@@ -42,6 +49,7 @@ const WS_SNAPSHOT := "snapshot"
 @onready var scale_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/ScaleModeButton
 @onready var selection_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/SelectionLabel
 @onready var parcel_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ParcelLabel
+@onready var claim_parcel_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ClaimParcelButton
 @onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
 @onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
 
@@ -69,6 +77,7 @@ var selected_inventory_index := -1
 var backend_profiles: Array = []
 var parcel_nodes := {}
 const PROFILE_SAVE_PATH := "user://backend_profiles.json"
+const SETTINGS_SAVE_PATH := "user://client_settings.json"
 var build_assets := [
 	"/assets/models/market-hall.gltf",
 	"/assets/models/skyport-tower.gltf",
@@ -84,6 +93,7 @@ func _ready() -> void:
 	profile_select.item_selected.connect(_on_profile_selected)
 	save_profile_button.pressed.connect(_save_current_profile)
 	join_button.pressed.connect(_join_world)
+	save_settings_button.pressed.connect(_save_client_settings)
 	send_chat_button.pressed.connect(_send_chat)
 	chat_input.text_submitted.connect(func(_text: String): _send_chat())
 	build_mode_button.pressed.connect(_toggle_build_mode)
@@ -92,6 +102,7 @@ func _ready() -> void:
 	scale_mode_button.pressed.connect(func(): _set_gizmo_mode("scale"))
 	duplicate_button.pressed.connect(_duplicate_selected_object)
 	delete_button.pressed.connect(_delete_selected_object)
+	claim_parcel_button.pressed.connect(_claim_active_parcel)
 	inventory_list.item_selected.connect(_on_inventory_item_selected)
 	equip_item_button.pressed.connect(_equip_selected_inventory_item)
 	use_item_button.pressed.connect(_use_selected_inventory_item)
@@ -101,6 +112,7 @@ func _ready() -> void:
 	objects_request.request_completed.connect(_on_objects_loaded)
 	_fetch_regions()
 	_load_profiles()
+	_load_client_settings()
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
 	_set_gizmo_mode("move")
@@ -128,15 +140,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				_apply_gizmo_wheel(1.0)
 			else:
 				camera.position.z = max(6.0, camera.position.z - 1.0)
+				camera_distance_slider.value = camera.position.z
 		if button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
 			if build_mode and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
 				_apply_gizmo_wheel(-1.0)
 			else:
 				camera.position.z = min(24.0, camera.position.z + 1.0)
+				camera_distance_slider.value = camera.position.z
 	elif event is InputEventMouseMotion and orbiting:
 		var motion := event as InputEventMouseMotion
-		yaw -= motion.relative.x * 0.005
-		pitch = clamp(pitch - motion.relative.y * 0.004, 0.15, 1.1)
+		var invert := -1.0 if invert_look_check.button_pressed else 1.0
+		yaw -= motion.relative.x * 0.005 * mouse_sensitivity_slider.value
+		pitch = clamp(pitch - motion.relative.y * 0.004 * mouse_sensitivity_slider.value * invert, 0.15, 1.1)
 	elif event is InputEventMouseMotion and build_mode and drag_selected and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
 		_drag_selected_object(event)
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build_mode:
@@ -305,12 +320,27 @@ func _handle_socket_message(message: Dictionary) -> void:
 			avatar_states.clear()
 			for avatar in message.get("avatars", []):
 				avatar_states[avatar.avatarId] = avatar
+			parcels = message.get("parcels", parcels)
 			_sync_avatars()
 			_sync_objects(message.get("objects", []))
 		"avatar:joined", "avatar:moved", "avatar:updated":
 			var avatar := message.avatar
 			avatar_states[avatar.avatarId] = avatar
 			_sync_avatars()
+		"parcel:updated":
+			var next_parcel := message.parcel
+			var replaced := false
+			for index in range(parcels.size()):
+				if parcels[index].id == next_parcel.id:
+					parcels[index] = next_parcel
+					replaced = true
+					break
+			if not replaced:
+				parcels.append(next_parcel)
+			if not active_parcel.is_empty() and active_parcel.get("id", "") == next_parcel.id:
+				active_parcel = next_parcel
+			_render_parcels()
+			_claim_button_state()
 		"avatar:left":
 			avatar_states.erase(message.avatarId)
 			_sync_avatars()
@@ -611,6 +641,46 @@ func _equip_selected_inventory_item() -> void:
 			_sync_avatars()
 		status_label.text = "Equipped %s" % item.name
 	request.queue_free()
+
+
+func _load_client_settings() -> void:
+	if FileAccess.file_exists(SETTINGS_SAVE_PATH):
+		var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.READ)
+		if file:
+			var parsed = JSON.parse_string(file.get_as_text())
+			if parsed is Dictionary:
+				fullscreen_check.button_pressed = parsed.get("fullscreen", false)
+				mouse_sensitivity_slider.value = float(parsed.get("mouseSensitivity", 1.0))
+				invert_look_check.button_pressed = parsed.get("invertLook", false)
+				camera_distance_slider.value = float(parsed.get("cameraDistance", 12.0))
+				fov_slider.value = float(parsed.get("fov", 75.0))
+				shadows_check.button_pressed = parsed.get("shadows", true)
+	_apply_client_settings()
+
+
+func _save_client_settings() -> void:
+	var payload := {
+		"fullscreen": fullscreen_check.button_pressed,
+		"mouseSensitivity": mouse_sensitivity_slider.value,
+		"invertLook": invert_look_check.button_pressed,
+		"cameraDistance": camera_distance_slider.value,
+		"fov": fov_slider.value,
+		"shadows": shadows_check.button_pressed
+	}
+	var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(payload))
+	_apply_client_settings()
+	status_label.text = "Client settings saved"
+
+
+func _apply_client_settings() -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen_check.button_pressed else DisplayServer.WINDOW_MODE_WINDOWED)
+	camera.position.z = camera_distance_slider.value
+	camera.fov = fov_slider.value
+	var sun := get_node_or_null("Sun") as DirectionalLight3D
+	if sun:
+		sun.shadow_enabled = shadows_check.button_pressed
 
 
 func _use_selected_inventory_item() -> void:
@@ -918,36 +988,6 @@ func _save_login_state() -> void:
 		backend_profiles[profile_select.selected]["backendUrl"] = backend_url_input.text.strip_edges()
 		backend_profiles[profile_select.selected]["displayName"] = display_name_input.text.strip_edges()
 		_persist_profiles()
-
-
-func _load_client_settings() -> void:
-	if FileAccess.file_exists(SETTINGS_SAVE_PATH):
-		var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.READ)
-		if file:
-			var parsed = JSON.parse_string(file.get_as_text())
-			if parsed is Dictionary:
-				fullscreen_check.button_pressed = parsed.get("fullscreen", false)
-				mouse_sensitivity_slider.value = float(parsed.get("mouseSensitivity", 1.0))
-				camera_distance_slider.value = float(parsed.get("cameraDistance", 12.0))
-	_apply_client_settings()
-
-
-func _save_client_settings() -> void:
-	var payload := {
-		"fullscreen": fullscreen_check.button_pressed,
-		"mouseSensitivity": mouse_sensitivity_slider.value,
-		"cameraDistance": camera_distance_slider.value
-	}
-	var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.WRITE)
-	if file:
-		file.store_string(JSON.stringify(payload))
-	_apply_client_settings()
-	status_label.text = "Client settings saved"
-
-
-func _apply_client_settings() -> void:
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen_check.button_pressed else DisplayServer.WINDOW_MODE_WINDOWED)
-	camera.position.z = camera_distance_slider.value
 
 
 func _parcel_color(parcel: Dictionary, transparent: bool) -> Color:
