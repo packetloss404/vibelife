@@ -24,7 +24,13 @@ const elements = {
   hairColor: document.querySelector("#hairColor"),
   saveAvatarButton: document.querySelector("#saveAvatarButton"),
   gizmoModeButtons: document.querySelector("#gizmoModeButtons"),
-  snapSizeSelect: document.querySelector("#snapSizeSelect")
+  snapSizeSelect: document.querySelector("#snapSizeSelect"),
+  duplicateSelectionButton: document.querySelector("#duplicateSelectionButton"),
+  clearSelectionButton: document.querySelector("#clearSelectionButton"),
+  presetNameInput: document.querySelector("#presetNameInput"),
+  savePresetButton: document.querySelector("#savePresetButton"),
+  clearPresetButton: document.querySelector("#clearPresetButton"),
+  presetList: document.querySelector("#presetList")
 };
 
 const loader = new GLTFLoader();
@@ -42,10 +48,13 @@ const state = {
   regionObjects: [],
   buildMode: false,
   selectedObjectId: null,
+  selectedObjectIds: [],
   appearance: null,
   gizmoMode: "translate",
   snapSize: 1,
   activeParcelId: null,
+  presets: [],
+  activePresetId: null,
   keys: new Set(),
   pointerActive: false,
   pointerMoved: false,
@@ -86,6 +95,20 @@ const pointer = new THREE.Vector2();
 const status = (message, isError = false) => {
   elements.status.textContent = message;
   elements.status.className = isError ? "warning" : "muted";
+};
+
+const presetStorageKey = "thirdlife-build-presets";
+
+const loadPresets = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(presetStorageKey) ?? "[]");
+  } catch {
+    return [];
+  }
+};
+
+const persistPresets = () => {
+  window.localStorage.setItem(presetStorageKey, JSON.stringify(state.presets));
 };
 
 const appendChat = (line) => {
@@ -175,7 +198,7 @@ const renderBuilderList = () => {
   elements.builderObjectList.innerHTML = mine
     .map((item) => {
       const assetName = item.asset.split("/").pop().replace(".gltf", "").replaceAll("-", " ");
-      const activeClass = item.id === state.selectedObjectId ? " active" : "";
+      const activeClass = state.selectedObjectIds.includes(item.id) ? " active" : "";
       return `
         <button class="card compact-card${activeClass}" data-select-object="${item.id}">
           <strong>${assetName}</strong>
@@ -184,6 +207,27 @@ const renderBuilderList = () => {
       `;
     })
     .join("");
+};
+
+const renderPresets = () => {
+  if (!state.presets.length) {
+    elements.presetList.textContent = "No presets saved yet.";
+    return;
+  }
+
+  elements.presetList.innerHTML = state.presets.map((preset) => {
+    const activeClass = preset.id === state.activePresetId ? " active" : "";
+    return `
+      <div class="card compact-card${activeClass}">
+        <strong>${preset.name}</strong>
+        <div>${preset.items.length} objects</div>
+        <div class="chat-row" style="margin-top:10px;">
+          <button data-activate-preset="${preset.id}">Activate</button>
+          <button data-delete-preset="${preset.id}">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
 };
 
 const loadParcels = async (regionId) => {
@@ -612,8 +656,21 @@ const updatePreviewObject = async (event) => {
   syncParcelLines();
 };
 
-const selectObject = (objectId) => {
-  state.selectedObjectId = objectId;
+const selectObject = (objectId, additive = false) => {
+  if (!objectId) {
+    state.selectedObjectId = null;
+    state.selectedObjectIds = [];
+  } else if (additive) {
+    if (state.selectedObjectIds.includes(objectId)) {
+      state.selectedObjectIds = state.selectedObjectIds.filter((id) => id !== objectId);
+    } else {
+      state.selectedObjectIds = [...state.selectedObjectIds, objectId];
+    }
+    state.selectedObjectId = state.selectedObjectIds[0] ?? null;
+  } else {
+    state.selectedObjectId = objectId;
+    state.selectedObjectIds = [objectId];
+  }
 
   if (viewer.selectionHelper) {
     viewer.scene.remove(viewer.selectionHelper);
@@ -713,6 +770,11 @@ const applyRegionObjects = async () => {
 
   if (state.selectedObjectId && !state.regionObjects.some((item) => item.id === state.selectedObjectId)) {
     selectObject(null);
+  }
+
+  state.selectedObjectIds = state.selectedObjectIds.filter((id) => state.regionObjects.some((item) => item.id === id));
+  if (!state.selectedObjectIds.length) {
+    state.selectedObjectId = null;
   }
 
   syncTransformSelection();
@@ -1030,6 +1092,113 @@ const createObject = async (point) => {
   status("Object placed.");
 };
 
+const duplicateSelection = async () => {
+  if (!state.selectedObjectIds.length || !state.session) {
+    return;
+  }
+
+  const selected = state.regionObjects.filter((item) => state.selectedObjectIds.includes(item.id));
+  const createdIds = [];
+
+  for (const item of selected) {
+    const response = await fetch(`/api/regions/${state.session.regionId}/objects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token: state.session.token,
+        asset: item.asset,
+        x: Number((item.x + (state.snapSize || 1)).toFixed(2)),
+        y: item.y,
+        z: Number((item.z + (state.snapSize || 1)).toFixed(2)),
+        rotationY: item.rotationY,
+        scale: item.scale
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      createdIds.push(data.object.id);
+    }
+  }
+
+  await syncRegionObjects();
+  if (createdIds.length) {
+    state.selectedObjectIds = createdIds;
+    state.selectedObjectId = createdIds[0];
+    syncTransformSelection();
+    renderBuilderList();
+    status(`Duplicated ${createdIds.length} object${createdIds.length === 1 ? "" : "s"}.`);
+  }
+};
+
+const savePresetFromSelection = () => {
+  const name = elements.presetNameInput.value.trim();
+  if (!name || !state.selectedObjectIds.length) {
+    status("Select objects and enter a preset name.", true);
+    return;
+  }
+
+  const selected = state.regionObjects.filter((item) => state.selectedObjectIds.includes(item.id));
+  const anchor = selected[0];
+  const preset = {
+    id: crypto.randomUUID(),
+    name,
+    items: selected.map((item) => ({
+      asset: item.asset,
+      dx: Number((item.x - anchor.x).toFixed(2)),
+      dy: Number((item.y - anchor.y).toFixed(2)),
+      dz: Number((item.z - anchor.z).toFixed(2)),
+      rotationY: item.rotationY,
+      scale: item.scale
+    }))
+  };
+
+  state.presets = [...state.presets, preset];
+  state.activePresetId = preset.id;
+  persistPresets();
+  renderPresets();
+  status(`Saved preset ${name}.`);
+};
+
+const placeActivePreset = async (point) => {
+  const preset = state.presets.find((entry) => entry.id === state.activePresetId);
+  if (!preset || !state.session) {
+    return false;
+  }
+
+  const anchor = snapPoint(point);
+  const createdIds = [];
+
+  for (const item of preset.items) {
+    const response = await fetch(`/api/regions/${state.session.regionId}/objects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token: state.session.token,
+        asset: item.asset,
+        x: Number((anchor.x + item.dx).toFixed(2)),
+        y: Number((anchor.y + item.dy).toFixed(2)),
+        z: Number((anchor.z + item.dz).toFixed(2)),
+        rotationY: item.rotationY,
+        scale: item.scale
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      createdIds.push(data.object.id);
+    }
+  }
+
+  await syncRegionObjects();
+  state.selectedObjectIds = createdIds;
+  state.selectedObjectId = createdIds[0] ?? null;
+  syncTransformSelection();
+  renderBuilderList();
+  status(`Placed preset ${preset.name}.`);
+  return true;
+};
+
 const updateSelectedObject = async (updates) => {
   if (!state.selectedObjectId) {
     return;
@@ -1266,7 +1435,49 @@ elements.builderObjectList.addEventListener("click", (event) => {
     return;
   }
 
-  selectObject(button.dataset.selectObject ?? null);
+  selectObject(button.dataset.selectObject ?? null, event.shiftKey);
+});
+
+elements.duplicateSelectionButton.addEventListener("click", () => {
+  void duplicateSelection();
+});
+
+elements.clearSelectionButton.addEventListener("click", () => {
+  selectObject(null);
+});
+
+elements.savePresetButton.addEventListener("click", savePresetFromSelection);
+
+elements.clearPresetButton.addEventListener("click", () => {
+  state.activePresetId = null;
+  renderPresets();
+  status("Preset placement cleared.");
+});
+
+elements.presetList.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const activateButton = target.closest("[data-activate-preset]");
+  if (activateButton instanceof HTMLElement) {
+    state.activePresetId = activateButton.dataset.activatePreset;
+    renderPresets();
+    status("Preset activated for placement.");
+    return;
+  }
+
+  const deleteButton = target.closest("[data-delete-preset]");
+  if (deleteButton instanceof HTMLElement) {
+    state.presets = state.presets.filter((preset) => preset.id !== deleteButton.dataset.deletePreset);
+    if (state.activePresetId === deleteButton.dataset.deletePreset) {
+      state.activePresetId = null;
+    }
+    persistPresets();
+    renderPresets();
+    status("Preset deleted.");
+  }
 });
 
 elements.parcelList.addEventListener("click", async (event) => {
@@ -1375,6 +1586,12 @@ window.addEventListener("keydown", async (event) => {
     }
   }
 
+  if (state.buildMode && (event.ctrlKey || event.metaKey) && event.code === "KeyD") {
+    event.preventDefault();
+    await duplicateSelection();
+    return;
+  }
+
   state.keys.add(event.code);
 });
 
@@ -1403,7 +1620,7 @@ window.addEventListener("pointerup", async (event) => {
 
       if (target.type === "object") {
         const ownedObject = state.regionObjects.find((item) => item.id === target.objectId && item.ownerAccountId === state.session.accountId);
-        selectObject(ownedObject ? ownedObject.id : null);
+        selectObject(ownedObject ? ownedObject.id : null, event.shiftKey);
         if (!ownedObject) {
           status("You can only edit your own objects.", true);
         }
@@ -1411,6 +1628,12 @@ window.addEventListener("pointerup", async (event) => {
       }
 
       try {
+        if (state.activePresetId) {
+          const placed = await placeActivePreset(target.point);
+          if (placed) {
+            return;
+          }
+        }
         await createObject(target.point);
       } catch (error) {
         status(error.message, true);
@@ -1444,5 +1667,7 @@ elements.viewport.addEventListener(
 );
 
 ensureViewer();
+state.presets = loadPresets();
 renderBuilderList();
+renderPresets();
 loadRegions().catch((error) => status(error.message, true));

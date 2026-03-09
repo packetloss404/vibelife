@@ -286,6 +286,10 @@
             <button data-gizmo-mode="rotate">Rotate</button>
             <button data-gizmo-mode="scale">Scale</button>
           </div>
+          <div class="chat-row">
+            <button id="duplicateSelectionButton">Duplicate selected</button>
+            <button id="clearSelectionButton">Clear selection</button>
+          </div>
           <label>
             Build snap
             <select id="snapSizeSelect">
@@ -297,6 +301,22 @@
           </label>
           <div id="builderHelp" class="muted">Join a region to place and edit objects.</div>
           <div id="builderObjectList" class="stack muted">No editable objects yet.</div>
+        </div>
+
+        <div class="card stack">
+          <div>
+            <p class="muted">Prefabs</p>
+            <h2>Saved build presets</h2>
+          </div>
+          <label>
+            Preset name
+            <input id="presetNameInput" placeholder="Harbor bench cluster" />
+          </label>
+          <div class="chat-row">
+            <button id="savePresetButton">Save selected as preset</button>
+            <button id="clearPresetButton">Clear active preset</button>
+          </div>
+          <div id="presetList" class="stack muted">No presets saved yet.</div>
         </div>
       </section>
 

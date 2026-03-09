@@ -18,6 +18,7 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - mouse transform gizmos for move, rotate, and scale editing
 - wearable outfits and accessories now equip from inventory items
 - build snapping and parcel highlight feedback while placing or editing
+- multi-select, duplicate, and prefab saving tools for faster building
 
 ## Why this is a good 2026-style starting point
 
@@ -70,6 +71,8 @@ npm run dev:postgres
 - click one of your placed objects to select it
 - use move, rotate, and scale gizmo buttons for mouse-driven editing
 - use build snap to place and move objects on a clean grid
+- shift-select multiple owned objects and press `Ctrl+D` to duplicate the current selection
+- save a selected group as a preset and place that prefab anywhere you have build access
 - use arrow keys to move, `Q` and `E` to rotate, `R` and `F` to scale, and `Delete` to remove it
 - public parcels allow open building, while owned parcels only allow the owner to place or move objects there
 - active parcel boundaries highlight while hovering, placing, or transforming an object
