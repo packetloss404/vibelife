@@ -26,6 +26,9 @@ const WS_SNAPSHOT := "snapshot"
 @onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/VBox/StatusLabel
 @onready var status_pill: Label = $CanvasLayer/UI/TopBar/TopMargin/TopRow/StatusPill
 @onready var inventory_list: ItemList = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryList
+@onready var inventory_selection_label: Label = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventorySelectionLabel
+@onready var equip_item_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow/EquipItemButton
+@onready var use_item_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow/UseItemButton
 @onready var chat_log: RichTextLabel = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatLog
 @onready var chat_input: LineEdit = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/ChatInput
 @onready var send_chat_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/SendChatButton
@@ -58,6 +61,8 @@ var gizmo_mode := "move"
 var drag_selected := false
 var active_parcel: Dictionary = {}
 var gizmo_handles := {}
+var active_drag_axis := ""
+var selected_inventory_index := -1
 var build_assets := [
 	"/assets/models/market-hall.gltf",
 	"/assets/models/skyport-tower.gltf",
@@ -79,6 +84,9 @@ func _ready() -> void:
 	scale_mode_button.pressed.connect(func(): _set_gizmo_mode("scale"))
 	duplicate_button.pressed.connect(_duplicate_selected_object)
 	delete_button.pressed.connect(_delete_selected_object)
+	inventory_list.item_selected.connect(_on_inventory_item_selected)
+	equip_item_button.pressed.connect(_equip_selected_inventory_item)
+	use_item_button.pressed.connect(_use_selected_inventory_item)
 	regions_request.request_completed.connect(_on_regions_loaded)
 	auth_request.request_completed.connect(_on_auth_completed)
 	scene_request.request_completed.connect(_on_scene_loaded)
@@ -99,8 +107,9 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-		if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
+	if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
 			drag_selected = false
+			active_drag_axis = ""
 			if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
 				await _update_selected_object(object_nodes[selected_object_id])
 		if button.button_index == MOUSE_BUTTON_RIGHT:
@@ -120,7 +129,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		yaw -= motion.relative.x * 0.005
 		pitch = clamp(pitch - motion.relative.y * 0.004, 0.15, 1.1)
 	elif event is InputEventMouseMotion and build_mode and drag_selected and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-		_drag_selected_object(event.position)
+		_drag_selected_object(event)
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build_mode:
 		await _handle_build_click(event.position)
 	elif event is InputEventKey and event.pressed and build_mode:
@@ -331,6 +340,7 @@ func _sync_single_object(item: Dictionary) -> void:
 		object_nodes[item.id].queue_free()
 	var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
 	node.set_meta("object_id", item.id)
+	_tag_pickable_nodes(node, item.id)
 	node.set_meta("parcel", _get_parcel_at(node.position))
 	_apply_selection_visual(node, item.id == selected_object_id)
 	dynamic_world.add_child(node)
@@ -402,6 +412,7 @@ func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale
 		imported.position = position
 		imported.rotation.y = rotation_y
 		imported.scale = Vector3.ONE * scale_value
+		_attach_selection_body(imported)
 		return imported
 
 	var root := Node3D.new()
@@ -475,6 +486,7 @@ func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale
 
 	mesh_instance.set_surface_override_material(0, material)
 	root.add_child(mesh_instance)
+	_attach_selection_body(root)
 	return root
 
 
@@ -495,8 +507,42 @@ func _instantiate_imported_asset(asset: String) -> Node3D:
 	return null
 
 
+func _attach_selection_body(node: Node3D) -> void:
+	var bounds := AABB(Vector3(-0.5, 0.0, -0.5), Vector3(1.0, 1.0, 1.0))
+	var found := false
+	for child in node.get_children():
+		if child is MeshInstance3D and (child as MeshInstance3D).mesh:
+			var mesh_bounds := (child as MeshInstance3D).get_aabb()
+			bounds = mesh_bounds if not found else bounds.merge(mesh_bounds)
+			found = true
+	if not found:
+		for descendant in node.find_children("*", "MeshInstance3D"):
+			var mesh_node := descendant as MeshInstance3D
+			if mesh_node and mesh_node.mesh:
+				var desc_bounds := mesh_node.get_aabb()
+				bounds = desc_bounds if not found else bounds.merge(desc_bounds)
+				found = true
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(maxf(bounds.size.x, 0.6), maxf(bounds.size.y, 0.6), maxf(bounds.size.z, 0.6))
+	shape.shape = box
+	body.position = bounds.get_center()
+	body.add_child(shape)
+	node.add_child(body)
+
+
+func _tag_pickable_nodes(node: Node, object_id: String) -> void:
+	for child in node.get_children():
+		if child is StaticBody3D:
+			(child as StaticBody3D).set_meta("object_id", object_id)
+		_tag_pickable_nodes(child, object_id)
+
+
 func _render_inventory() -> void:
 	inventory_list.clear()
+	selected_inventory_index = -1
+	inventory_selection_label.text = "No inventory item selected"
 	for item in inventory:
 		var equipped := ""
 		if item.get("equipped", false):
@@ -522,12 +568,55 @@ func _send_chat() -> void:
 	chat_input.clear()
 
 
+func _on_inventory_item_selected(index: int) -> void:
+	selected_inventory_index = index
+	var item: Dictionary = inventory[index]
+	inventory_selection_label.text = "%s - %s" % [item.name, item.kind]
+
+
+func _equip_selected_inventory_item() -> void:
+	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size() or session.is_empty():
+		return
+	var item: Dictionary = inventory[selected_inventory_index]
+	if item.get("slot", null) == null:
+		status_label.text = "Selected item cannot be equipped"
+		return
+	var request := HTTPRequest.new()
+	add_child(request)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({"token": session.token, "itemId": item.id})
+	var url := "%s/api/inventory/equip" % backend_url_input.text.rstrip("/")
+	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
+		var result := await request.request_completed
+		var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+		inventory = payload.get("inventory", inventory)
+		_render_inventory()
+		status_label.text = "Equipped %s" % item.name
+	request.queue_free()
+
+
+func _use_selected_inventory_item() -> void:
+	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size():
+		return
+	var item: Dictionary = inventory[selected_inventory_index]
+	if item.get("slot", null) != null:
+		await _equip_selected_inventory_item()
+		return
+	if item.kind == "tool":
+		status_label.text = "%s ready for parcel editing" % item.name
+	elif item.kind == "pet":
+		_append_chat("System: %s companion activated" % item.name)
+	else:
+		status_label.text = "%s used" % item.name
+
+
 func _toggle_build_mode() -> void:
 	build_mode = not build_mode
 	build_mode_button.text = "Disable build mode" if build_mode else "Enable build mode"
 	status_label.text = "Build mode enabled" if build_mode else "Build mode disabled"
 	if not build_mode:
 		drag_selected = false
+		active_drag_axis = ""
 
 
 func _set_gizmo_mode(mode: String) -> void:
@@ -544,6 +633,12 @@ func _handle_build_click(mouse_position: Vector2) -> void:
 	var space_state := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	var hit := space_state.intersect_ray(query)
+
+	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("gizmo_axis"):
+		active_drag_axis = str((hit.collider as Node).get_meta("gizmo_axis"))
+		drag_selected = true
+		status_label.text = "Dragging %s axis" % active_drag_axis.to_upper()
+		return
 
 	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("object_id"):
 		selected_object_id = str((hit.collider as Node).get_meta("object_id"))
@@ -672,21 +767,29 @@ func _apply_gizmo_wheel(direction: float) -> void:
 	await _update_selected_object(node)
 
 
-func _drag_selected_object(mouse_position: Vector2) -> void:
+func _drag_selected_object(event: InputEventMouseMotion) -> void:
 	var node := object_nodes[selected_object_id]
-	var from := camera.project_ray_origin(mouse_position)
-	var plane := Plane(Vector3.UP, 0.0)
-	var point := plane.intersects_ray(from, camera.project_ray_normal(mouse_position))
-	if point == null:
+	if active_drag_axis.is_empty():
 		return
+	var delta := event.relative
 	if gizmo_mode == "move":
-		node.position.x = round(point.x)
-		node.position.z = round(point.z)
+		if active_drag_axis == "x":
+			node.position.x += delta.x * 0.02
+		elif active_drag_axis == "y":
+			node.position.y -= delta.y * 0.02
+		else:
+			node.position.z += delta.x * 0.02
 	elif gizmo_mode == "rotate":
-		node.look_at(Vector3(point.x, node.position.y, point.z), Vector3.UP)
+		var rotation_delta := delta.x * 0.01
+		if active_drag_axis == "x":
+			node.rotation.x += rotation_delta
+		elif active_drag_axis == "y":
+			node.rotation.y += rotation_delta
+		else:
+			node.rotation.z += rotation_delta
 	elif gizmo_mode == "scale":
-		var distance := max(0.4, node.position.distance_to(Vector3(point.x, node.position.y, point.z)) / 4.0)
-		node.scale = Vector3.ONE * distance
+		var scale_delta := max(0.2, 1.0 + (delta.x * 0.005))
+		node.scale *= scale_delta
 	active_parcel = _get_parcel_at(node.position)
 	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
 
@@ -744,6 +847,7 @@ func _rebuild_gizmo_handles() -> void:
 		child.queue_free()
 	gizmo_handles.clear()
 	for axis in ["x", "y", "z"]:
+		var handle_root := Node3D.new()
 		var handle := MeshInstance3D.new()
 		var mesh := CylinderMesh.new()
 		mesh.top_radius = 0.04
@@ -755,9 +859,19 @@ func _rebuild_gizmo_handles() -> void:
 		material.albedo_color = axis == "x" ? Color("ff6b6b") : axis == "y" ? Color("66ffd1") : Color("6aa8ff")
 		material.emission = material.albedo_color
 		handle.set_surface_override_material(0, material)
-		handle.visible = false
-		gizmos_root.add_child(handle)
-		gizmo_handles[axis] = handle
+		handle_root.add_child(handle)
+		var body := StaticBody3D.new()
+		body.set_meta("gizmo_axis", axis)
+		var shape := CollisionShape3D.new()
+		var cylinder := CylinderShape3D.new()
+		cylinder.height = 1.3
+		cylinder.radius = 0.18
+		shape.shape = cylinder
+		body.add_child(shape)
+		handle_root.add_child(body)
+		handle_root.visible = false
+		gizmos_root.add_child(handle_root)
+		gizmo_handles[axis] = handle_root
 
 
 func _update_gizmo_handles() -> void:
@@ -769,9 +883,9 @@ func _update_gizmo_handles() -> void:
 		return
 
 	var target := object_nodes[selected_object_id].position
-	var x_handle: MeshInstance3D = gizmo_handles["x"]
-	var y_handle: MeshInstance3D = gizmo_handles["y"]
-	var z_handle: MeshInstance3D = gizmo_handles["z"]
+	var x_handle: Node3D = gizmo_handles["x"]
+	var y_handle: Node3D = gizmo_handles["y"]
+	var z_handle: Node3D = gizmo_handles["z"]
 	x_handle.visible = true
 	y_handle.visible = true
 	z_handle.visible = true
@@ -781,6 +895,48 @@ func _update_gizmo_handles() -> void:
 	x_handle.rotation_degrees.z = 90
 	z_handle.rotation_degrees.x = 90
 	y_handle.rotation = Vector3.ZERO
+
+
+func _on_inventory_item_selected(index: int) -> void:
+	selected_inventory_index = index
+	var item: Dictionary = inventory[index]
+	inventory_selection_label.text = "%s - %s" % [item.name, item.kind]
+
+
+func _equip_selected_inventory_item() -> void:
+	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size() or session.is_empty():
+		return
+	var item: Dictionary = inventory[selected_inventory_index]
+	if item.get("slot", null) == null:
+		status_label.text = "Selected item cannot be equipped"
+		return
+	var request := HTTPRequest.new()
+	add_child(request)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({"token": session.token, "itemId": item.id})
+	var url := "%s/api/inventory/equip" % backend_url_input.text.rstrip("/")
+	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
+		var result := await request.request_completed
+		var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+		inventory = payload.get("inventory", inventory)
+		_render_inventory()
+		status_label.text = "Equipped %s" % item.name
+	request.queue_free()
+
+
+func _use_selected_inventory_item() -> void:
+	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size():
+		return
+	var item: Dictionary = inventory[selected_inventory_index]
+	if item.get("slot", null) != null:
+		await _equip_selected_inventory_item()
+		return
+	if item.kind == "tool":
+		status_label.text = "%s ready for parcel editing" % item.name
+	elif item.kind == "pet":
+		_append_chat("System: %s companion activated" % item.name)
+	else:
+		status_label.text = "%s used" % item.name
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:

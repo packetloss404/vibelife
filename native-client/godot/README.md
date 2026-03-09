@@ -14,6 +14,8 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - includes native object placement, selection, duplication, deletion, and transform hotkeys
 - includes parcel-aware build checks and native move/rotate/scale manipulation modes
 - includes a cleaner docked HUD with top status, left login/build controls, and right inventory/chat panels
+- supports click-selecting world objects and dragging native gizmo axes
+- supports equip and use actions from the native inventory panel
 
 ## Open it
 

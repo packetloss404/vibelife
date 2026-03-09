@@ -77,6 +77,7 @@ npm run dev:postgres
 - now includes native build-mode object placement and imported avatar scene usage in Godot
 - native client now has parcel-aware build checks and move/rotate/scale editing modes
 - native client HUD is now split into a docked layout with status, build controls, inventory, and chat
+- native inventory now supports equip/use actions and native object editing now supports axis-handle dragging
 
 ## Building tools
 

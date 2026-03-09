@@ -208,6 +208,17 @@ text = "Inventory"
 [node name="InventoryList" type="ItemList" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 180)
 
+[node name="InventorySelectionLabel" type="Label" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+text = "No inventory item selected"
+
+[node name="InventoryActionRow" type="HBoxContainer" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
+
+[node name="EquipItemButton" type="Button" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow"]
+text = "Equip"
+
+[node name="UseItemButton" type="Button" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow"]
+text = "Use"
+
 [node name="ChatLabel" type="Label" parent="CanvasLayer/UI/RightDock/RightMargin/RightVBox"]
 text = "Region chat"
 
