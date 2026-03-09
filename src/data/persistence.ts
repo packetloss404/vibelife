@@ -15,8 +15,13 @@ export type RegionRecord = {
 export type AccountRecord = {
   id: string;
   displayName: string;
-  kind: "guest";
+  kind: "guest" | "registered";
+  role: "resident" | "admin";
   createdAt: string;
+};
+
+export type AccountAuthRecord = AccountRecord & {
+  passwordHash: string | null;
 };
 
 export type AvatarAppearanceRecord = {
@@ -83,6 +88,8 @@ export type PersistenceLayer = {
   mode: "memory" | "postgres";
   listRegions(): Promise<RegionRecord[]>;
   getOrCreateGuestAccount(displayName: string): Promise<{ account: AccountRecord; isNew: boolean }>;
+  registerAccount(displayName: string, passwordHash: string, role: "resident" | "admin"): Promise<{ account: AccountRecord; isNew: boolean }>;
+  authenticateAccount(displayName: string, passwordHash: string): Promise<AccountRecord | undefined>;
   getInventory(accountId: string): Promise<InventoryItemRecord[]>;
   equipInventoryItem(accountId: string, itemId: string): Promise<InventoryItemRecord[]>;
   getAvatarAppearance(accountId: string): Promise<AvatarAppearanceRecord>;
@@ -92,10 +99,12 @@ export type PersistenceLayer = {
   listParcels(regionId: string): Promise<ParcelRecord[]>;
   claimParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
   releaseParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
+  reassignParcel(parcelId: string, ownerAccountId: string | null): Promise<ParcelRecord | undefined>;
   listRegionObjects(regionId: string): Promise<RegionObjectRecord[]>;
   createRegionObject(object: Omit<RegionObjectRecord, "ownerDisplayName">): Promise<RegionObjectRecord>;
   updateRegionObject(objectId: string, ownerAccountId: string, updates: Pick<RegionObjectRecord, "x" | "y" | "z" | "rotationY" | "scale" | "updatedAt">): Promise<RegionObjectRecord | undefined>;
   deleteRegionObject(objectId: string, ownerAccountId: string): Promise<boolean>;
+  adminDeleteRegionObject(objectId: string): Promise<boolean>;
 };
 
 const seededRegions: RegionRecord[] = [
@@ -207,6 +216,7 @@ function createStarterPosition(accountId: string, regionId: string): AvatarPosit
 function createMemoryPersistence(): PersistenceLayer {
   const accountsById = new Map<string, AccountRecord>();
   const accountIdsByName = new Map<string, string>();
+  const passwordHashesById = new Map<string, string | null>();
   const inventory = new Map<string, InventoryItemRecord[]>();
   const appearances = new Map<string, AvatarAppearanceRecord>();
   const positions = new Map<string, AvatarPositionRecord>();
@@ -232,11 +242,13 @@ function createMemoryPersistence(): PersistenceLayer {
         id: randomUUID(),
         displayName,
         kind: "guest",
+        role: "resident",
         createdAt: new Date().toISOString()
       };
 
       accountsById.set(account.id, account);
       accountIdsByName.set(key, account.id);
+      passwordHashesById.set(account.id, null);
       inventory.set(
         account.id,
         starterInventory.map((item) => ({
@@ -254,6 +266,58 @@ function createMemoryPersistence(): PersistenceLayer {
       appearances.set(account.id, createDefaultAppearance(account.id));
 
       return { account, isNew: true };
+    },
+    async registerAccount(displayName, passwordHash, role) {
+      const key = normalizeDisplayName(displayName);
+      const existingId = accountIdsByName.get(key);
+
+      if (existingId) {
+        return { account: accountsById.get(existingId) as AccountRecord, isNew: false };
+      }
+
+      const account: AccountRecord = {
+        id: randomUUID(),
+        displayName,
+        kind: "registered",
+        role,
+        createdAt: new Date().toISOString()
+      };
+
+      accountsById.set(account.id, account);
+      accountIdsByName.set(key, account.id);
+      passwordHashesById.set(account.id, passwordHash);
+      inventory.set(
+        account.id,
+        starterInventory.map((item) => ({
+          id: randomUUID(),
+          accountId: account.id,
+          name: item.name,
+          kind: item.kind,
+          slot: item.slot,
+          appearanceKey: item.appearanceKey,
+          equipped: item.equipped,
+          rarity: item.rarity,
+          createdAt: new Date().toISOString()
+        }))
+      );
+      appearances.set(account.id, createDefaultAppearance(account.id));
+
+      return { account, isNew: true };
+    },
+    async authenticateAccount(displayName, passwordHash) {
+      const key = normalizeDisplayName(displayName);
+      const existingId = accountIdsByName.get(key);
+
+      if (!existingId) {
+        return undefined;
+      }
+
+      if (passwordHashesById.get(existingId) !== passwordHash) {
+        return undefined;
+      }
+
+      const account = accountsById.get(existingId);
+      return account?.kind === "registered" ? account : undefined;
     },
     async getInventory(accountId) {
       return inventory.get(accountId) ?? [];
@@ -333,6 +397,23 @@ function createMemoryPersistence(): PersistenceLayer {
       parcels.set(parcelId, updatedParcel);
       return updatedParcel;
     },
+    async reassignParcel(parcelId, ownerAccountId) {
+      const parcel = parcels.get(parcelId);
+
+      if (!parcel) {
+        return undefined;
+      }
+
+      const owner = ownerAccountId ? accountsById.get(ownerAccountId) : null;
+      const updatedParcel: ParcelRecord = {
+        ...parcel,
+        ownerAccountId,
+        ownerDisplayName: owner?.displayName ?? null
+      };
+
+      parcels.set(parcelId, updatedParcel);
+      return updatedParcel;
+    },
     async listRegionObjects(regionId) {
       return [...regionObjects.values()].filter((item) => item.regionId === regionId);
     },
@@ -363,6 +444,9 @@ function createMemoryPersistence(): PersistenceLayer {
 
       regionObjects.delete(objectId);
       return true;
+    },
+    async adminDeleteRegionObject(objectId) {
+      return regionObjects.delete(objectId);
     }
   };
 }
@@ -416,9 +500,13 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       display_name TEXT NOT NULL,
       display_name_key TEXT NOT NULL UNIQUE,
       kind TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'resident',
+      password_hash TEXT,
       created_at TIMESTAMPTZ NOT NULL
     )
   `);
+  await pool.query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'resident'");
+  await pool.query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS password_hash TEXT");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inventory_items (
@@ -564,9 +652,10 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         id: string;
         display_name: string;
         kind: "guest";
+        role: "resident" | "admin";
         created_at: string;
       }>(
-        "SELECT id, display_name, kind, created_at FROM accounts WHERE display_name_key = $1 LIMIT 1",
+        "SELECT id, display_name, kind, role, created_at FROM accounts WHERE display_name_key = $1 LIMIT 1",
         [displayNameKey]
       );
 
@@ -576,6 +665,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
             id: existing.rows[0].id,
             displayName: existing.rows[0].display_name,
             kind: existing.rows[0].kind,
+            role: existing.rows[0].role,
             createdAt: existing.rows[0].created_at
           },
           isNew: false
@@ -586,12 +676,13 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         id: randomUUID(),
         displayName,
         kind: "guest",
+        role: "resident",
         createdAt: new Date().toISOString()
       };
 
       await pool.query(
-        "INSERT INTO accounts (id, display_name, display_name_key, kind, created_at) VALUES ($1, $2, $3, $4, $5)",
-        [account.id, account.displayName, displayNameKey, account.kind, account.createdAt]
+        "INSERT INTO accounts (id, display_name, display_name_key, kind, role, password_hash, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [account.id, account.displayName, displayNameKey, account.kind, account.role, null, account.createdAt]
       );
 
       for (const item of starterInventory) {
@@ -615,6 +706,81 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       );
 
       return { account, isNew: true };
+    },
+    async registerAccount(displayName, passwordHash, role) {
+      const displayNameKey = normalizeDisplayName(displayName);
+      const existing = await pool.query<{ id: string; display_name: string; kind: "guest" | "registered"; role: "resident" | "admin"; created_at: string }>(
+        "SELECT id, display_name, kind, role, created_at FROM accounts WHERE display_name_key = $1 LIMIT 1",
+        [displayNameKey]
+      );
+
+      if (existing.rows[0]) {
+        return {
+          account: {
+            id: existing.rows[0].id,
+            displayName: existing.rows[0].display_name,
+            kind: existing.rows[0].kind,
+            role: existing.rows[0].role,
+            createdAt: existing.rows[0].created_at
+          },
+          isNew: false
+        };
+      }
+
+      const account: AccountRecord = {
+        id: randomUUID(),
+        displayName,
+        kind: "registered",
+        role,
+        createdAt: new Date().toISOString()
+      };
+
+      await pool.query(
+        "INSERT INTO accounts (id, display_name, display_name_key, kind, role, password_hash, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [account.id, account.displayName, displayNameKey, account.kind, account.role, passwordHash, account.createdAt]
+      );
+
+      for (const item of starterInventory) {
+        await pool.query(
+          "INSERT INTO inventory_items (id, account_id, name, kind, rarity, created_at, slot, appearance_key, equipped) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+          [randomUUID(), account.id, item.name, item.kind, item.rarity, new Date().toISOString(), item.slot, item.appearanceKey, item.equipped]
+        );
+      }
+
+      const appearance = createDefaultAppearance(account.id);
+      await pool.query(
+        "INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [appearance.accountId, appearance.bodyColor, appearance.accentColor, appearance.headColor, appearance.hairColor, appearance.outfit, appearance.accessory, appearance.updatedAt]
+      );
+
+      return { account, isNew: true };
+    },
+    async authenticateAccount(displayName, passwordHash) {
+      const displayNameKey = normalizeDisplayName(displayName);
+      const result = await pool.query<{
+        id: string;
+        display_name: string;
+        kind: "guest" | "registered";
+        role: "resident" | "admin";
+        password_hash: string | null;
+        created_at: string;
+      }>(
+        "SELECT id, display_name, kind, role, password_hash, created_at FROM accounts WHERE display_name_key = $1 LIMIT 1",
+        [displayNameKey]
+      );
+
+      const row = result.rows[0];
+      if (!row || row.kind !== "registered" || row.password_hash !== passwordHash) {
+        return undefined;
+      }
+
+      return {
+        id: row.id,
+        displayName: row.display_name,
+        kind: row.kind,
+        role: row.role,
+        createdAt: row.created_at
+      };
     },
     async getInventory(accountId) {
       return readInventory(accountId);
@@ -831,6 +997,54 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         tier: row.tier
       };
     },
+    async reassignParcel(parcelId, ownerAccountId) {
+      const result = await pool.query<{
+        id: string;
+        region_id: string;
+        name: string;
+        owner_account_id: string | null;
+        owner_display_name: string | null;
+        min_x: number;
+        max_x: number;
+        min_z: number;
+        max_z: number;
+        tier: string;
+      }>(
+        `
+          UPDATE parcels
+          SET owner_account_id = $2
+          WHERE id = $1
+          RETURNING
+            id,
+            region_id,
+            name,
+            owner_account_id,
+            (SELECT display_name FROM accounts WHERE accounts.id = $2) AS owner_display_name,
+            min_x,
+            max_x,
+            min_z,
+            max_z,
+            tier
+        `,
+        [parcelId, ownerAccountId]
+      );
+
+      const row = result.rows[0];
+      if (!row) return undefined;
+
+      return {
+        id: row.id,
+        regionId: row.region_id,
+        name: row.name,
+        ownerAccountId: row.owner_account_id,
+        ownerDisplayName: row.owner_display_name,
+        minX: row.min_x,
+        maxX: row.max_x,
+        minZ: row.min_z,
+        maxZ: row.max_z,
+        tier: row.tier
+      };
+    },
     async releaseParcel(parcelId, accountId) {
       const result = await pool.query<{
         id: string;
@@ -989,6 +1203,10 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
     },
     async deleteRegionObject(objectId, ownerAccountId) {
       const result = await pool.query("DELETE FROM region_objects WHERE id = $1 AND owner_account_id = $2", [objectId, ownerAccountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async adminDeleteRegionObject(objectId) {
+      const result = await pool.query("DELETE FROM region_objects WHERE id = $1", [objectId]);
       return (result.rowCount ?? 0) > 0;
     }
   };

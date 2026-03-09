@@ -3,7 +3,9 @@ import { GLTFLoader } from "/vendor/three/examples/jsm/loaders/GLTFLoader.js";
 import { TransformControls } from "/vendor/three/examples/jsm/controls/TransformControls.js";
 
 const elements = {
+  authModeSelect: document.querySelector("#authModeSelect"),
   displayName: document.querySelector("#displayName"),
+  password: document.querySelector("#password"),
   regionSelect: document.querySelector("#regionSelect"),
   joinButton: document.querySelector("#joinButton"),
   status: document.querySelector("#status"),
@@ -30,7 +32,13 @@ const elements = {
   presetNameInput: document.querySelector("#presetNameInput"),
   savePresetButton: document.querySelector("#savePresetButton"),
   clearPresetButton: document.querySelector("#clearPresetButton"),
-  presetList: document.querySelector("#presetList")
+  presetList: document.querySelector("#presetList"),
+  adminPanel: document.querySelector("#adminPanel"),
+  adminTakeParcelButton: document.querySelector("#adminTakeParcelButton"),
+  adminClearParcelButton: document.querySelector("#adminClearParcelButton"),
+  adminDeleteObjectButton: document.querySelector("#adminDeleteObjectButton"),
+  adminNotice: document.querySelector("#adminNotice"),
+  toast: document.querySelector("#toast")
 };
 
 const loader = new GLTFLoader();
@@ -88,6 +96,7 @@ const viewer = {
 };
 
 let viewerBootError = null;
+let toastTimer = null;
 
 const tempVectorA = new THREE.Vector3();
 const tempVectorB = new THREE.Vector3();
@@ -97,6 +106,16 @@ const pointer = new THREE.Vector2();
 const status = (message, isError = false) => {
   elements.status.textContent = message;
   elements.status.className = isError ? "warning" : "muted";
+};
+
+const toast = (message, isError = false) => {
+  elements.toast.textContent = message;
+  elements.toast.style.display = "block";
+  elements.toast.style.borderColor = isError ? "rgba(255,125,125,0.6)" : "rgba(102,255,209,0.4)";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    elements.toast.style.display = "none";
+  }, 2600);
 };
 
 const presetStorageKey = "thirdlife-build-presets";
@@ -184,6 +203,25 @@ const renderParcels = () => {
     .join("");
 
   syncParcelLines();
+
+  const active = state.parcels.find((parcel) => parcel.id === state.activeParcelId);
+  if (state.account?.role === "admin") {
+    elements.adminNotice.textContent = active ? `Active parcel: ${active.name}` : "Select or hover a parcel to moderate.";
+  }
+};
+
+const updateAdminPanel = () => {
+  const isAdmin = state.account?.role === "admin";
+  elements.adminPanel.style.display = isAdmin ? "grid" : "none";
+
+  if (!isAdmin) {
+    return;
+  }
+
+  const active = state.parcels.find((parcel) => parcel.id === state.activeParcelId);
+  elements.adminTakeParcelButton.disabled = !active || active.ownerAccountId === state.session?.accountId;
+  elements.adminClearParcelButton.disabled = !active || !active.ownerAccountId;
+  elements.adminDeleteObjectButton.disabled = !state.selectedObjectId;
 };
 
 const renderBuilderList = () => {
@@ -687,6 +725,7 @@ const selectObject = (objectId, additive = false) => {
   }
 
   syncTransformSelection();
+  updateAdminPanel();
 
   renderBuilderList();
 };
@@ -1290,16 +1329,23 @@ const connect = async () => {
     state.socket.close();
   }
 
-  const response = await fetch("/api/auth/guest", {
+  const authMode = elements.authModeSelect.value;
+  const endpoint = authMode === "guest" ? "/api/auth/guest" : authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       displayName: elements.displayName.value,
-      regionId: elements.regionSelect.value
+      regionId: elements.regionSelect.value,
+      password: elements.password.value
     })
   });
 
   const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error ?? "Authentication failed");
+  }
   state.session = data.session;
   state.account = data.account;
   state.appearance = data.appearance;
@@ -1310,6 +1356,7 @@ const connect = async () => {
   renderInventory(state.inventory);
   renderAppearanceControls(data.appearance);
   renderParcels();
+  updateAdminPanel();
   await syncAvatarMeshes();
   await loadRegionScene(state.session.regionId);
   await syncRegionObjects();
@@ -1317,6 +1364,7 @@ const connect = async () => {
   elements.activeRegion.textContent = state.regions.find((region) => region.id === state.session.regionId)?.name ?? state.session.regionId;
   elements.viewerHint.textContent = `Scene streaming live - ${state.session.regionId}`;
   elements.builderHelp.textContent = "Enable build mode, click terrain to place, click your object to select, use gizmo buttons for drag editing, arrows still nudge, Q/E rotate, R/F scale, Delete removes.";
+  toast(`${state.account.displayName} connected as ${state.account.kind}/${state.account.role}.`);
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
@@ -1371,6 +1419,7 @@ const connect = async () => {
         ? state.parcels.map((item) => item.id === message.parcel.id ? message.parcel : item)
         : [...state.parcels, message.parcel];
       renderParcels();
+      updateAdminPanel();
     }
 
     void syncAvatarMeshes();
@@ -1535,6 +1584,42 @@ elements.parcelList.addEventListener("click", async (event) => {
 
   await loadParcels(state.session.regionId);
   status(parcelId ? "Parcel claimed." : "Parcel released.");
+});
+
+elements.adminTakeParcelButton.addEventListener("click", async () => {
+  if (!state.session || !state.activeParcelId) return;
+  const response = await fetch("/api/admin/parcels/assign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, parcelId: state.activeParcelId, ownerAccountId: state.session.accountId })
+  });
+  const data = await response.json();
+  if (!response.ok) return toast(data.error ?? "Admin parcel assignment failed.", true);
+  toast(`Admin took parcel ${data.parcel.name}.`);
+});
+
+elements.adminClearParcelButton.addEventListener("click", async () => {
+  if (!state.session || !state.activeParcelId) return;
+  const response = await fetch("/api/admin/parcels/assign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, parcelId: state.activeParcelId, ownerAccountId: null })
+  });
+  const data = await response.json();
+  if (!response.ok) return toast(data.error ?? "Admin parcel clear failed.", true);
+  toast(`Admin cleared parcel ${data.parcel.name}.`);
+});
+
+elements.adminDeleteObjectButton.addEventListener("click", async () => {
+  if (!state.session || !state.selectedObjectId) return;
+  const response = await fetch("/api/admin/objects/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, objectId: state.selectedObjectId })
+  });
+  const data = await response.json();
+  if (!response.ok) return toast(data.error ?? "Admin object cleanup failed.", true);
+  toast("Admin deleted selected object.");
 });
 
 elements.inventoryList.addEventListener("click", async (event) => {

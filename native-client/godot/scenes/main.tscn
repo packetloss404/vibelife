@@ -129,6 +129,12 @@ text = "Display name"
 [node name="DisplayNameInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
 text = "Guest Voyager"
 
+[node name="AuthModeSelect" type="OptionButton" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+
+[node name="PasswordInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+secret = true
+placeholder_text = "Password for register/login"
+
 [node name="RegionLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
 text = "Region"
 

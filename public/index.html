@@ -209,8 +209,22 @@
 
         <div class="card stack">
           <label>
+            Account mode
+            <select id="authModeSelect">
+              <option value="guest">Guest</option>
+              <option value="register">Register</option>
+              <option value="login">Login</option>
+            </select>
+          </label>
+
+          <label>
             Display name
             <input id="displayName" maxlength="32" placeholder="Guest Voyager" />
+          </label>
+
+          <label>
+            Password
+            <input id="password" type="password" placeholder="Only needed for register/login" />
           </label>
 
           <label>
@@ -241,6 +255,17 @@
             <h2>Region parcels</h2>
           </div>
           <div id="parcelList" class="stack muted">Join a region to load parcels.</div>
+        </div>
+
+        <div class="card stack" id="adminPanel" style="display:none;">
+          <div>
+            <p class="muted">Moderation</p>
+            <h2>Admin controls</h2>
+          </div>
+          <button id="adminTakeParcelButton">Take active parcel</button>
+          <button id="adminClearParcelButton">Clear active parcel</button>
+          <button id="adminDeleteObjectButton">Delete selected object</button>
+          <div id="adminNotice" class="muted">Select a parcel or object to moderate.</div>
         </div>
 
         <div class="card stack">
@@ -321,6 +346,7 @@
       </section>
 
       <section class="world panel">
+        <div id="toast" class="panel" style="display:none; position:absolute; right:32px; top:32px; z-index:20; padding:12px 16px;"></div>
         <div class="world-header">
           <div>
             <p class="muted">Active region</p>

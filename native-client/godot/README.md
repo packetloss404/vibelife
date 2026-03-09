@@ -21,6 +21,7 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - can claim active parcels from the native HUD
 - can also release parcels you own from the native HUD
 - saves fullscreen, mouse sensitivity, invert look, FOV, and shadow settings locally
+- supports guest, register, and login account modes, plus admin parcel/object moderation when logged into an admin account
 
 ## Open it
 

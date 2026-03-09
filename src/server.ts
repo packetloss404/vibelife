@@ -1,9 +1,14 @@
 import path from "node:path";
+import { scryptSync } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
+import {
+  adminAssignParcel,
+  adminDeleteRegionObject,
+} from "./world/store.js";
 import {
   claimParcel,
   createRegionObject,
@@ -17,7 +22,9 @@ import {
   listParcels,
   listRegionObjects,
   listRegions,
+  loginSession,
   moveAvatar,
+  registerSession,
   releaseParcel,
   removeAvatar,
   updateAvatarAppearance,
@@ -30,6 +37,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
 const threeDir = path.resolve(__dirname, "../node_modules/three");
+
+function hashPassword(password: string) {
+  return scryptSync(password, "thirdlife-2026", 64).toString("hex");
+}
 
 await initializeWorldStore();
 
@@ -80,6 +91,56 @@ app.post<{ Body: { displayName?: string; regionId?: string } }>("/api/auth/guest
     parcels,
     appearance,
     avatar,
+    persistence: getPersistenceMode()
+  });
+});
+
+app.post<{ Body: { displayName?: string; password?: string; regionId?: string } }>("/api/auth/register", async (request, reply) => {
+  const displayName = (request.body.displayName ?? "").trim().slice(0, 32);
+  const password = (request.body.password ?? "").trim();
+
+  if (!displayName || password.length < 4) {
+    return reply.code(400).send({ error: "displayName and password are required" });
+  }
+
+  const result = await registerSession(displayName, hashPassword(password), request.body.regionId);
+
+  if (!result.ok) {
+    return reply.code(409).send({ error: result.reason });
+  }
+
+  return reply.send({
+    session: result.session,
+    account: result.account,
+    inventory: result.inventory,
+    parcels: result.parcels,
+    appearance: result.appearance,
+    avatar: result.avatar,
+    persistence: getPersistenceMode()
+  });
+});
+
+app.post<{ Body: { displayName?: string; password?: string; regionId?: string } }>("/api/auth/login", async (request, reply) => {
+  const displayName = (request.body.displayName ?? "").trim().slice(0, 32);
+  const password = (request.body.password ?? "").trim();
+
+  if (!displayName || password.length < 4) {
+    return reply.code(400).send({ error: "displayName and password are required" });
+  }
+
+  const result = await loginSession(displayName, hashPassword(password), request.body.regionId);
+
+  if (!result.ok) {
+    return reply.code(401).send({ error: result.reason });
+  }
+
+  return reply.send({
+    session: result.session,
+    account: result.account,
+    inventory: result.inventory,
+    parcels: result.parcels,
+    appearance: result.appearance,
+    avatar: result.avatar,
     persistence: getPersistenceMode()
   });
 });
@@ -177,6 +238,45 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/release"
   }
 
   return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | null } }>("/api/admin/parcels/assign", async (request, reply) => {
+  const { token, parcelId, ownerAccountId = null } = request.body;
+
+  if (!token || !parcelId) {
+    return reply.code(400).send({ error: "token and parcelId are required" });
+  }
+
+  const parcel = await adminAssignParcel(token, parcelId, ownerAccountId);
+
+  if (!parcel) {
+    return reply.code(403).send({ error: "admin parcel reassignment failed" });
+  }
+
+  const session = getSession(token);
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+  }
+
+  return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; objectId?: string } }>("/api/admin/objects/delete", async (request, reply) => {
+  const { token, objectId } = request.body;
+
+  if (!token || !objectId) {
+    return reply.code(400).send({ error: "token and objectId are required" });
+  }
+
+  const session = getSession(token);
+  const deleted = await adminDeleteRegionObject(token, objectId);
+
+  if (!deleted || !session) {
+    return reply.code(403).send({ error: "admin object cleanup failed" });
+  }
+
+  broadcastRegion(session.regionId, { type: "object:deleted", objectId });
+  return reply.send({ ok: true });
 });
 
 app.post<{

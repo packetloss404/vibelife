@@ -23,6 +23,8 @@ const WS_SNAPSHOT := "snapshot"
 @onready var profile_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/ProfileSelect
 @onready var save_profile_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/SaveProfileButton
 @onready var display_name_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/DisplayNameInput
+@onready var auth_mode_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/AuthModeSelect
+@onready var password_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/PasswordInput
 @onready var region_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/RegionSelect
 @onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
 @onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/JoinButton
@@ -117,6 +119,8 @@ func _ready() -> void:
 	_load_client_settings()
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
+	for auth_mode in ["Guest", "Register", "Login"]:
+		auth_mode_select.add_item(auth_mode)
 	_set_gizmo_mode("move")
 
 
@@ -212,12 +216,15 @@ func _join_world() -> void:
 		return
 
 	var chosen_region: Dictionary = regions[region_select.selected]
+	var auth_modes := ["guest", "register", "login"]
+	var auth_mode := auth_modes[auth_mode_select.selected]
 	var body := JSON.stringify({
 		"displayName": display_name_input.text,
-		"regionId": chosen_region.id
+		"regionId": chosen_region.id,
+		"password": password_input.text
 	})
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var url := "%s/api/auth/guest" % backend_url_input.text.rstrip("/")
+	var url := "%s/api/auth/%s" % [backend_url_input.text.rstrip("/"), auth_mode]
 	var error := auth_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	if error != OK:
 		status_label.text = "Auth request failed: %s" % error
@@ -832,9 +839,11 @@ func _delete_selected_object() -> void:
 	if selected_object_id.is_empty():
 		return
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({"token": session.token})
-	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
-	if delete_object_request.request(url, headers, HTTPClient.METHOD_DELETE, body) == OK:
+	var is_admin := session.get("role", "resident") == "admin"
+	var body := JSON.stringify(is_admin ? {"token": session.token, "objectId": selected_object_id} : {"token": session.token})
+	var url := is_admin ? "%s/api/admin/objects/delete" % backend_url_input.text.rstrip("/") : "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
+	var method := HTTPClient.METHOD_POST if is_admin else HTTPClient.METHOD_DELETE
+	if delete_object_request.request(url, headers, method, body) == OK:
 		await delete_object_request.request_completed
 		await _load_region_objects(session.regionId)
 	selected_object_id = ""
@@ -970,7 +979,8 @@ func _save_current_profile() -> void:
 	backend_profiles.append({
 		"name": name,
 		"backendUrl": backend_url_input.text.strip_edges(),
-		"displayName": display_name_input.text.strip_edges()
+		"displayName": display_name_input.text.strip_edges(),
+		"authMode": auth_mode_select.selected
 	})
 	_persist_profiles()
 	_load_profiles()
@@ -983,12 +993,14 @@ func _on_profile_selected(index: int) -> void:
 	var profile: Dictionary = backend_profiles[index]
 	backend_url_input.text = profile.get("backendUrl", backend_url_input.text)
 	display_name_input.text = profile.get("displayName", display_name_input.text)
+auth_mode_select.select(int(profile.get("authMode", 0)))
 
 
 func _save_login_state() -> void:
 	if profile_select.selected >= 0 and profile_select.selected < backend_profiles.size():
 		backend_profiles[profile_select.selected]["backendUrl"] = backend_url_input.text.strip_edges()
 		backend_profiles[profile_select.selected]["displayName"] = display_name_input.text.strip_edges()
+		backend_profiles[profile_select.selected]["authMode"] = auth_mode_select.selected
 		_persist_profiles()
 
 
@@ -1117,8 +1129,9 @@ func _update_gizmo_handles() -> void:
 
 
 func _claim_button_state() -> void:
-	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or active_parcel.get("ownerAccountId", null) != null
-	release_parcel_button.disabled = active_parcel.is_empty() or String(active_parcel.get("ownerAccountId", "")) != String(session.get("accountId", ""))
+	var is_admin := session.get("role", "resident") == "admin"
+	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or (active_parcel.get("ownerAccountId", null) != null and not is_admin)
+	release_parcel_button.disabled = active_parcel.is_empty() or (String(active_parcel.get("ownerAccountId", "")) != String(session.get("accountId", "")) and not is_admin)
 
 
 func _claim_active_parcel() -> void:
@@ -1127,8 +1140,9 @@ func _claim_active_parcel() -> void:
 	var request := HTTPRequest.new()
 	add_child(request)
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({"token": session.token, "parcelId": active_parcel.id})
-	var url := "%s/api/parcels/claim" % backend_url_input.text.rstrip("/")
+	var is_admin := session.get("role", "resident") == "admin"
+	var body := JSON.stringify(is_admin ? {"token": session.token, "parcelId": active_parcel.id, "ownerAccountId": session.accountId} : {"token": session.token, "parcelId": active_parcel.id})
+	var url := "%s%s" % [backend_url_input.text.rstrip("/"), is_admin ? "/api/admin/parcels/assign" : "/api/parcels/claim"]
 	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 		var result := await request.request_completed
 		if int(result[1]) == 200:
@@ -1140,7 +1154,7 @@ func _claim_active_parcel() -> void:
 			active_parcel = parcel
 			_render_parcels()
 			_claim_button_state()
-			status_label.text = "Claimed %s" % parcel.get("name", "parcel")
+			status_label.text = "%s %s" % [is_admin ? "Admin claimed" : "Claimed", parcel.get("name", "parcel")]
 		else:
 			status_label.text = "Parcel claim failed"
 	request.queue_free()
@@ -1152,8 +1166,9 @@ func _release_active_parcel() -> void:
 	var request := HTTPRequest.new()
 	add_child(request)
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({"token": session.token, "parcelId": active_parcel.id})
-	var url := "%s/api/parcels/release" % backend_url_input.text.rstrip("/")
+	var is_admin := session.get("role", "resident") == "admin"
+	var body := JSON.stringify(is_admin ? {"token": session.token, "parcelId": active_parcel.id, "ownerAccountId": null} : {"token": session.token, "parcelId": active_parcel.id})
+	var url := "%s%s" % [backend_url_input.text.rstrip("/"), is_admin ? "/api/admin/parcels/assign" : "/api/parcels/release"]
 	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 		var result := await request.request_completed
 		if int(result[1]) == 200:
@@ -1165,7 +1180,7 @@ func _release_active_parcel() -> void:
 			active_parcel = parcel
 			_render_parcels()
 			_claim_button_state()
-			status_label.text = "Released %s" % parcel.get("name", "parcel")
+			status_label.text = "%s %s" % [is_admin ? "Admin cleared" : "Released", parcel.get("name", "parcel")]
 		else:
 			status_label.text = "Parcel release failed"
 	request.queue_free()

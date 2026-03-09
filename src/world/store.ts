@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   createPersistenceLayer,
+  type AccountAuthRecord,
   type AccountRecord,
   type AvatarAppearanceRecord,
   type AvatarPositionRecord,
@@ -44,6 +45,7 @@ export type Session = {
   avatarId: string;
   displayName: string;
   regionId: string;
+  role: "resident" | "admin";
 };
 
 export type AvatarState = {
@@ -81,7 +83,15 @@ export function getPersistenceMode() {
   return persistence.mode;
 }
 
-export async function createGuestSession(displayName: string, regionId?: string): Promise<{
+function getBootstrapAdminDisplayName() {
+  return (process.env.ADMIN_DISPLAY_NAME ?? "Admin").trim().toLowerCase();
+}
+
+function shouldBootstrapAdmin(displayName: string) {
+  return displayName.trim().toLowerCase() === getBootstrapAdminDisplayName();
+}
+
+async function createSessionForAccount(account: Account, displayName: string, regionId?: string): Promise<{
   account: Account;
   inventory: InventoryItem[];
   parcels: Parcel[];
@@ -90,7 +100,6 @@ export async function createGuestSession(displayName: string, regionId?: string)
   avatar: AvatarState;
 }> {
   const region = regions.find((entry) => entry.id === regionId) ?? regions[0];
-  const { account } = await persistence.getOrCreateGuestAccount(displayName);
   const inventory = await persistence.getInventory(account.id);
   const appearance = applyEquippedWearables(await persistence.getAvatarAppearance(account.id), inventory);
   const parcels = await persistence.listParcels(region.id);
@@ -108,7 +117,7 @@ export async function createGuestSession(displayName: string, regionId?: string)
   const avatar: AvatarState = {
     avatarId,
     accountId: account.id,
-    displayName,
+    displayName: account.displayName,
     appearance,
     x: spawn.x,
     y: spawn.y,
@@ -120,8 +129,9 @@ export async function createGuestSession(displayName: string, regionId?: string)
     token,
     accountId: account.id,
     avatarId,
-    displayName,
-    regionId: region.id
+    displayName: displayName || account.displayName,
+    regionId: region.id,
+    role: account.role
   };
 
   sessions.set(token, session);
@@ -136,6 +146,38 @@ export async function createGuestSession(displayName: string, regionId?: string)
   });
 
   return { account, inventory, parcels, appearance, session, avatar };
+}
+
+export async function createGuestSession(displayName: string, regionId?: string): Promise<{
+  account: Account;
+  inventory: InventoryItem[];
+  parcels: Parcel[];
+  appearance: AvatarAppearance;
+  session: Session;
+  avatar: AvatarState;
+}> {
+  const { account } = await persistence.getOrCreateGuestAccount(displayName);
+  return createSessionForAccount(account, displayName, regionId);
+}
+
+export async function registerSession(displayName: string, passwordHash: string, regionId?: string) {
+  const result = await persistence.registerAccount(displayName, passwordHash, shouldBootstrapAdmin(displayName) ? "admin" : "resident");
+
+  if (!result.isNew) {
+    return { ok: false as const, reason: "display name already exists" };
+  }
+
+  return { ok: true as const, ...(await createSessionForAccount(result.account, displayName, regionId)) };
+}
+
+export async function loginSession(displayName: string, passwordHash: string, regionId?: string) {
+  const account = await persistence.authenticateAccount(displayName, passwordHash);
+
+  if (!account) {
+    return { ok: false as const, reason: "invalid credentials" };
+  }
+
+  return { ok: true as const, ...(await createSessionForAccount(account, displayName, regionId)) };
 }
 
 export function getSession(token: string): Session | undefined {
@@ -300,6 +342,30 @@ export async function releaseParcel(token: string, parcelId: string): Promise<Pa
   }
 
   return persistence.releaseParcel(parcelId, session.accountId);
+}
+
+function isAdminSession(session: Session | undefined) {
+  return session?.role === "admin";
+}
+
+export async function adminAssignParcel(token: string, parcelId: string, ownerAccountId: string | null): Promise<Parcel | undefined> {
+  const session = sessions.get(token);
+
+  if (!isAdminSession(session)) {
+    return undefined;
+  }
+
+  return persistence.reassignParcel(parcelId, ownerAccountId);
+}
+
+export async function adminDeleteRegionObject(token: string, objectId: string): Promise<boolean> {
+  const session = sessions.get(token);
+
+  if (!isAdminSession(session)) {
+    return false;
+  }
+
+  return persistence.adminDeleteRegionObject(objectId);
 }
 
 export async function listRegionObjects(regionId: string): Promise<RegionObject[]> {
