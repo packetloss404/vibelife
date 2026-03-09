@@ -1,0 +1,19 @@
+{
+  "id": "aurora-docks",
+  "name": "Aurora Docks",
+  "spawn": { "x": -4, "z": 10 },
+  "assets": [
+    { "id": "dock-tower-west", "asset": "/assets/models/skyport-tower.gltf", "position": [-14, 0, -8], "rotation": [0, 0.4, 0], "scale": [1.1, 1, 1.1] },
+    { "id": "dock-tower-east", "asset": "/assets/models/skyport-tower.gltf", "position": [14, 0, -10], "rotation": [0, -0.25, 0], "scale": [1.25, 1.15, 1.25] },
+    { "id": "market-hall", "asset": "/assets/models/market-hall.gltf", "position": [0, 0, 12], "rotation": [0, 0.05, 0], "scale": [1.2, 1, 1.15] },
+    { "id": "bench-01", "asset": "/assets/models/park-bench.gltf", "position": [-8, 0, 14], "rotation": [0, 0.8, 0], "scale": [1, 1, 1] },
+    { "id": "bench-02", "asset": "/assets/models/park-bench.gltf", "position": [8, 0, 15], "rotation": [0, -0.9, 0], "scale": [1, 1, 1] },
+    { "id": "crate-01", "asset": "/assets/models/dock-crate.gltf", "position": [18, 0, 8], "rotation": [0, 0.2, 0], "scale": [1, 1, 1] },
+    { "id": "crate-02", "asset": "/assets/models/dock-crate.gltf", "position": [19.6, 0, 9.4], "rotation": [0, -0.45, 0], "scale": [0.86, 0.86, 0.86] },
+    { "id": "lantern-a", "asset": "/assets/models/street-lantern.gltf", "position": [-16, 0, 7], "rotation": [0, 0, 0], "scale": [1, 1, 1] },
+    { "id": "lantern-b", "asset": "/assets/models/street-lantern.gltf", "position": [-5, 0, 17], "rotation": [0, 0, 0], "scale": [1, 1, 1] },
+    { "id": "lantern-c", "asset": "/assets/models/street-lantern.gltf", "position": [9, 0, 18], "rotation": [0, 0, 0], "scale": [1, 1, 1] },
+    { "id": "tree-a", "asset": "/assets/models/garden-tree.gltf", "position": [-21, 0, 5], "rotation": [0, 0.3, 0], "scale": [1.2, 1.2, 1.2] },
+    { "id": "tree-b", "asset": "/assets/models/garden-tree.gltf", "position": [21, 0, 4], "rotation": [0, 1.3, 0], "scale": [1.1, 1.1, 1.1] }
+  ]
+}

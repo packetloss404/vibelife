@@ -9,6 +9,7 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - Postgres-ready region, account, and inventory persistence
 - WebSocket region presence and chat
 - browser 3D viewer with click-to-move avatar sync
+- region scene manifests and generated glTF assets
 
 ## Why this is a good 2026-style starting point
 
@@ -47,6 +48,12 @@ npm run dev:postgres
 - saves avatar positions per account and region
 - seeds claimable parcels in each region
 - lets a connected user claim an unowned parcel
+
+## Scene pipeline
+
+- region layouts live in `public/scenes/*.json`
+- reusable world assets live in `public/assets/models/*.gltf`
+- regenerate assets with `npm run generate:assets`
 
 ## Suggested next milestones
 

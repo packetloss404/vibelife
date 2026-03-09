@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.179.1/build/three.module.js";
+import { GLTFLoader } from "https://unpkg.com/three@0.179.1/examples/jsm/loaders/GLTFLoader.js";
 
 const elements = {
   displayName: document.querySelector("#displayName"),
@@ -14,6 +15,8 @@ const elements = {
   inventoryList: document.querySelector("#inventoryList"),
   parcelList: document.querySelector("#parcelList")
 };
+
+const loader = new GLTFLoader();
 
 const state = {
   socket: null,
@@ -32,6 +35,7 @@ const state = {
   cameraDistance: 12,
   localVelocity: new THREE.Vector3(),
   movementVector: new THREE.Vector3(),
+  regionScene: null,
   clock: new THREE.Clock()
 };
 
@@ -39,15 +43,12 @@ const viewer = {
   renderer: null,
   scene: null,
   camera: null,
-  raycaster: new THREE.Raycaster(),
-  pointer: new THREE.Vector2(),
   terrain: null,
-  terrainGeometry: null,
-  terrainBounds: 30,
-  worldRoot: null,
   avatarRoot: null,
-  skyGroup: null,
-  parcelLines: new Map()
+  decorRoot: null,
+  parcelLines: new Map(),
+  terrainBounds: 30,
+  assetCache: new Map()
 };
 
 const tempVectorA = new THREE.Vector3();
@@ -132,8 +133,8 @@ const makeLabelSprite = (text) => {
   canvas.height = 64;
   const context = canvas.getContext("2d");
 
-  context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "rgba(5, 12, 16, 0.72)";
+  context.beginPath();
   context.roundRect(8, 8, 240, 48, 18);
   context.fill();
   context.fillStyle = "#e9f8ff";
@@ -204,45 +205,6 @@ const createHumanoid = (avatarId, displayName, isSelf) => {
   return root;
 };
 
-const makeBuilding = (config) => {
-  const group = new THREE.Group();
-  group.position.set(config.x, getTerrainHeight(config.x, config.z), config.z);
-  group.rotation.y = config.rotation ?? 0;
-
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(config.width, config.height, config.depth),
-    new THREE.MeshStandardMaterial({ color: config.color, roughness: 0.82, metalness: 0.12 })
-  );
-  base.position.y = config.height / 2;
-  base.castShadow = true;
-  base.receiveShadow = true;
-  group.add(base);
-
-  const roof = new THREE.Mesh(
-    new THREE.CylinderGeometry(0, Math.max(config.width, config.depth) * 0.72, config.roofHeight ?? 1.8, 4),
-    new THREE.MeshStandardMaterial({ color: config.roofColor, roughness: 0.72, metalness: 0.08 })
-  );
-  roof.position.y = config.height + (config.roofHeight ?? 1.8) / 2 + 0.2;
-  roof.rotation.y = Math.PI / 4;
-  roof.castShadow = true;
-  group.add(roof);
-
-  const windowMaterial = new THREE.MeshStandardMaterial({ color: 0xa9f4ff, emissive: 0x2d7b84, roughness: 0.2, metalness: 0.65 });
-  for (let row = 0; row < (config.rows ?? 2); row += 1) {
-    for (let col = 0; col < (config.columns ?? 3); col += 1) {
-      const windowBox = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.08), windowMaterial);
-      windowBox.position.set(
-        -config.width / 2 + 1 + col * ((config.width - 2) / Math.max(1, (config.columns ?? 3) - 1)),
-        1.2 + row * 1.2,
-        config.depth / 2 + 0.05
-      );
-      group.add(windowBox);
-    }
-  }
-
-  return group;
-};
-
 const syncParcelLines = () => {
   if (!viewer.scene) {
     return;
@@ -259,14 +221,7 @@ const syncParcelLines = () => {
     let line = viewer.parcelLines.get(parcel.id);
 
     if (!line) {
-      const points = [
-        new THREE.Vector3(parcel.minX, 0.1, parcel.minZ),
-        new THREE.Vector3(parcel.maxX, 0.1, parcel.minZ),
-        new THREE.Vector3(parcel.maxX, 0.1, parcel.maxZ),
-        new THREE.Vector3(parcel.minX, 0.1, parcel.maxZ),
-        new THREE.Vector3(parcel.minX, 0.1, parcel.minZ)
-      ];
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const geometry = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 5 }, () => new THREE.Vector3()));
       const material = new THREE.LineBasicMaterial({ color: parcel.ownerAccountId ? 0xffb36a : 0x66ffd1 });
       line = new THREE.Line(geometry, material);
       viewer.scene.add(line);
@@ -281,21 +236,13 @@ const syncParcelLines = () => {
       [parcel.minX, parcel.maxZ],
       [parcel.minX, parcel.minZ]
     ];
-    coords.forEach(([x, z], index) => {
-      positions.setXYZ(index, x, getTerrainHeight(x, z) + 0.14, z);
-    });
+    coords.forEach(([x, z], index) => positions.setXYZ(index, x, getTerrainHeight(x, z) + 0.14, z));
     positions.needsUpdate = true;
     line.material.color.setHex(parcel.ownerAccountId ? 0xffb36a : 0x66ffd1);
   }
 };
 
-const buildWorld = () => {
-  const worldRoot = new THREE.Group();
-  const avatarRoot = new THREE.Group();
-  viewer.worldRoot = worldRoot;
-  viewer.avatarRoot = avatarRoot;
-  viewer.scene.add(worldRoot, avatarRoot);
-
+const makeTerrain = () => {
   const terrainGeometry = new THREE.PlaneGeometry(60, 60, 120, 120);
   terrainGeometry.rotateX(-Math.PI / 2);
   const positions = terrainGeometry.attributes.position;
@@ -305,63 +252,67 @@ const buildWorld = () => {
     positions.setY(index, getTerrainHeight(x, z));
   }
   terrainGeometry.computeVertexNormals();
-  viewer.terrainGeometry = terrainGeometry;
 
-  viewer.terrain = new THREE.Mesh(
+  const terrain = new THREE.Mesh(
     terrainGeometry,
-    new THREE.MeshStandardMaterial({ color: 0x24586a, roughness: 0.96, metalness: 0.06, flatShading: false })
+    new THREE.MeshStandardMaterial({ color: 0x24586a, roughness: 0.96, metalness: 0.06 })
   );
-  viewer.terrain.receiveShadow = true;
-  viewer.terrain.castShadow = false;
-  worldRoot.add(viewer.terrain);
+  terrain.receiveShadow = true;
+  return terrain;
+};
 
-  const waterRing = new THREE.Mesh(
-    new THREE.RingGeometry(28, 38, 80),
-    new THREE.MeshBasicMaterial({ color: 0x4ee4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
-  );
-  waterRing.rotation.x = -Math.PI / 2;
-  waterRing.position.y = -0.2;
-  worldRoot.add(waterRing);
-
-  const towerConfigs = [
-    { x: -12, z: -8, width: 6, height: 6, depth: 6, color: 0xd4d9dd, roofColor: 0x5f7d8d, columns: 3, rows: 3 },
-    { x: 11, z: -10, width: 8, height: 8, depth: 7, color: 0xb6c6d0, roofColor: 0x294150, columns: 4, rows: 4 },
-    { x: -3, z: 12, width: 10, height: 5, depth: 7, color: 0xc9d7dd, roofColor: 0x845d4a, columns: 4, rows: 2 },
-    { x: 17, z: 9, width: 5, height: 10, depth: 5, color: 0x8caab6, roofColor: 0x223542, columns: 2, rows: 4 }
-  ];
-  towerConfigs.forEach((config) => worldRoot.add(makeBuilding(config)));
-
-  for (let index = 0; index < 16; index += 1) {
-    const angle = (Math.PI * 2 * index) / 16;
-    const radius = 22 + (index % 2) * 2.4;
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
-    const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.16, 0.24, 2.6, 8),
-      new THREE.MeshStandardMaterial({ color: 0x574535, roughness: 1 })
-    );
-    trunk.position.set(x, getTerrainHeight(x, z) + 1.3, z);
-    const canopy = new THREE.Mesh(
-      new THREE.SphereGeometry(1.3, 16, 16),
-      new THREE.MeshStandardMaterial({ color: 0x69c38c, roughness: 0.9 })
-    );
-    canopy.position.set(x, getTerrainHeight(x, z) + 3.1, z);
-    worldRoot.add(trunk, canopy);
+const loadGltfAsset = async (url) => {
+  if (!viewer.assetCache.has(url)) {
+    viewer.assetCache.set(url, loader.loadAsync(url).then((gltf) => gltf.scene));
   }
 
-  for (let index = 0; index < 24; index += 1) {
-    const x = Math.cos(index * 0.51) * (8 + (index % 3) * 5);
-    const z = Math.sin(index * 0.72) * (6 + (index % 4) * 4);
-    const lantern = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.22, 0.22, 1.6, 10),
-      new THREE.MeshStandardMaterial({ color: 0x7997a2, roughness: 0.75 })
-    );
-    lantern.position.set(x, getTerrainHeight(x, z) + 0.8, z);
-    lantern.castShadow = true;
-    const glow = new THREE.PointLight(0x7cecff, 4, 7, 2);
-    glow.position.set(x, getTerrainHeight(x, z) + 1.8, z);
-    worldRoot.add(lantern, glow);
+  const scene = await viewer.assetCache.get(url);
+  return scene.clone(true);
+};
+
+const createLanternGlow = () => {
+  const light = new THREE.PointLight(0x8cecff, 4, 7, 2);
+  light.position.y = 2.3;
+  return light;
+};
+
+const applySceneObject = async (item) => {
+  const object = await loadGltfAsset(item.asset);
+  const [x, y = 0, z] = item.position;
+  const [rx = 0, ry = 0, rz = 0] = item.rotation ?? [0, 0, 0];
+  const [sx = 1, sy = 1, sz = 1] = item.scale ?? [1, 1, 1];
+
+  object.position.set(x, getTerrainHeight(x, z) + y, z);
+  object.rotation.set(rx, ry, rz);
+  object.scale.set(sx, sy, sz);
+  object.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+
+  if (item.asset.includes("street-lantern")) {
+    object.add(createLanternGlow());
   }
+
+  viewer.decorRoot.add(object);
+};
+
+const loadRegionScene = async (regionId) => {
+  if (!viewer.decorRoot) {
+    return;
+  }
+
+  viewer.decorRoot.clear();
+
+  const response = await fetch(`/scenes/${regionId}.json`);
+  if (!response.ok) {
+    throw new Error(`Scene manifest missing for ${regionId}`);
+  }
+
+  state.regionScene = await response.json();
+  await Promise.all(state.regionScene.assets.map((item) => applySceneObject(item)));
 };
 
 const ensureViewer = () => {
@@ -371,7 +322,6 @@ const ensureViewer = () => {
 
   viewer.scene = new THREE.Scene();
   viewer.scene.fog = new THREE.Fog(0x0a1117, 24, 78);
-
   viewer.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
   viewer.camera.position.set(0, 8, 14);
 
@@ -407,7 +357,18 @@ const ensureViewer = () => {
   );
   viewer.scene.add(sky);
 
-  buildWorld();
+  viewer.terrain = makeTerrain();
+  viewer.decorRoot = new THREE.Group();
+  viewer.avatarRoot = new THREE.Group();
+  viewer.scene.add(viewer.terrain, viewer.decorRoot, viewer.avatarRoot);
+
+  const waterRing = new THREE.Mesh(
+    new THREE.RingGeometry(28, 38, 80),
+    new THREE.MeshBasicMaterial({ color: 0x4ee4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+  );
+  waterRing.rotation.x = -Math.PI / 2;
+  waterRing.position.y = -0.2;
+  viewer.scene.add(waterRing);
 
   const resize = () => {
     const width = elements.viewport.clientWidth;
@@ -443,7 +404,6 @@ const syncAvatarMeshes = () => {
 
   for (const [avatarId, avatar] of state.avatars.entries()) {
     let mesh = state.avatarMeshes.get(avatarId);
-
     if (!mesh) {
       mesh = createHumanoid(avatarId, avatar.displayName, state.session && avatarId === state.session.avatarId);
       viewer.avatarRoot.add(mesh);
@@ -455,22 +415,14 @@ const syncAvatarMeshes = () => {
     }
 
     mesh.userData.targetPosition.set(avatar.x, getTerrainHeight(avatar.x, avatar.z), avatar.z);
-    mesh.userData.displayName = avatar.displayName;
   }
 };
 
-const getSelfAvatar = () => {
-  if (!state.session) {
-    return undefined;
-  }
-
-  return state.avatars.get(state.session.avatarId);
-};
+const getSelfAvatar = () => state.session ? state.avatars.get(state.session.avatarId) : undefined;
 
 const updateCamera = () => {
   const selfAvatar = getSelfAvatar();
   const mesh = selfAvatar ? state.avatarMeshes.get(selfAvatar.avatarId) : null;
-
   if (!mesh) {
     return;
   }
@@ -494,32 +446,31 @@ const animateAvatars = () => {
 
   for (const [avatarId, mesh] of state.avatarMeshes.entries()) {
     const target = mesh.userData.targetPosition;
-
-    if (target) {
-      tempVectorA.copy(target);
-      const previous = mesh.position.clone();
-      mesh.position.lerp(tempVectorA, avatarId === state.session?.avatarId ? 0.24 : 0.12);
-      const delta = previous.distanceTo(mesh.position);
-
-      if (delta > 0.0001) {
-        tempVectorB.copy(target).sub(previous);
-        mesh.rotation.y = Math.atan2(tempVectorB.x, tempVectorB.z);
-      }
-
-      const stride = Math.min(1, delta * 32);
-      const swing = Math.sin(elapsed * 8 + avatarId.length) * stride;
-      mesh.userData.parts.leftLeg.rotation.x = swing;
-      mesh.userData.parts.rightLeg.rotation.x = -swing;
-      mesh.userData.parts.leftArm.rotation.x = -swing * 0.7;
-      mesh.userData.parts.rightArm.rotation.x = swing * 0.7;
+    if (!target) {
+      continue;
     }
+
+    const previous = mesh.position.clone();
+    mesh.position.lerp(target, avatarId === state.session?.avatarId ? 0.24 : 0.12);
+    const delta = previous.distanceTo(mesh.position);
+    if (delta > 0.0001) {
+      tempVectorB.copy(target).sub(previous);
+      mesh.rotation.y = Math.atan2(tempVectorB.x, tempVectorB.z);
+    }
+
+    const stride = Math.min(1, delta * 32);
+    const swing = Math.sin(elapsed * 8 + avatarId.length) * stride;
+    mesh.userData.parts.leftLeg.rotation.x = swing;
+    mesh.userData.parts.rightLeg.rotation.x = -swing;
+    mesh.userData.parts.leftArm.rotation.x = -swing * 0.7;
+    mesh.userData.parts.rightArm.rotation.x = swing * 0.7;
   }
 };
 
 const updateLocalMovement = () => {
   const selfAvatar = getSelfAvatar();
-
   if (!selfAvatar || !state.socket || state.socket.readyState !== WebSocket.OPEN) {
+    state.clock.getDelta();
     return;
   }
 
@@ -536,8 +487,7 @@ const updateLocalMovement = () => {
   }
 
   state.movementVector.normalize();
-  const angle = state.yaw;
-  const forward = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+  const forward = new THREE.Vector3(Math.sin(state.yaw), 0, Math.cos(state.yaw));
   const right = new THREE.Vector3(forward.z, 0, -forward.x);
   tempVectorA.copy(forward).multiplyScalar(-state.movementVector.z).add(right.multiplyScalar(state.movementVector.x)).normalize();
   state.localVelocity.lerp(tempVectorA.multiplyScalar(7.5), 0.16);
@@ -592,9 +542,10 @@ const connect = async () => {
   renderInventory(data.inventory);
   renderParcels();
   syncAvatarMeshes();
+  await loadRegionScene(state.session.regionId);
 
   elements.activeRegion.textContent = state.regions.find((region) => region.id === state.session.regionId)?.name ?? state.session.regionId;
-  elements.viewerHint.textContent = `WASD move, drag to orbit, ${state.persistence} persistence`;
+  elements.viewerHint.textContent = `Scene streaming live - ${state.session.regionId}`;
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
@@ -610,15 +561,12 @@ const connect = async () => {
     if (message.type === "snapshot") {
       state.avatars = new Map(message.avatars.map((avatar) => [avatar.avatarId, avatar]));
     }
-
     if (message.type === "avatar:joined" || message.type === "avatar:moved") {
       state.avatars.set(message.avatar.avatarId, message.avatar);
     }
-
     if (message.type === "avatar:left") {
       state.avatars.delete(message.avatarId);
     }
-
     if (message.type === "chat") {
       appendChat(`${message.displayName}: ${message.message}`);
     }
@@ -635,7 +583,6 @@ const connect = async () => {
 
 const sendChat = () => {
   const message = elements.chatInput.value.trim();
-
   if (!message || !state.socket || state.socket.readyState !== WebSocket.OPEN) {
     return;
   }
@@ -711,10 +658,14 @@ window.addEventListener("pointermove", (event) => {
   state.pitch = Math.max(0.15, Math.min(1.1, state.pitch - event.movementY * 0.004));
 });
 
-elements.viewport.addEventListener("wheel", (event) => {
-  event.preventDefault();
-  state.cameraDistance = Math.max(7, Math.min(18, state.cameraDistance + event.deltaY * 0.01));
-}, { passive: false });
+elements.viewport.addEventListener(
+  "wheel",
+  (event) => {
+    event.preventDefault();
+    state.cameraDistance = Math.max(7, Math.min(18, state.cameraDistance + event.deltaY * 0.01));
+  },
+  { passive: false }
+);
 
 ensureViewer();
 loadRegions().catch((error) => status(error.message, true));
