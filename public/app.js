@@ -73,6 +73,7 @@ const state = {
   cameraDistance: 12,
   reconnectAttempts: 0,
   reconnectTimer: null,
+  lastSequence: 0,
   localVelocity: new THREE.Vector3(),
   movementVector: new THREE.Vector3(),
   regionScene: null,
@@ -1392,20 +1393,23 @@ const connect = async () => {
   toast(`${state.account.displayName} connected as ${state.account.kind}/${state.account.role}.`);
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const openRegionSocket = () => new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
+  const openRegionSocket = () => new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}&lastSequence=${state.lastSequence}`);
   const socket = openRegionSocket();
   const handleSocketMessage = (event) => {
     const message = JSON.parse(event.data);
 
     if (message.type === "snapshot") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.avatars = new Map(message.avatars.map((avatar) => [avatar.avatarId, avatar]));
       state.regionObjects = message.objects;
       void applyRegionObjects();
     }
     if (message.type === "avatar:joined" || message.type === "avatar:moved") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.avatars.set(message.avatar.avatarId, message.avatar);
     }
     if (message.type === "avatar:updated") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.avatars.set(message.avatar.avatarId, message.avatar);
       if (message.avatar.avatarId === state.session?.avatarId) {
         state.appearance = message.avatar.appearance;
@@ -1413,28 +1417,34 @@ const connect = async () => {
       }
     }
     if (message.type === "avatar:left") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.avatars.delete(message.avatarId);
     }
     if (message.type === "chat") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       appendChat(`${message.displayName}: ${message.message}`);
     }
 
     if (message.type === "object:created") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.regionObjects = [...state.regionObjects.filter((item) => item.id !== message.object.id), message.object];
       void applyRegionObjects();
     }
 
     if (message.type === "object:updated") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.regionObjects = state.regionObjects.map((item) => item.id === message.object.id ? message.object : item);
       void applyRegionObjects();
     }
 
     if (message.type === "object:deleted") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.regionObjects = state.regionObjects.filter((item) => item.id !== message.objectId);
       void applyRegionObjects();
     }
 
     if (message.type === "parcel:updated") {
+      state.lastSequence = Math.max(state.lastSequence, message.sequence ?? 0);
       state.parcels = state.parcels.some((item) => item.id === message.parcel.id)
         ? state.parcels.map((item) => item.id === message.parcel.id ? message.parcel : item)
         : [...state.parcels, message.parcel];

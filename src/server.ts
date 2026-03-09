@@ -10,6 +10,7 @@ import {
   adminDeleteRegionObject,
 } from "./world/store.js";
 import {
+  addParcelCollaborator,
   appendAuditLog,
   claimParcel,
   createRegionObject,
@@ -27,12 +28,14 @@ import {
   loginSession,
   moveAvatar,
   registerSession,
+  removeParcelCollaborator,
   releaseParcel,
   removeAvatar,
+  transferParcel,
   updateAvatarAppearance,
   updateRegionObject
 } from "./world/store.js";
-import { broadcastRegion, joinRegion, leaveRegion } from "./world/region.js";
+import { broadcastRegion, getRegionSequence, joinRegion, leaveRegion, nextRegionSequence } from "./world/region.js";
 
 const app = Fastify({ logger: true });
 const __filename = fileURLToPath(import.meta.url);
@@ -173,7 +176,7 @@ app.patch<{
 
   const session = getSession(token);
   if (session) {
-    broadcastRegion(session.regionId, { type: "avatar:updated", avatar });
+    broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar });
   }
 
   return reply.send({ avatar });
@@ -193,7 +196,7 @@ app.post<{ Body: { token?: string; itemId?: string } }>("/api/inventory/equip", 
     return reply.code(404).send({ error: "unable to equip item" });
   }
 
-  broadcastRegion(session.regionId, { type: "avatar:updated", avatar: result.avatar });
+  broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar: result.avatar });
   return reply.send(result);
 });
 
@@ -214,7 +217,7 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", 
   const session = getSession(token);
 
   if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
     await appendAuditLog(token, "parcel.claim", "parcel", parcel.id, `claimed ${parcel.name}`, session.regionId);
   }
 
@@ -238,7 +241,7 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/release"
   const session = getSession(token);
 
   if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
     await appendAuditLog(token, "parcel.release", "parcel", parcel.id, `released ${parcel.name}`, session.regionId);
   }
 
@@ -260,10 +263,61 @@ app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | 
 
   const session = getSession(token);
   if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
     await appendAuditLog(token, "admin.parcel.assign", "parcel", parcel.id, `assigned ${parcel.name} to ${ownerAccountId ?? "none"}`, session.regionId);
   }
 
+  return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; parcelId?: string; collaboratorAccountId?: string } }>("/api/parcels/collaborators/add", async (request, reply) => {
+  const { token, parcelId, collaboratorAccountId } = request.body;
+  if (!token || !parcelId || !collaboratorAccountId) {
+    return reply.code(400).send({ error: "token, parcelId and collaboratorAccountId are required" });
+  }
+  const parcel = await addParcelCollaborator(token, parcelId, collaboratorAccountId);
+  if (!parcel) {
+    return reply.code(403).send({ error: "unable to add collaborator" });
+  }
+  const session = getSession(token);
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
+    await appendAuditLog(token, "parcel.collaborator.add", "parcel", parcel.id, `added collaborator ${collaboratorAccountId}`, session.regionId);
+  }
+  return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; parcelId?: string; collaboratorAccountId?: string } }>("/api/parcels/collaborators/remove", async (request, reply) => {
+  const { token, parcelId, collaboratorAccountId } = request.body;
+  if (!token || !parcelId || !collaboratorAccountId) {
+    return reply.code(400).send({ error: "token, parcelId and collaboratorAccountId are required" });
+  }
+  const parcel = await removeParcelCollaborator(token, parcelId, collaboratorAccountId);
+  if (!parcel) {
+    return reply.code(403).send({ error: "unable to remove collaborator" });
+  }
+  const session = getSession(token);
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
+    await appendAuditLog(token, "parcel.collaborator.remove", "parcel", parcel.id, `removed collaborator ${collaboratorAccountId}`, session.regionId);
+  }
+  return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | null } }>("/api/parcels/transfer", async (request, reply) => {
+  const { token, parcelId, ownerAccountId = null } = request.body;
+  if (!token || !parcelId) {
+    return reply.code(400).send({ error: "token and parcelId are required" });
+  }
+  const parcel = await transferParcel(token, parcelId, ownerAccountId);
+  if (!parcel) {
+    return reply.code(403).send({ error: "unable to transfer parcel" });
+  }
+  const session = getSession(token);
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
+    await appendAuditLog(token, "parcel.transfer", "parcel", parcel.id, `transferred parcel to ${ownerAccountId ?? "none"}`, session.regionId);
+  }
   return reply.send({ parcel });
 });
 
@@ -281,7 +335,7 @@ app.post<{ Body: { token?: string; objectId?: string } }>("/api/admin/objects/de
     return reply.code(403).send({ error: "admin object cleanup failed" });
   }
 
-  broadcastRegion(session.regionId, { type: "object:deleted", objectId });
+  broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId });
   await appendAuditLog(token, "admin.object.delete", "object", objectId, "admin deleted region object", session.regionId);
   return reply.send({ ok: true });
 });
@@ -331,7 +385,7 @@ app.post<{
     return reply.code(403).send({ error: object.permission.reason ?? "unable to create object in region" });
   }
 
-  broadcastRegion(request.params.regionId, { type: "object:created", object: object.object });
+  broadcastRegion(request.params.regionId, { type: "object:created", sequence: nextRegionSequence(request.params.regionId), object: object.object });
 
   return reply.send({ object: object.object });
 });
@@ -353,7 +407,7 @@ app.patch<{
     return reply.code(statusCode).send({ error: object.permission.reason ?? "object not found or not owned" });
   }
 
-  broadcastRegion(object.object.regionId, { type: "object:updated", object: object.object });
+  broadcastRegion(object.object.regionId, { type: "object:updated", sequence: nextRegionSequence(object.object.regionId), object: object.object });
 
   return reply.send({ object: object.object });
 });
@@ -376,14 +430,14 @@ app.delete<{
   }
 
   if (session) {
-    broadcastRegion(session.regionId, { type: "object:deleted", objectId: request.params.objectId });
+    broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId: request.params.objectId });
   }
 
   return reply.send({ ok: true });
 });
 
 app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) => {
-  const token = (request.query as { token?: string }).token;
+  const { token, lastSequence } = request.query as { token?: string; lastSequence?: string };
 
   if (!token) {
     socket.close(1008, "Missing token");
@@ -402,15 +456,27 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
 
   socket.send(JSON.stringify({
     type: "snapshot",
+    sequence: getRegionSequence(regionId),
     avatars: getRegionPopulation(regionId),
     objects: await listRegionObjects(regionId),
     parcels: await listParcels(regionId)
   }));
 
+  if (lastSequence) {
+    socket.send(JSON.stringify({
+      type: "chat",
+      sequence: nextRegionSequence(regionId),
+      avatarId: "system",
+      displayName: "System",
+      message: `Resynced after sequence ${lastSequence}.`,
+      createdAt: new Date().toISOString()
+    }));
+  }
+
   const joinedAvatar = getRegionPopulation(regionId).find((avatar) => avatar.avatarId === session.avatarId);
 
   if (joinedAvatar) {
-    broadcastRegion(regionId, { type: "avatar:joined", avatar: joinedAvatar });
+    broadcastRegion(regionId, { type: "avatar:joined", sequence: nextRegionSequence(regionId), avatar: joinedAvatar });
   }
 
   socket.on("message", async (rawMessage: Buffer) => {
@@ -430,13 +496,14 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
         );
 
         if (avatar) {
-          broadcastRegion(regionId, { type: "avatar:moved", avatar });
+          broadcastRegion(regionId, { type: "avatar:moved", sequence: nextRegionSequence(regionId), avatar });
         }
       }
 
       if (message.type === "chat") {
         broadcastRegion(regionId, {
           type: "chat",
+          sequence: nextRegionSequence(regionId),
           avatarId: session.avatarId,
           displayName: session.displayName,
           message: message.message.slice(0, 180),
@@ -446,6 +513,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
     } catch {
       socket.send(JSON.stringify({
         type: "chat",
+        sequence: nextRegionSequence(regionId),
         avatarId: "system",
         displayName: "System",
         message: "Ignored malformed event payload.",
@@ -461,6 +529,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
     if (removed) {
       broadcastRegion(regionId, {
         type: "avatar:left",
+        sequence: nextRegionSequence(regionId),
         avatarId: removed.avatarId
       });
     }

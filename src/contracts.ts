@@ -32,6 +32,8 @@ export type ParcelContract = {
   name: string;
   ownerAccountId: string | null;
   ownerDisplayName: string | null;
+  collaboratorAccountIds: string[];
+  collaboratorDisplayNames: string[];
   minX: number;
   maxX: number;
   minZ: number;
@@ -56,6 +58,7 @@ export type RegionObjectContract = {
 
 export type RegionSnapshotEvent = {
   type: "snapshot";
+  sequence: number;
   avatars: AvatarStateContract[];
   objects: RegionObjectContract[];
   parcels: ParcelContract[];
@@ -63,15 +66,15 @@ export type RegionSnapshotEvent = {
 
 export type RegionEvent =
   | RegionSnapshotEvent
-  | { type: "avatar:joined"; avatar: AvatarStateContract }
-  | { type: "avatar:moved"; avatar: AvatarStateContract }
-  | { type: "avatar:updated"; avatar: AvatarStateContract }
-  | { type: "avatar:left"; avatarId: string }
-  | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string }
-  | { type: "object:created"; object: RegionObjectContract }
-  | { type: "object:updated"; object: RegionObjectContract }
-  | { type: "object:deleted"; objectId: string }
-  | { type: "parcel:updated"; parcel: ParcelContract };
+  | { type: "avatar:joined"; sequence: number; avatar: AvatarStateContract }
+  | { type: "avatar:moved"; sequence: number; avatar: AvatarStateContract }
+  | { type: "avatar:updated"; sequence: number; avatar: AvatarStateContract }
+  | { type: "avatar:left"; sequence: number; avatarId: string }
+  | { type: "chat"; sequence: number; avatarId: string; displayName: string; message: string; createdAt: string }
+  | { type: "object:created"; sequence: number; object: RegionObjectContract }
+  | { type: "object:updated"; sequence: number; object: RegionObjectContract }
+  | { type: "object:deleted"; sequence: number; objectId: string }
+  | { type: "parcel:updated"; sequence: number; parcel: ParcelContract };
 
 export type RegionCommand =
   | { type: "move"; x: number; y?: number; z: number }

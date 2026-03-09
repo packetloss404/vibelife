@@ -1,4 +1,5 @@
 import type { AvatarState, Parcel, RegionObject } from "./store.js";
+import type { RegionEvent } from "../contracts.js";
 
 type RegionSocket = {
   OPEN: number;
@@ -6,24 +7,13 @@ type RegionSocket = {
   send(payload: string): void;
 };
 
-type RegionEvent =
-  | { type: "snapshot"; avatars: AvatarState[]; objects: RegionObject[]; parcels: Parcel[] }
-  | { type: "avatar:joined"; avatar: AvatarState }
-  | { type: "avatar:moved"; avatar: AvatarState }
-  | { type: "avatar:updated"; avatar: AvatarState }
-  | { type: "avatar:left"; avatarId: string }
-  | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string }
-  | { type: "object:created"; object: RegionObject }
-  | { type: "object:updated"; object: RegionObject }
-  | { type: "object:deleted"; objectId: string }
-  | { type: "parcel:updated"; parcel: Parcel };
-
 type RegionPeer = {
   avatarId: string;
   socket: RegionSocket;
 };
 
 const peersByRegion = new Map<string, Map<string, RegionPeer>>();
+const regionSequences = new Map<string, number>();
 
 function getPeers(regionId: string) {
   let peers = peersByRegion.get(regionId);
@@ -42,6 +32,16 @@ export function joinRegion(regionId: string, avatarId: string, socket: RegionSoc
 
 export function leaveRegion(regionId: string, avatarId: string) {
   getPeers(regionId).delete(avatarId);
+}
+
+export function nextRegionSequence(regionId: string) {
+  const next = (regionSequences.get(regionId) ?? 0) + 1;
+  regionSequences.set(regionId, next);
+  return next;
+}
+
+export function getRegionSequence(regionId: string) {
+  return regionSequences.get(regionId) ?? 0;
 }
 
 export function broadcastRegion(regionId: string, event: RegionEvent) {

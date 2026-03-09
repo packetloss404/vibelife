@@ -80,6 +80,7 @@ var active_drag_axis := ""
 var selected_inventory_index := -1
 var backend_profiles: Array = []
 var parcel_nodes := {}
+var last_sequence := 0
 const PROFILE_SAVE_PATH := "user://backend_profiles.json"
 const SETTINGS_SAVE_PATH := "user://client_settings.json"
 var build_assets := [
@@ -304,9 +305,11 @@ func _on_objects_loaded(_result: int, response_code: int, _headers: PackedString
 
 func _connect_websocket() -> void:
 	websocket = WebSocketPeer.new()
+	if websocket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+		websocket.close()
 	var base := backend_url_input.text.rstrip("/")
 	var ws_url := base.replace("http://", "ws://").replace("https://", "wss://")
-	ws_url += "/ws/regions/%s?token=%s" % [session.regionId, session.token]
+	ws_url += "/ws/regions/%s?token=%s&lastSequence=%s" % [session.regionId, session.token, str(last_sequence)]
 	var error := websocket.connect_to_url(ws_url)
 	if error != OK:
 		status_label.text = "WebSocket failed: %s" % error
@@ -328,6 +331,7 @@ func _poll_websocket() -> void:
 func _handle_socket_message(message: Dictionary) -> void:
 	match message.get("type", ""):
 		WS_SNAPSHOT:
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			avatar_states.clear()
 			for avatar in message.get("avatars", []):
 				avatar_states[avatar.avatarId] = avatar
@@ -335,10 +339,12 @@ func _handle_socket_message(message: Dictionary) -> void:
 			_sync_avatars()
 			_sync_objects(message.get("objects", []))
 		"avatar:joined", "avatar:moved", "avatar:updated":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			var avatar := message.avatar
 			avatar_states[avatar.avatarId] = avatar
 			_sync_avatars()
 		"parcel:updated":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			var next_parcel := message.parcel
 			var replaced := false
 			for index in range(parcels.size()):
@@ -353,13 +359,17 @@ func _handle_socket_message(message: Dictionary) -> void:
 			_render_parcels()
 			_claim_button_state()
 		"avatar:left":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			avatar_states.erase(message.avatarId)
 			_sync_avatars()
 		"chat":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			_append_chat("%s: %s" % [message.displayName, message.message])
 		"object:created", "object:updated":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			_sync_single_object(message.object)
 		"object:deleted":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			if object_nodes.has(message.objectId):
 				object_nodes[message.objectId].queue_free()
 				object_nodes.erase(message.objectId)

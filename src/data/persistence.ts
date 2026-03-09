@@ -74,12 +74,32 @@ export type ParcelRecord = {
   name: string;
   ownerAccountId: string | null;
   ownerDisplayName: string | null;
+  collaboratorAccountIds: string[];
+  collaboratorDisplayNames: string[];
   minX: number;
   maxX: number;
   minZ: number;
   maxZ: number;
   tier: string;
 };
+
+async function mapParcelCollaborators(pool: pg.Pool, parcelId: string) {
+  const result = await pool.query<{ account_id: string; display_name: string }>(
+    `
+      SELECT parcel_collaborators.account_id, accounts.display_name
+      FROM parcel_collaborators
+      JOIN accounts ON accounts.id = parcel_collaborators.account_id
+      WHERE parcel_collaborators.parcel_id = $1
+      ORDER BY accounts.display_name ASC
+    `,
+    [parcelId]
+  );
+
+  return {
+    collaboratorAccountIds: result.rows.map((row) => row.account_id),
+    collaboratorDisplayNames: result.rows.map((row) => row.display_name)
+  };
+}
 
 export type RegionObjectRecord = {
   id: string;
@@ -112,6 +132,8 @@ export type PersistenceLayer = {
   claimParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
   releaseParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
   reassignParcel(parcelId: string, ownerAccountId: string | null): Promise<ParcelRecord | undefined>;
+  addParcelCollaborator(parcelId: string, ownerAccountId: string, collaboratorAccountId: string): Promise<ParcelRecord | undefined>;
+  removeParcelCollaborator(parcelId: string, ownerAccountId: string, collaboratorAccountId: string): Promise<ParcelRecord | undefined>;
   listRegionObjects(regionId: string): Promise<RegionObjectRecord[]>;
   createRegionObject(object: Omit<RegionObjectRecord, "ownerDisplayName">): Promise<RegionObjectRecord>;
   updateRegionObject(objectId: string, ownerAccountId: string, updates: Pick<RegionObjectRecord, "x" | "y" | "z" | "rotationY" | "scale" | "updatedAt">): Promise<RegionObjectRecord | undefined>;
@@ -146,6 +168,8 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
     regionId: "aurora-docks",
     name: "Landing Strip",
     ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
     minX: -10,
     maxX: 10,
     minZ: -10,
@@ -157,6 +181,8 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
     regionId: "aurora-docks",
     name: "East Pier",
     ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
     minX: 10,
     maxX: 28,
     minZ: -16,
@@ -168,6 +194,8 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
     regionId: "glass-garden",
     name: "Orchard Ring",
     ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
     minX: -18,
     maxX: 4,
     minZ: -12,
@@ -179,6 +207,8 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
     regionId: "glass-garden",
     name: "Sky Overlook",
     ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
     minX: 4,
     maxX: 22,
     minZ: -18,
@@ -235,7 +265,7 @@ function createMemoryPersistence(): PersistenceLayer {
   const appearances = new Map<string, AvatarAppearanceRecord>();
   const positions = new Map<string, AvatarPositionRecord>();
   const parcels = new Map<string, ParcelRecord>(
-    seededParcels.map((parcel) => [parcel.id, { ...parcel, ownerDisplayName: null }])
+    seededParcels.map((parcel) => [parcel.id, { ...parcel, ownerDisplayName: null, collaboratorAccountIds: [], collaboratorDisplayNames: [] }])
   );
   const regionObjects = new Map<string, RegionObjectRecord>();
   const auditLogs: AuditLogRecord[] = [];
@@ -388,7 +418,9 @@ function createMemoryPersistence(): PersistenceLayer {
       const updatedParcel: ParcelRecord = {
         ...parcel,
         ownerAccountId: accountId,
-        ownerDisplayName: account.displayName
+        ownerDisplayName: account.displayName,
+        collaboratorAccountIds: [],
+        collaboratorDisplayNames: []
       };
 
       parcels.set(parcelId, updatedParcel);
@@ -404,7 +436,9 @@ function createMemoryPersistence(): PersistenceLayer {
       const updatedParcel: ParcelRecord = {
         ...parcel,
         ownerAccountId: null,
-        ownerDisplayName: null
+        ownerDisplayName: null,
+        collaboratorAccountIds: [],
+        collaboratorDisplayNames: []
       };
 
       parcels.set(parcelId, updatedParcel);
@@ -421,9 +455,38 @@ function createMemoryPersistence(): PersistenceLayer {
       const updatedParcel: ParcelRecord = {
         ...parcel,
         ownerAccountId,
-        ownerDisplayName: owner?.displayName ?? null
+        ownerDisplayName: owner?.displayName ?? null,
+        collaboratorAccountIds: [],
+        collaboratorDisplayNames: []
       };
 
+      parcels.set(parcelId, updatedParcel);
+      return updatedParcel;
+    },
+    async addParcelCollaborator(parcelId, ownerAccountId, collaboratorAccountId) {
+      const parcel = parcels.get(parcelId);
+      const collaborator = accountsById.get(collaboratorAccountId);
+
+      if (!parcel || parcel.ownerAccountId !== ownerAccountId || !collaborator) {
+        return undefined;
+      }
+
+      const ids = [...new Set([...parcel.collaboratorAccountIds, collaboratorAccountId])];
+      const names = ids.map((id) => accountsById.get(id)?.displayName).filter(Boolean) as string[];
+      const updatedParcel: ParcelRecord = { ...parcel, collaboratorAccountIds: ids, collaboratorDisplayNames: names };
+      parcels.set(parcelId, updatedParcel);
+      return updatedParcel;
+    },
+    async removeParcelCollaborator(parcelId, ownerAccountId, collaboratorAccountId) {
+      const parcel = parcels.get(parcelId);
+
+      if (!parcel || parcel.ownerAccountId !== ownerAccountId) {
+        return undefined;
+      }
+
+      const ids = parcel.collaboratorAccountIds.filter((id) => id !== collaboratorAccountId);
+      const names = ids.map((id) => accountsById.get(id)?.displayName).filter(Boolean) as string[];
+      const updatedParcel: ParcelRecord = { ...parcel, collaboratorAccountIds: ids, collaboratorDisplayNames: names };
       parcels.set(parcelId, updatedParcel);
       return updatedParcel;
     },
@@ -500,6 +563,49 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       rarity: row.rarity,
       createdAt: row.created_at
     }));
+  };
+
+  const readParcelById = async (parcelId: string): Promise<ParcelRecord | undefined> => {
+    const result = await pool.query<{
+      id: string;
+      region_id: string;
+      name: string;
+      owner_account_id: string | null;
+      owner_display_name: string | null;
+      min_x: number;
+      max_x: number;
+      min_z: number;
+      max_z: number;
+      tier: string;
+    }>(
+      `
+        SELECT parcels.id, parcels.region_id, parcels.name, parcels.owner_account_id,
+          accounts.display_name AS owner_display_name, parcels.min_x, parcels.max_x,
+          parcels.min_z, parcels.max_z, parcels.tier
+        FROM parcels
+        LEFT JOIN accounts ON accounts.id = parcels.owner_account_id
+        WHERE parcels.id = $1
+        LIMIT 1
+      `,
+      [parcelId]
+    );
+
+    const row = result.rows[0];
+    if (!row) return undefined;
+
+    return {
+      id: row.id,
+      regionId: row.region_id,
+      name: row.name,
+      ownerAccountId: row.owner_account_id,
+      ownerDisplayName: row.owner_display_name,
+      ...(await mapParcelCollaborators(pool, row.id)),
+      minX: row.min_x,
+      maxX: row.max_x,
+      minZ: row.min_z,
+      maxZ: row.max_z,
+      tier: row.tier
+    };
   };
 
   await pool.query(`
@@ -594,6 +700,13 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       min_z DOUBLE PRECISION NOT NULL,
       max_z DOUBLE PRECISION NOT NULL,
       tier TEXT NOT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS parcel_collaborators (
+      parcel_id TEXT NOT NULL REFERENCES parcels(id) ON DELETE CASCADE,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      PRIMARY KEY (parcel_id, account_id)
     )
   `);
 
@@ -966,18 +1079,19 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         [regionId]
       );
 
-      return result.rows.map((row) => ({
+      return Promise.all(result.rows.map(async (row) => ({
         id: row.id,
         regionId: row.region_id,
         name: row.name,
         ownerAccountId: row.owner_account_id,
         ownerDisplayName: row.owner_display_name,
+        ...(await mapParcelCollaborators(pool, row.id)),
         minX: row.min_x,
         maxX: row.max_x,
         minZ: row.min_z,
         maxZ: row.max_z,
         tier: row.tier
-      }));
+      })));
     },
     async claimParcel(parcelId, accountId) {
       const result = await pool.query<{
@@ -1023,12 +1137,35 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         name: row.name,
         ownerAccountId: row.owner_account_id,
         ownerDisplayName: row.owner_display_name,
+        ...(await mapParcelCollaborators(pool, row.id)),
         minX: row.min_x,
         maxX: row.max_x,
         minZ: row.min_z,
         maxZ: row.max_z,
         tier: row.tier
       };
+    },
+    async addParcelCollaborator(parcelId, ownerAccountId, collaboratorAccountId) {
+      const parcel = await pool.query<{ owner_account_id: string | null }>("SELECT owner_account_id FROM parcels WHERE id = $1 LIMIT 1", [parcelId]);
+      if (!parcel.rows[0] || parcel.rows[0].owner_account_id !== ownerAccountId) {
+        return undefined;
+      }
+
+      await pool.query(
+        "INSERT INTO parcel_collaborators (parcel_id, account_id) VALUES ($1, $2) ON CONFLICT (parcel_id, account_id) DO NOTHING",
+        [parcelId, collaboratorAccountId]
+      );
+
+      return readParcelById(parcelId);
+    },
+    async removeParcelCollaborator(parcelId, ownerAccountId, collaboratorAccountId) {
+      const parcel = await pool.query<{ owner_account_id: string | null; region_id: string }>("SELECT owner_account_id, region_id FROM parcels WHERE id = $1 LIMIT 1", [parcelId]);
+      if (!parcel.rows[0] || parcel.rows[0].owner_account_id !== ownerAccountId) {
+        return undefined;
+      }
+
+      await pool.query("DELETE FROM parcel_collaborators WHERE parcel_id = $1 AND account_id = $2", [parcelId, collaboratorAccountId]);
+      return readParcelById(parcelId);
     },
     async reassignParcel(parcelId, ownerAccountId) {
       const result = await pool.query<{
@@ -1071,6 +1208,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         name: row.name,
         ownerAccountId: row.owner_account_id,
         ownerDisplayName: row.owner_display_name,
+        ...(await mapParcelCollaborators(pool, row.id)),
         minX: row.min_x,
         maxX: row.max_x,
         minZ: row.min_z,
@@ -1122,6 +1260,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         name: row.name,
         ownerAccountId: row.owner_account_id,
         ownerDisplayName: row.owner_display_name,
+        ...(await mapParcelCollaborators(pool, row.id)),
         minX: row.min_x,
         maxX: row.max_x,
         minZ: row.min_z,

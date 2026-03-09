@@ -343,6 +343,10 @@ async function getBuildPermission(session: Session, x: number, z: number): Promi
     return { allowed: true, parcel };
   }
 
+  if (parcel.collaboratorAccountIds.includes(session.accountId)) {
+    return { allowed: true, parcel };
+  }
+
   if (!parcel.ownerAccountId) {
     return {
       allowed: false,
@@ -398,6 +402,66 @@ export async function adminAssignParcel(token: string, parcelId: string, ownerAc
   const session = getSession(token);
 
   if (!isAdminSession(session)) {
+    return undefined;
+  }
+
+  return persistence.reassignParcel(parcelId, ownerAccountId);
+}
+
+export async function addParcelCollaborator(token: string, parcelId: string, collaboratorAccountId: string): Promise<Parcel | undefined> {
+  const session = getSession(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  const parcel = (await persistence.listParcels(session.regionId)).find((entry) => entry.id === parcelId);
+
+  if (!parcel) {
+    return undefined;
+  }
+
+  if (parcel.ownerAccountId !== session.accountId && !isAdminSession(session)) {
+    return undefined;
+  }
+
+  return persistence.addParcelCollaborator(parcelId, parcel.ownerAccountId ?? session.accountId, collaboratorAccountId);
+}
+
+export async function removeParcelCollaborator(token: string, parcelId: string, collaboratorAccountId: string): Promise<Parcel | undefined> {
+  const session = getSession(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  const parcel = (await persistence.listParcels(session.regionId)).find((entry) => entry.id === parcelId);
+
+  if (!parcel) {
+    return undefined;
+  }
+
+  if (parcel.ownerAccountId !== session.accountId && !isAdminSession(session)) {
+    return undefined;
+  }
+
+  return persistence.removeParcelCollaborator(parcelId, parcel.ownerAccountId ?? session.accountId, collaboratorAccountId);
+}
+
+export async function transferParcel(token: string, parcelId: string, ownerAccountId: string | null): Promise<Parcel | undefined> {
+  const session = getSession(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  const parcel = (await persistence.listParcels(session.regionId)).find((entry) => entry.id === parcelId);
+
+  if (!parcel) {
+    return undefined;
+  }
+
+  if (parcel.ownerAccountId !== session.accountId && !isAdminSession(session)) {
     return undefined;
   }
 
