@@ -74,6 +74,7 @@ npm run dev:postgres
 - uses the existing `/api/regions`, `/api/auth/guest`, `/api/regions/:id/objects`, and `/ws/regions/:regionId` backend flow
 - imports local glTF assets from `native-client/godot/assets/models` when available and falls back to placeholder geometry when needed
 - already includes native login, region, chat, and inventory panels
+- now includes native build-mode object placement and imported avatar scene usage in Godot
 
 ## Building tools
 

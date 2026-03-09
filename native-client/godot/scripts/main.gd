@@ -14,6 +14,9 @@ const WS_SNAPSHOT := "snapshot"
 @onready var auth_request: HTTPRequest = $Network/AuthRequest
 @onready var scene_request: HTTPRequest = $Network/SceneRequest
 @onready var objects_request: HTTPRequest = $Network/ObjectsRequest
+@onready var create_object_request: HTTPRequest = $Network/CreateObjectRequest
+@onready var update_object_request: HTTPRequest = $Network/UpdateObjectRequest
+@onready var delete_object_request: HTTPRequest = $Network/DeleteObjectRequest
 @onready var backend_url_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/BackendUrlInput
 @onready var display_name_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/DisplayNameInput
 @onready var region_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/RegionSelect
@@ -24,6 +27,11 @@ const WS_SNAPSHOT := "snapshot"
 @onready var chat_log: RichTextLabel = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatLog
 @onready var chat_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/ChatInput
 @onready var send_chat_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/SendChatButton
+@onready var build_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildModeButton
+@onready var build_asset_select: OptionButton = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildAssetSelect
+@onready var selection_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/SelectionLabel
+@onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
+@onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
 
 var websocket := WebSocketPeer.new()
 var regions: Array = []
@@ -36,6 +44,16 @@ var yaw := 0.0
 var pitch := 0.45
 var orbiting := false
 var model_scene_cache := {}
+var build_mode := false
+var selected_object_id := ""
+var build_assets := [
+	"/assets/models/market-hall.gltf",
+	"/assets/models/skyport-tower.gltf",
+	"/assets/models/garden-tree.gltf",
+	"/assets/models/park-bench.gltf",
+	"/assets/models/street-lantern.gltf",
+	"/assets/models/dock-crate.gltf"
+]
 
 func _ready() -> void:
 	_setup_ground()
@@ -43,11 +61,16 @@ func _ready() -> void:
 	join_button.pressed.connect(_join_world)
 	send_chat_button.pressed.connect(_send_chat)
 	chat_input.text_submitted.connect(func(_text: String): _send_chat())
+	build_mode_button.pressed.connect(_toggle_build_mode)
+	duplicate_button.pressed.connect(_duplicate_selected_object)
+	delete_button.pressed.connect(_delete_selected_object)
 	regions_request.request_completed.connect(_on_regions_loaded)
 	auth_request.request_completed.connect(_on_auth_completed)
 	scene_request.request_completed.connect(_on_scene_loaded)
 	objects_request.request_completed.connect(_on_objects_loaded)
 	_fetch_regions()
+	for asset in build_assets:
+		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
 
 
 func _process(delta: float) -> void:
@@ -69,6 +92,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
 		yaw -= motion.relative.x * 0.005
 		pitch = clamp(pitch - motion.relative.y * 0.004, 0.15, 1.1)
+	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build_mode:
+		_handle_build_click(event.position)
+	elif event is InputEventKey and event.pressed and build_mode:
+		_handle_build_key(event)
 
 
 func _setup_ground() -> void:
@@ -76,6 +103,13 @@ func _setup_ground() -> void:
 	plane.size = Vector2(60, 60)
 	ground.mesh = plane
 	ground.rotation_degrees.x = -90
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(60, 0.2, 60)
+	shape.shape = box
+	body.add_child(shape)
+	ground.add_child(body)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color("24586a")
 	material.roughness = 0.95
@@ -257,11 +291,21 @@ func _sync_single_object(item: Dictionary) -> void:
 	if object_nodes.has(item.id):
 		object_nodes[item.id].queue_free()
 	var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
+	node.set_meta("object_id", item.id)
 	dynamic_world.add_child(node)
 	object_nodes[item.id] = node
 
 
 func _make_avatar_node(state: Dictionary) -> Node3D:
+	var imported := _instantiate_imported_asset("/assets/models/avatar-runner.gltf")
+	if imported:
+		var label := Label3D.new()
+		label.text = state.displayName
+		label.position.y = 3.4
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		imported.add_child(label)
+		return imported
+
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var body_mesh := CapsuleMesh.new()
@@ -425,6 +469,123 @@ func _send_chat() -> void:
 		"message": message
 	}))
 	chat_input.clear()
+
+
+func _toggle_build_mode() -> void:
+	build_mode = not build_mode
+	build_mode_button.text = "Disable build mode" if build_mode else "Enable build mode"
+	status_label.text = "Build mode enabled" if build_mode else "Build mode disabled"
+
+
+func _handle_build_click(mouse_position: Vector2) -> void:
+	if session.is_empty():
+		return
+
+	var from := camera.project_ray_origin(mouse_position)
+	var to := from + camera.project_ray_normal(mouse_position) * 500.0
+	var space_state := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	var hit := space_state.intersect_ray(query)
+
+	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("object_id"):
+		selected_object_id = str((hit.collider as Node).get_meta("object_id"))
+		selection_label.text = "Selected: %s" % selected_object_id
+		return
+
+	var ground_plane := Plane(Vector3.UP, 0.0)
+	var world_point := ground_plane.intersects_ray(from, camera.project_ray_normal(mouse_position))
+	if world_point == null:
+		return
+
+	await _create_object(Vector3(world_point.x, 0.0, world_point.z))
+
+
+func _handle_build_key(event: InputEventKey) -> void:
+	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
+		return
+
+	var node := object_nodes[selected_object_id]
+	var moved := false
+	if event.physical_keycode == KEY_UP:
+		node.position.z -= 1.0
+		moved = true
+	if event.physical_keycode == KEY_DOWN:
+		node.position.z += 1.0
+		moved = true
+	if event.physical_keycode == KEY_LEFT:
+		node.position.x -= 1.0
+		moved = true
+	if event.physical_keycode == KEY_RIGHT:
+		node.position.x += 1.0
+		moved = true
+	if event.physical_keycode == KEY_Q:
+		node.rotation.y -= 0.2
+		moved = true
+	if event.physical_keycode == KEY_E:
+		node.rotation.y += 0.2
+		moved = true
+	if event.physical_keycode == KEY_R:
+		node.scale *= 1.1
+		moved = true
+	if event.physical_keycode == KEY_F:
+		node.scale *= 0.9
+		moved = true
+	if event.physical_keycode == KEY_DELETE:
+		await _delete_selected_object()
+		return
+
+	if moved:
+		await _update_selected_object(node)
+
+
+func _create_object(position: Vector3) -> void:
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({
+		"token": session.token,
+		"asset": build_assets[build_asset_select.selected],
+		"x": position.x,
+		"y": position.y,
+		"z": position.z,
+		"rotationY": 0.0,
+		"scale": 1.0
+	})
+	var url := "%s/api/regions/%s/objects" % [backend_url_input.text.rstrip("/"), session.regionId]
+	if create_object_request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
+		await create_object_request.request_completed
+
+
+func _update_selected_object(node: Node3D) -> void:
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({
+		"token": session.token,
+		"x": node.position.x,
+		"y": node.position.y,
+		"z": node.position.z,
+		"rotationY": node.rotation.y,
+		"scale": node.scale.x
+	})
+	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
+	if update_object_request.request(url, headers, HTTPClient.METHOD_PATCH, body) == OK:
+		await update_object_request.request_completed
+
+
+func _delete_selected_object() -> void:
+	if selected_object_id.is_empty():
+		return
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({"token": session.token})
+	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
+	if delete_object_request.request(url, headers, HTTPClient.METHOD_DELETE, body) == OK:
+		await delete_object_request.request_completed
+	selected_object_id = ""
+	selection_label.text = "No object selected"
+
+
+func _duplicate_selected_object() -> void:
+	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
+		return
+	var node := object_nodes[selected_object_id]
+	await _create_object(node.position + Vector3(1.0, 0.0, 1.0))
 
 
 func _update_local_movement(delta: float) -> void:

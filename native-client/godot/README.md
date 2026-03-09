@@ -11,6 +11,7 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - loads imported glTF world assets from `native-client/godot/assets/models`
 - supports basic third-person camera orbit and WASD movement
 - includes native login, region selection, chat, and inventory panels
+- includes native object placement, selection, duplication, deletion, and transform hotkeys
 
 ## Open it
 
@@ -22,5 +23,6 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 ## Notes
 
 - The client first tries imported local glTF assets and falls back to simple native placeholder geometry when needed.
+- Build mode in the native client currently uses click-to-place plus keyboard transforms: arrows move, `Q/E` rotate, `R/F` scale, `Delete` removes.
 - It already connects to the real backend API and WebSocket flow.
 - The browser client remains in `public/` as a debug/admin prototype, not the primary viewer.

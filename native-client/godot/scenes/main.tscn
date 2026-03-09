@@ -50,6 +50,12 @@ current = true
 
 [node name="ObjectsRequest" type="HTTPRequest" parent="Network"]
 
+[node name="CreateObjectRequest" type="HTTPRequest" parent="Network"]
+
+[node name="UpdateObjectRequest" type="HTTPRequest" parent="Network"]
+
+[node name="DeleteObjectRequest" type="HTTPRequest" parent="Network"]
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="UI" type="Control" parent="CanvasLayer"]
@@ -134,4 +140,40 @@ offset_top = 20.0
 offset_right = 1000.0
 offset_bottom = 56.0
 text = "WASD move, hold right mouse to orbit, mouse wheel zoom. This is the primary native 3D client scaffold."
+autowrap_mode = 3
+
+[node name="BuildPanel" type="PanelContainer" parent="CanvasLayer/UI"]
+offset_left = 16.0
+offset_top = 360.0
+offset_right = 380.0
+offset_bottom = 610.0
+
+[node name="BuildMargin" type="MarginContainer" parent="CanvasLayer/UI/BuildPanel"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="BuildVBox" type="VBoxContainer" parent="CanvasLayer/UI/BuildPanel/BuildMargin"]
+theme_override_constants/separation = 10
+
+[node name="BuildTitle" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Native build tools"
+
+[node name="BuildModeButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Enable build mode"
+
+[node name="BuildAssetSelect" type="OptionButton" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+
+[node name="SelectionLabel" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "No object selected"
+
+[node name="DuplicateButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Duplicate selected"
+
+[node name="DeleteButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Delete selected"
+
+[node name="BuildHelp" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "In build mode, left click places or selects. Arrow keys move, Q/E rotate, R/F scale."
 autowrap_mode = 3
