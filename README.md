@@ -75,6 +75,7 @@ npm run dev:postgres
 - imports local glTF assets from `native-client/godot/assets/models` when available and falls back to placeholder geometry when needed
 - already includes native login, region, chat, and inventory panels
 - now includes native build-mode object placement and imported avatar scene usage in Godot
+- native client now has parcel-aware build checks and move/rotate/scale editing modes
 
 ## Building tools
 

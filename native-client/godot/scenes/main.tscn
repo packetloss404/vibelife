@@ -165,8 +165,22 @@ text = "Enable build mode"
 
 [node name="BuildAssetSelect" type="OptionButton" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 
+[node name="GizmoModeRow" type="HBoxContainer" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+
+[node name="MoveModeButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow"]
+text = "Move"
+
+[node name="RotateModeButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow"]
+text = "Rotate"
+
+[node name="ScaleModeButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow"]
+text = "Scale"
+
 [node name="SelectionLabel" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 text = "No object selected"
+
+[node name="ParcelLabel" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Parcel: none"
 
 [node name="DuplicateButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 text = "Duplicate selected"

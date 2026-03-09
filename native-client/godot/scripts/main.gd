@@ -29,15 +29,21 @@ const WS_SNAPSHOT := "snapshot"
 @onready var send_chat_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/SendChatButton
 @onready var build_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildModeButton
 @onready var build_asset_select: OptionButton = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildAssetSelect
+@onready var move_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/MoveModeButton
+@onready var rotate_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/RotateModeButton
+@onready var scale_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/ScaleModeButton
 @onready var selection_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/SelectionLabel
+@onready var parcel_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ParcelLabel
 @onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
 @onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
 
 var websocket := WebSocketPeer.new()
 var regions: Array = []
 var session: Dictionary = {}
+var parcels: Array = []
 var avatar_states := {}
 var avatar_nodes := {}
+var avatar_previous_positions := {}
 var object_nodes := {}
 var inventory: Array = []
 var yaw := 0.0
@@ -46,6 +52,9 @@ var orbiting := false
 var model_scene_cache := {}
 var build_mode := false
 var selected_object_id := ""
+var gizmo_mode := "move"
+var drag_selected := false
+var active_parcel: Dictionary = {}
 var build_assets := [
 	"/assets/models/market-hall.gltf",
 	"/assets/models/skyport-tower.gltf",
@@ -62,6 +71,9 @@ func _ready() -> void:
 	send_chat_button.pressed.connect(_send_chat)
 	chat_input.text_submitted.connect(func(_text: String): _send_chat())
 	build_mode_button.pressed.connect(_toggle_build_mode)
+	move_mode_button.pressed.connect(func(): _set_gizmo_mode("move"))
+	rotate_mode_button.pressed.connect(func(): _set_gizmo_mode("rotate"))
+	scale_mode_button.pressed.connect(func(): _set_gizmo_mode("scale"))
 	duplicate_button.pressed.connect(_duplicate_selected_object)
 	delete_button.pressed.connect(_delete_selected_object)
 	regions_request.request_completed.connect(_on_regions_loaded)
@@ -82,20 +94,32 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
+		if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
+			drag_selected = false
+			if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
+				await _update_selected_object(object_nodes[selected_object_id])
 		if button.button_index == MOUSE_BUTTON_RIGHT:
 			orbiting = button.pressed
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
-			camera.position.z = max(6.0, camera.position.z - 1.0)
+			if build_mode and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
+				_apply_gizmo_wheel(1.0)
+			else:
+				camera.position.z = max(6.0, camera.position.z - 1.0)
 		if button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
-			camera.position.z = min(24.0, camera.position.z + 1.0)
+			if build_mode and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
+				_apply_gizmo_wheel(-1.0)
+			else:
+				camera.position.z = min(24.0, camera.position.z + 1.0)
 	elif event is InputEventMouseMotion and orbiting:
 		var motion := event as InputEventMouseMotion
 		yaw -= motion.relative.x * 0.005
 		pitch = clamp(pitch - motion.relative.y * 0.004, 0.15, 1.1)
+	elif event is InputEventMouseMotion and build_mode and drag_selected and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
+		_drag_selected_object(event.position)
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build_mode:
-		_handle_build_click(event.position)
+		await _handle_build_click(event.position)
 	elif event is InputEventKey and event.pressed and build_mode:
-		_handle_build_key(event)
+		await _handle_build_key(event)
 
 
 func _setup_ground() -> void:
@@ -166,6 +190,7 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	avatar_states[payload.avatar.avatarId] = payload.avatar
 	status_label.text = "Connected as %s" % session.displayName
 	inventory = payload.get("inventory", [])
+	parcels = payload.get("parcels", [])
 	_render_inventory()
 	_append_chat("System: joined %s" % session.regionId)
 	await _load_region_scene(session.regionId)
@@ -269,6 +294,7 @@ func _sync_avatars() -> void:
 		if not avatar_states.has(avatar_id):
 			avatar_nodes[avatar_id].queue_free()
 			avatar_nodes.erase(avatar_id)
+			avatar_previous_positions.erase(avatar_id)
 
 	for avatar_id in avatar_states.keys():
 		var state: Dictionary = avatar_states[avatar_id]
@@ -276,6 +302,7 @@ func _sync_avatars() -> void:
 			var avatar_node := _make_avatar_node(state)
 			avatars_root.add_child(avatar_node)
 			avatar_nodes[avatar_id] = avatar_node
+			avatar_previous_positions[avatar_id] = avatar_node.position
 		_update_avatar_node(avatar_nodes[avatar_id], state)
 
 
@@ -292,6 +319,8 @@ func _sync_single_object(item: Dictionary) -> void:
 		object_nodes[item.id].queue_free()
 	var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
 	node.set_meta("object_id", item.id)
+	node.set_meta("parcel", _get_parcel_at(node.position))
+	_apply_selection_visual(node, item.id == selected_object_id)
 	dynamic_world.add_child(node)
 	object_nodes[item.id] = node
 
@@ -304,6 +333,9 @@ func _make_avatar_node(state: Dictionary) -> Node3D:
 		label.position.y = 3.4
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		imported.add_child(label)
+		var animation_player := _find_animation_player(imported)
+		if animation_player and animation_player.has_animation("Idle"):
+			animation_player.play("Idle")
 		return imported
 
 	var root := Node3D.new()
@@ -331,18 +363,25 @@ func _make_avatar_node(state: Dictionary) -> Node3D:
 
 
 func _update_avatar_node(node: Node3D, state: Dictionary) -> void:
+	var previous := avatar_previous_positions.get(state.avatarId, node.position)
 	node.position = Vector3(state.x, state.y, state.z)
+	avatar_previous_positions[state.avatarId] = node.position
 	var appearance: Dictionary = state.get("appearance", {})
-	var body := node.get_child(0) as MeshInstance3D
-	var head := node.get_child(1) as MeshInstance3D
-	var label := node.get_child(2) as Label3D
-	label.text = state.displayName
-	var body_material := StandardMaterial3D.new()
-	body_material.albedo_color = Color(appearance.get("bodyColor", "#8cd8ff"))
-	body.set_surface_override_material(0, body_material)
-	var head_material := StandardMaterial3D.new()
-	head_material.albedo_color = Color(appearance.get("headColor", "#f2c7a8"))
-	head.set_surface_override_material(0, head_material)
+	var label: Label3D = null
+	for child in node.get_children():
+		if child is Label3D:
+			label = child
+		if child is MeshInstance3D:
+			var mesh_child := child as MeshInstance3D
+			var material := StandardMaterial3D.new()
+			if mesh_child.name.to_lower().contains("head"):
+				material.albedo_color = Color(appearance.get("headColor", "#f2c7a8"))
+			else:
+				material.albedo_color = Color(appearance.get("bodyColor", "#8cd8ff"))
+			mesh_child.set_surface_override_material(0, material)
+	if label:
+		label.text = state.displayName
+	_update_avatar_animation(node, previous.distance_to(node.position))
 
 
 func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale_value: float) -> Node3D:
@@ -475,6 +514,13 @@ func _toggle_build_mode() -> void:
 	build_mode = not build_mode
 	build_mode_button.text = "Disable build mode" if build_mode else "Enable build mode"
 	status_label.text = "Build mode enabled" if build_mode else "Build mode disabled"
+	if not build_mode:
+		drag_selected = false
+
+
+func _set_gizmo_mode(mode: String) -> void:
+	gizmo_mode = mode
+	status_label.text = "Gizmo mode: %s" % mode
 
 
 func _handle_build_click(mouse_position: Vector2) -> void:
@@ -489,12 +535,17 @@ func _handle_build_click(mouse_position: Vector2) -> void:
 
 	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("object_id"):
 		selected_object_id = str((hit.collider as Node).get_meta("object_id"))
-		selection_label.text = "Selected: %s" % selected_object_id
+		_update_selection_state()
+		drag_selected = true
 		return
 
 	var ground_plane := Plane(Vector3.UP, 0.0)
 	var world_point := ground_plane.intersects_ray(from, camera.project_ray_normal(mouse_position))
 	if world_point == null:
+		return
+	var parcel := _get_parcel_at(world_point)
+	if not _can_build_in_parcel(parcel):
+		status_label.text = _parcel_denied_reason(parcel)
 		return
 
 	await _create_object(Vector3(world_point.x, 0.0, world_point.z))
@@ -535,6 +586,10 @@ func _handle_build_key(event: InputEventKey) -> void:
 		return
 
 	if moved:
+		var parcel := _get_parcel_at(node.position)
+		if not _can_build_in_parcel(parcel):
+			status_label.text = _parcel_denied_reason(parcel)
+			return
 		await _update_selected_object(node)
 
 
@@ -552,6 +607,9 @@ func _create_object(position: Vector3) -> void:
 	var url := "%s/api/regions/%s/objects" % [backend_url_input.text.rstrip("/"), session.regionId]
 	if create_object_request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 		await create_object_request.request_completed
+		active_parcel = _get_parcel_at(position)
+		parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+		await _load_region_objects(session.regionId)
 
 
 func _update_selected_object(node: Node3D) -> void:
@@ -567,6 +625,8 @@ func _update_selected_object(node: Node3D) -> void:
 	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
 	if update_object_request.request(url, headers, HTTPClient.METHOD_PATCH, body) == OK:
 		await update_object_request.request_completed
+		node.set_meta("parcel", _get_parcel_at(node.position))
+		await _load_region_objects(session.regionId)
 
 
 func _delete_selected_object() -> void:
@@ -577,8 +637,9 @@ func _delete_selected_object() -> void:
 	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
 	if delete_object_request.request(url, headers, HTTPClient.METHOD_DELETE, body) == OK:
 		await delete_object_request.request_completed
+		await _load_region_objects(session.regionId)
 	selected_object_id = ""
-	selection_label.text = "No object selected"
+	_update_selection_state()
 
 
 func _duplicate_selected_object() -> void:
@@ -586,6 +647,102 @@ func _duplicate_selected_object() -> void:
 		return
 	var node := object_nodes[selected_object_id]
 	await _create_object(node.position + Vector3(1.0, 0.0, 1.0))
+
+
+func _apply_gizmo_wheel(direction: float) -> void:
+	var node := object_nodes[selected_object_id]
+	if gizmo_mode == "rotate":
+		node.rotation.y += 0.15 * direction
+	elif gizmo_mode == "scale":
+		node.scale *= 1.0 + (0.08 * direction)
+	else:
+		node.position.y += 0.3 * direction
+	await _update_selected_object(node)
+
+
+func _drag_selected_object(mouse_position: Vector2) -> void:
+	var node := object_nodes[selected_object_id]
+	var from := camera.project_ray_origin(mouse_position)
+	var plane := Plane(Vector3.UP, 0.0)
+	var point := plane.intersects_ray(from, camera.project_ray_normal(mouse_position))
+	if point == null:
+		return
+	if gizmo_mode == "move":
+		node.position.x = round(point.x)
+		node.position.z = round(point.z)
+	elif gizmo_mode == "rotate":
+		node.look_at(Vector3(point.x, node.position.y, point.z), Vector3.UP)
+	elif gizmo_mode == "scale":
+		var distance := max(0.4, node.position.distance_to(Vector3(point.x, node.position.y, point.z)) / 4.0)
+		node.scale = Vector3.ONE * distance
+	active_parcel = _get_parcel_at(node.position)
+	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+
+
+func _get_parcel_at(position: Vector3) -> Dictionary:
+	for parcel in parcels:
+		if position.x >= float(parcel.minX) and position.x <= float(parcel.maxX) and position.z >= float(parcel.minZ) and position.z <= float(parcel.maxZ):
+			return parcel
+	return {}
+
+
+func _can_build_in_parcel(parcel: Dictionary) -> bool:
+	if parcel.is_empty():
+		return false
+	if parcel.tier == "public":
+		return true
+	if parcel.ownerAccountId == null:
+		return false
+	return String(parcel.ownerAccountId) == String(session.accountId)
+
+
+func _parcel_denied_reason(parcel: Dictionary) -> String:
+	if parcel.is_empty():
+		return "Builds must be placed inside a parcel"
+	if parcel.ownerAccountId == null and parcel.tier != "public":
+		return "Claim this parcel before building here"
+	return "Parcel owned by %s" % parcel.get("ownerDisplayName", "another resident")
+
+
+func _update_selection_state() -> void:
+	selection_label.text = "Selected: %s" % selected_object_id if not selected_object_id.is_empty() else "No object selected"
+	for object_id in object_nodes.keys():
+		_apply_selection_visual(object_nodes[object_id], object_id == selected_object_id)
+	active_parcel = object_nodes[selected_object_id].get_meta("parcel", {}) if not selected_object_id.is_empty() and object_nodes.has(selected_object_id) else {}
+	if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
+		active_parcel = _get_parcel_at(object_nodes[selected_object_id].position)
+	else:
+		active_parcel = {}
+	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+
+
+func _apply_selection_visual(node: Node3D, selected: bool) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var mesh_child := child as MeshInstance3D
+			var material := mesh_child.get_active_material(0)
+			if material is StandardMaterial3D:
+				(material as StandardMaterial3D).emission_enabled = selected
+				(material as StandardMaterial3D).emission = Color("ffb36a")
+
+
+func _find_animation_player(node: Node) -> AnimationPlayer:
+	if node is AnimationPlayer:
+		return node as AnimationPlayer
+	for child in node.get_children():
+		var result := _find_animation_player(child)
+		if result:
+			return result
+	return null
+
+
+func _update_avatar_animation(node: Node3D, movement_delta: float) -> void:
+	var animation_player := _find_animation_player(node)
+	if animation_player == null:
+		return
+	var desired := "Walk" if movement_delta > 0.02 else "Idle"
+	if animation_player.has_animation(desired) and animation_player.current_animation != desired:
+		animation_player.play(desired)
 
 
 func _update_local_movement(delta: float) -> void:
