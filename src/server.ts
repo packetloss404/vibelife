@@ -28,6 +28,7 @@ const app = Fastify({ logger: true });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
+const threeDir = path.resolve(__dirname, "../node_modules/three");
 
 await initializeWorldStore();
 
@@ -36,6 +37,12 @@ await app.register(websocket);
 await app.register(fastifyStatic, {
   root: publicDir,
   prefix: "/",
+  wildcard: false
+});
+await app.register(fastifyStatic, {
+  root: threeDir,
+  prefix: "/vendor/three/",
+  decorateReply: false,
   wildcard: false
 });
 

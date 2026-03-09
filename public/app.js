@@ -1,6 +1,6 @@
-import * as THREE from "https://unpkg.com/three@0.179.1/build/three.module.js";
-import { GLTFLoader } from "https://unpkg.com/three@0.179.1/examples/jsm/loaders/GLTFLoader.js";
-import { TransformControls } from "https://unpkg.com/three@0.179.1/examples/jsm/controls/TransformControls.js";
+import * as THREE from "/vendor/three/build/three.module.js";
+import { GLTFLoader } from "/vendor/three/examples/jsm/loaders/GLTFLoader.js";
+import { TransformControls } from "/vendor/three/examples/jsm/controls/TransformControls.js";
 
 const elements = {
   displayName: document.querySelector("#displayName"),
@@ -86,6 +86,8 @@ const viewer = {
   parcelFills: new Map(),
   previewObject: null
 };
+
+let viewerBootError = null;
 
 const tempVectorA = new THREE.Vector3();
 const tempVectorB = new THREE.Vector3();
@@ -797,32 +799,37 @@ const ensureViewer = () => {
     return;
   }
 
-  viewer.scene = new THREE.Scene();
-  viewer.scene.fog = new THREE.Fog(0x0a1117, 24, 78);
-  viewer.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
-  viewer.camera.position.set(0, 8, 14);
+  if (viewerBootError) {
+    throw viewerBootError;
+  }
 
-  viewer.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  viewer.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  viewer.renderer.outputColorSpace = THREE.SRGBColorSpace;
-  viewer.renderer.shadowMap.enabled = true;
-  viewer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  elements.viewport.prepend(viewer.renderer.domElement);
+  try {
+    viewer.scene = new THREE.Scene();
+    viewer.scene.fog = new THREE.Fog(0x0a1117, 24, 78);
+    viewer.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
+    viewer.camera.position.set(0, 8, 14);
 
-  const hemi = new THREE.HemisphereLight(0xa8ecff, 0x183140, 1.9);
-  const sun = new THREE.DirectionalLight(0xfff4dd, 2.4);
-  sun.position.set(18, 24, 7);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -40;
-  sun.shadow.camera.right = 40;
-  sun.shadow.camera.top = 40;
-  sun.shadow.camera.bottom = -40;
-  viewer.scene.add(hemi, sun);
+    viewer.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    viewer.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    viewer.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    viewer.renderer.shadowMap.enabled = true;
+    viewer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    elements.viewport.prepend(viewer.renderer.domElement);
 
-  const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(140, 48, 32),
-    new THREE.ShaderMaterial({
+    const hemi = new THREE.HemisphereLight(0xa8ecff, 0x183140, 1.9);
+    const sun = new THREE.DirectionalLight(0xfff4dd, 2.4);
+    sun.position.set(18, 24, 7);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -40;
+    sun.shadow.camera.right = 40;
+    sun.shadow.camera.top = 40;
+    sun.shadow.camera.bottom = -40;
+    viewer.scene.add(hemi, sun);
+
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(140, 48, 32),
+      new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
         topColor: { value: new THREE.Color(0x6cc2ff) },
@@ -830,76 +837,80 @@ const ensureViewer = () => {
       },
       vertexShader: `varying vec3 vWorldPosition; void main() { vec4 worldPosition = modelMatrix * vec4(position, 1.0); vWorldPosition = worldPosition.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform vec3 topColor; uniform vec3 bottomColor; varying vec3 vWorldPosition; void main() { float h = normalize(vWorldPosition + vec3(0.0, 40.0, 0.0)).y; gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), 1.3), 0.0)), 1.0); }`
-    })
-  );
-  viewer.scene.add(sky);
+      })
+    );
+    viewer.scene.add(sky);
 
-  viewer.terrain = makeTerrain();
-  viewer.staticRoot = new THREE.Group();
-  viewer.dynamicRoot = new THREE.Group();
-  viewer.avatarRoot = new THREE.Group();
-  viewer.scene.add(viewer.terrain, viewer.staticRoot, viewer.dynamicRoot, viewer.avatarRoot);
+    viewer.terrain = makeTerrain();
+    viewer.staticRoot = new THREE.Group();
+    viewer.dynamicRoot = new THREE.Group();
+    viewer.avatarRoot = new THREE.Group();
+    viewer.scene.add(viewer.terrain, viewer.staticRoot, viewer.dynamicRoot, viewer.avatarRoot);
 
-  viewer.transformControls = new TransformControls(viewer.camera, viewer.renderer.domElement);
-  viewer.transformControls.setMode(state.gizmoMode);
-  viewer.transformControls.setTranslationSnap(state.snapSize || null);
-  viewer.transformControls.setRotationSnap(state.snapSize ? Math.PI / 8 : null);
-  viewer.transformControls.setScaleSnap(state.snapSize ? Math.max(0.1, state.snapSize / 2) : null);
-  viewer.transformControls.addEventListener("dragging-changed", (event) => {
-    state.pointerActive = event.value;
-  });
-  viewer.transformControls.addEventListener("objectChange", () => {
-    if (viewer.transformControls.object) {
-      state.activeParcelId = getParcelAt(viewer.transformControls.object.position.x, viewer.transformControls.object.position.z)?.id ?? null;
-      syncParcelLines();
-    }
-    refreshSelectionHelper();
-  });
-  viewer.transformControls.addEventListener("mouseUp", async () => {
-    if (!state.selectedObjectId || !viewer.dynamicObjects.has(state.selectedObjectId)) {
-      return;
-    }
-
-    const object = viewer.dynamicObjects.get(state.selectedObjectId);
-    await updateSelectedObject({
-      x: Number(object.position.x.toFixed(2)),
-      y: Number(object.position.y.toFixed(2)),
-      z: Number(object.position.z.toFixed(2)),
-      rotationY: Number(object.rotation.y.toFixed(2)),
-      scale: Number(object.scale.x.toFixed(2))
+    viewer.transformControls = new TransformControls(viewer.camera, viewer.renderer.domElement);
+    viewer.transformControls.setMode(state.gizmoMode);
+    viewer.transformControls.setTranslationSnap(state.snapSize || null);
+    viewer.transformControls.setRotationSnap(state.snapSize ? Math.PI / 8 : null);
+    viewer.transformControls.setScaleSnap(state.snapSize ? Math.max(0.1, state.snapSize / 2) : null);
+    viewer.transformControls.addEventListener("dragging-changed", (event) => {
+      state.pointerActive = event.value;
     });
-  });
-  viewer.scene.add(viewer.transformControls);
+    viewer.transformControls.addEventListener("objectChange", () => {
+      if (viewer.transformControls.object) {
+        state.activeParcelId = getParcelAt(viewer.transformControls.object.position.x, viewer.transformControls.object.position.z)?.id ?? null;
+        syncParcelLines();
+      }
+      refreshSelectionHelper();
+    });
+    viewer.transformControls.addEventListener("mouseUp", async () => {
+      if (!state.selectedObjectId || !viewer.dynamicObjects.has(state.selectedObjectId)) {
+        return;
+      }
 
-  const waterRing = new THREE.Mesh(
-    new THREE.RingGeometry(28, 38, 80),
-    new THREE.MeshBasicMaterial({ color: 0x4ee4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
-  );
-  waterRing.rotation.x = -Math.PI / 2;
-  waterRing.position.y = -0.2;
-  viewer.scene.add(waterRing);
+      const object = viewer.dynamicObjects.get(state.selectedObjectId);
+      await updateSelectedObject({
+        x: Number(object.position.x.toFixed(2)),
+        y: Number(object.position.y.toFixed(2)),
+        z: Number(object.position.z.toFixed(2)),
+        rotationY: Number(object.rotation.y.toFixed(2)),
+        scale: Number(object.scale.x.toFixed(2))
+      });
+    });
+    viewer.scene.add(viewer.transformControls);
 
-  const resize = () => {
-    const width = elements.viewport.clientWidth;
-    const height = Math.max(460, elements.viewport.clientHeight);
-    viewer.camera.aspect = width / height;
-    viewer.camera.updateProjectionMatrix();
-    viewer.renderer.setSize(width, height);
-  };
+    const waterRing = new THREE.Mesh(
+      new THREE.RingGeometry(28, 38, 80),
+      new THREE.MeshBasicMaterial({ color: 0x4ee4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+    );
+    waterRing.rotation.x = -Math.PI / 2;
+    waterRing.position.y = -0.2;
+    viewer.scene.add(waterRing);
 
-  window.addEventListener("resize", resize);
-  resize();
+    const resize = () => {
+      const width = elements.viewport.clientWidth;
+      const height = Math.max(460, elements.viewport.clientHeight);
+      viewer.camera.aspect = width / height;
+      viewer.camera.updateProjectionMatrix();
+      viewer.renderer.setSize(width, height);
+    };
 
-  const animate = () => {
-    window.requestAnimationFrame(animate);
-    updateLocalMovement();
-    updateCamera();
-    animateAvatars();
-    refreshSelectionHelper();
-    viewer.renderer.render(viewer.scene, viewer.camera);
-  };
+    window.addEventListener("resize", resize);
+    resize();
 
-  animate();
+    const animate = () => {
+      window.requestAnimationFrame(animate);
+      updateLocalMovement();
+      updateCamera();
+      animateAvatars();
+      refreshSelectionHelper();
+      viewer.renderer.render(viewer.scene, viewer.camera);
+    };
+
+    animate();
+  } catch (error) {
+    viewerBootError = error;
+    throw error;
+  }
 };
 
 const syncAvatarMeshes = async () => {
@@ -1266,6 +1277,13 @@ const loadRegions = async () => {
 };
 
 const connect = async () => {
+  try {
+    ensureViewer();
+  } catch (error) {
+    status(`3D viewer failed to start: ${error.message}`, true);
+    throw error;
+  }
+
   if (state.socket) {
     state.socket.close();
   }
@@ -1666,7 +1684,6 @@ elements.viewport.addEventListener(
   { passive: false }
 );
 
-ensureViewer();
 state.presets = loadPresets();
 renderBuilderList();
 renderPresets();
