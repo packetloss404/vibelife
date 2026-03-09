@@ -71,6 +71,8 @@ const state = {
   pitch: 0.45,
   lastSentAt: 0,
   cameraDistance: 12,
+  reconnectAttempts: 0,
+  reconnectTimer: null,
   localVelocity: new THREE.Vector3(),
   movementVector: new THREE.Vector3(),
   regionScene: null,
@@ -1347,6 +1349,9 @@ const connect = async () => {
   if (state.socket) {
     state.socket.close();
   }
+  clearTimeout(state.reconnectTimer);
+  state.reconnectTimer = null;
+  state.reconnectAttempts = 0;
 
   const authMode = elements.authModeSelect.value;
   const endpoint = authMode === "guest" ? "/api/auth/guest" : authMode === "register" ? "/api/auth/register" : "/api/auth/login";
@@ -1387,14 +1392,9 @@ const connect = async () => {
   toast(`${state.account.displayName} connected as ${state.account.kind}/${state.account.role}.`);
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
-
-  socket.addEventListener("open", () => {
-    status(`Connected as ${state.session.displayName} (${state.persistence}).`);
-    appendChat(`System: ${state.session.displayName} entered ${elements.activeRegion.textContent}.`);
-  });
-
-  socket.addEventListener("message", (event) => {
+  const openRegionSocket = () => new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
+  const socket = openRegionSocket();
+  const handleSocketMessage = (event) => {
     const message = JSON.parse(event.data);
 
     if (message.type === "snapshot") {
@@ -1444,11 +1444,34 @@ const connect = async () => {
     }
 
     void syncAvatarMeshes();
+  };
+  const handleSocketClose = () => {
+    status("Disconnected from region.", true);
+    if (state.session) {
+      state.reconnectAttempts += 1;
+      const delay = Math.min(5000, 800 * state.reconnectAttempts);
+      state.reconnectTimer = setTimeout(() => {
+        const retrySocket = openRegionSocket();
+        state.socket = retrySocket;
+        retrySocket.addEventListener("open", () => {
+          state.reconnectAttempts = 0;
+          status(`Reconnected as ${state.session.displayName}.`);
+        });
+        retrySocket.addEventListener("message", handleSocketMessage);
+        retrySocket.addEventListener("close", handleSocketClose);
+      }, delay);
+    }
+  };
+
+  socket.addEventListener("open", () => {
+    state.reconnectAttempts = 0;
+    status(`Connected as ${state.session.displayName} (${state.persistence}).`);
+    appendChat(`System: ${state.session.displayName} entered ${elements.activeRegion.textContent}.`);
   });
 
-  socket.addEventListener("close", () => {
-    status("Disconnected from region.", true);
-  });
+  socket.addEventListener("message", handleSocketMessage);
+
+  socket.addEventListener("close", handleSocketClose);
 
   state.socket = socket;
 };

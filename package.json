@@ -7,9 +7,10 @@
     "dev": "tsx watch src/server.ts",
     "dev:postgres": "set DATABASE_URL=postgres://simtrade:simtrade@127.0.0.1:5432/thirdlife&& tsx watch src/server.ts",
     "generate:assets": "node scripts/generate-assets.mjs",
+    "sync:assets": "node scripts/sync-assets.mjs",
     "start": "node --enable-source-maps dist/server.js",
     "build": "tsc -p tsconfig.json",
-    "check": "npm run build && node scripts/check.mjs"
+    "check": "npm run build && npm run sync:assets && node scripts/check.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",

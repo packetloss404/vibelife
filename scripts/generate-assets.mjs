@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
@@ -210,5 +211,10 @@ for (const [name, build] of Object.entries(assets)) {
   const gltf = await toGltf(scene, animations);
   await writeFile(path.join(outDir, `${name}.gltf`), gltf, "utf8");
 }
+
+await new Promise((resolve, reject) => {
+  const child = spawn(process.execPath, [path.resolve(__dirname, "./sync-assets.mjs")], { stdio: "inherit" });
+  child.on("exit", (code) => code === 0 ? resolve(undefined) : reject(new Error(`sync-assets exited with ${code}`)));
+});
 
 console.log(`Generated ${Object.keys(assets).length} glTF assets in ${outDir}`);

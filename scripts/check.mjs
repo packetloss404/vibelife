@@ -1,4 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 const root = process.cwd();
@@ -23,6 +24,24 @@ async function assertAssetCopiesExist() {
   const missing = webFiles.filter((name) => !nativeFiles.includes(name));
   if (missing.length) {
     throw new Error(`Native Godot assets missing copies for: ${missing.join(", ")}`);
+  }
+
+  const extra = nativeFiles.filter((name) => !webFiles.includes(name));
+  if (extra.length) {
+    throw new Error(`Native Godot assets contain extra files: ${extra.join(", ")}`);
+  }
+
+  for (const file of webFiles) {
+    const [webContent, nativeContent] = await Promise.all([
+      readFile(path.join(webDir, file)),
+      readFile(path.join(nativeDir, file))
+    ]);
+    const webHash = createHash("sha256").update(webContent).digest("hex");
+    const nativeHash = createHash("sha256").update(nativeContent).digest("hex");
+
+    if (webHash !== nativeHash) {
+      throw new Error(`Native Godot asset drift detected for: ${file}`);
+    }
   }
 }
 

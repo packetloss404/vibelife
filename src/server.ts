@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
+import { isRegionCommand } from "./contracts.js";
 import {
   adminAssignParcel,
   adminDeleteRegionObject,
@@ -414,9 +415,11 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
 
   socket.on("message", async (rawMessage: Buffer) => {
     try {
-      const message = JSON.parse(rawMessage.toString()) as
-        | { type: "move"; x: number; z: number; y?: number }
-        | { type: "chat"; message: string };
+      const message = JSON.parse(rawMessage.toString()) as unknown;
+
+      if (!isRegionCommand(message)) {
+        throw new Error("Invalid command payload");
+      }
 
       if (message.type === "move") {
         const avatar = await moveAvatar(
