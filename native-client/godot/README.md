@@ -26,6 +26,16 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 3. Run the project.
 4. Point the backend field to your server, for example `http://127.0.0.1:3000`.
 
+## Desktop export scaffold
+
+- export presets now live in `native-client/godot/export_presets.cfg`
+- default outputs target:
+  - `build/windows/ThirdLifeNative.exe`
+  - `build/linux/thirdlife-native.x86_64`
+  - `build/macos/ThirdLifeNative.zip`
+- in Godot, install the matching export templates, then use `Project -> Export`
+- update icons, signing, and bundle identifiers before shipping
+
 ## Notes
 
 - The client first tries imported local glTF assets and falls back to simple native placeholder geometry when needed.

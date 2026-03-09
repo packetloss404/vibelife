@@ -116,7 +116,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-	if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
+		if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
 			drag_selected = false
 			active_drag_axis = ""
 			if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
@@ -186,6 +186,7 @@ func _on_regions_loaded(_result: int, response_code: int, _headers: PackedString
 	status_label.text = "Ready to join."
 	status_pill.text = "Ready"
 	_save_login_state()
+	_apply_client_settings()
 
 
 func _join_world() -> void:
@@ -217,6 +218,7 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	status_label.text = "Connected as %s" % session.displayName
 	status_pill.text = "Connected"
 	_save_login_state()
+	_apply_client_settings()
 	inventory = payload.get("inventory", [])
 	parcels = payload.get("parcels", [])
 	_render_inventory()
@@ -604,6 +606,9 @@ func _equip_selected_inventory_item() -> void:
 		var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
 		inventory = payload.get("inventory", inventory)
 		_render_inventory()
+		if payload.has("avatar"):
+			avatar_states[payload.avatar.avatarId] = payload.avatar
+			_sync_avatars()
 		status_label.text = "Equipped %s" % item.name
 	request.queue_free()
 
@@ -630,6 +635,7 @@ func _toggle_build_mode() -> void:
 	if not build_mode:
 		drag_selected = false
 		active_drag_axis = ""
+	_claim_button_state()
 
 
 func _set_gizmo_mode(mode: String) -> void:
@@ -727,9 +733,10 @@ func _create_object(position: Vector3) -> void:
 	var url := "%s/api/regions/%s/objects" % [backend_url_input.text.rstrip("/"), session.regionId]
 	if create_object_request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
 		await create_object_request.request_completed
-		active_parcel = _get_parcel_at(position)
-		parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
-		await _load_region_objects(session.regionId)
+	active_parcel = _get_parcel_at(position)
+	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+	_claim_button_state()
+	await _load_region_objects(session.regionId)
 
 
 func _update_selected_object(node: Node3D) -> void:
@@ -805,6 +812,7 @@ func _drag_selected_object(event: InputEventMouseMotion) -> void:
 		node.scale *= scale_delta
 	active_parcel = _get_parcel_at(node.position)
 	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
+	_claim_button_state()
 
 
 func _get_parcel_at(position: Vector3) -> Dictionary:
@@ -912,6 +920,36 @@ func _save_login_state() -> void:
 		_persist_profiles()
 
 
+func _load_client_settings() -> void:
+	if FileAccess.file_exists(SETTINGS_SAVE_PATH):
+		var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.READ)
+		if file:
+			var parsed = JSON.parse_string(file.get_as_text())
+			if parsed is Dictionary:
+				fullscreen_check.button_pressed = parsed.get("fullscreen", false)
+				mouse_sensitivity_slider.value = float(parsed.get("mouseSensitivity", 1.0))
+				camera_distance_slider.value = float(parsed.get("cameraDistance", 12.0))
+	_apply_client_settings()
+
+
+func _save_client_settings() -> void:
+	var payload := {
+		"fullscreen": fullscreen_check.button_pressed,
+		"mouseSensitivity": mouse_sensitivity_slider.value,
+		"cameraDistance": camera_distance_slider.value
+	}
+	var file := FileAccess.open(SETTINGS_SAVE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(payload))
+	_apply_client_settings()
+	status_label.text = "Client settings saved"
+
+
+func _apply_client_settings() -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen_check.button_pressed else DisplayServer.WINDOW_MODE_WINDOWED)
+	camera.position.z = camera_distance_slider.value
+
+
 func _parcel_color(parcel: Dictionary, transparent: bool) -> Color:
 	if not active_parcel.is_empty() and parcel.id == active_parcel.get("id", ""):
 		return Color(1.0, 0.95, 0.54, 0.18 if transparent else 1.0)
@@ -968,6 +1006,7 @@ func _update_selection_state() -> void:
 		active_parcel = {}
 	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
 	_update_gizmo_handles()
+	_claim_button_state()
 
 
 func _apply_selection_visual(node: Node3D, selected: bool) -> void:
@@ -1033,6 +1072,35 @@ func _update_gizmo_handles() -> void:
 	x_handle.rotation_degrees.z = 90
 	z_handle.rotation_degrees.x = 90
 	y_handle.rotation = Vector3.ZERO
+
+
+func _claim_button_state() -> void:
+	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or active_parcel.get("ownerAccountId", null) != null
+
+
+func _claim_active_parcel() -> void:
+	if active_parcel.is_empty() or session.is_empty() or active_parcel.get("tier", "") == "public":
+		return
+	var request := HTTPRequest.new()
+	add_child(request)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({"token": session.token, "parcelId": active_parcel.id})
+	var url := "%s/api/parcels/claim" % backend_url_input.text.rstrip("/")
+	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
+		var result := await request.request_completed
+		if int(result[1]) == 200:
+			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+			var parcel = payload.get("parcel", {})
+			for index in range(parcels.size()):
+				if parcels[index].id == parcel.id:
+					parcels[index] = parcel
+			active_parcel = parcel
+			_render_parcels()
+			_claim_button_state()
+			status_label.text = "Claimed %s" % parcel.get("name", "parcel")
+		else:
+			status_label.text = "Parcel claim failed"
+	request.queue_free()
 
 
 func _on_inventory_item_selected(index: int) -> void:
