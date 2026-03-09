@@ -11,6 +11,9 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - browser 3D viewer with click-to-move avatar sync
 - region scene manifests and generated glTF assets
 - in-world object placement, selection, transform, and deletion tools
+- imported avatar models with idle and walk clips
+- live WebSocket sync for object creation, updates, and deletion
+- parcel-aware build permissions for public and owned land
 
 ## Why this is a good 2026-style starting point
 
@@ -62,6 +65,7 @@ npm run dev:postgres
 - click terrain to place the selected asset
 - click one of your placed objects to select it
 - use arrow keys to move, `Q` and `E` to rotate, `R` and `F` to scale, and `Delete` to remove it
+- public parcels allow open building, while owned parcels only allow the owner to place or move objects there
 
 ## Suggested next milestones
 

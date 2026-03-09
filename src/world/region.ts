@@ -1,4 +1,4 @@
-import type { AvatarState } from "./store.js";
+import type { AvatarState, RegionObject } from "./store.js";
 
 type RegionSocket = {
   OPEN: number;
@@ -7,11 +7,14 @@ type RegionSocket = {
 };
 
 type RegionEvent =
-  | { type: "snapshot"; avatars: AvatarState[] }
+  | { type: "snapshot"; avatars: AvatarState[]; objects: RegionObject[] }
   | { type: "avatar:joined"; avatar: AvatarState }
   | { type: "avatar:moved"; avatar: AvatarState }
   | { type: "avatar:left"; avatarId: string }
-  | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string };
+  | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string }
+  | { type: "object:created"; object: RegionObject }
+  | { type: "object:updated"; object: RegionObject }
+  | { type: "object:deleted"; objectId: string };
 
 type RegionPeer = {
   avatarId: string;
@@ -42,7 +45,12 @@ export function leaveRegion(regionId: string, avatarId: string) {
 export function broadcastRegion(regionId: string, event: RegionEvent) {
   const payload = JSON.stringify(event);
 
-  for (const peer of getPeers(regionId).values()) {
+  for (const [avatarId, peer] of getPeers(regionId).entries()) {
+    if (!peer.socket || typeof peer.socket.send !== "function") {
+      getPeers(regionId).delete(avatarId);
+      continue;
+    }
+
     if (peer.socket.readyState === peer.socket.OPEN) {
       peer.socket.send(payload);
     }

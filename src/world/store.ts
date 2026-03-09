@@ -19,6 +19,12 @@ export type Parcel = ParcelRecord;
 
 export type RegionObject = RegionObjectRecord;
 
+export type BuildPermission = {
+  allowed: boolean;
+  parcel: Parcel | null;
+  reason?: string;
+};
+
 export type Session = {
   token: string;
   accountId: string;
@@ -161,6 +167,45 @@ export async function listParcels(regionId: string): Promise<Parcel[]> {
   return persistence.listParcels(regionId);
 }
 
+function pointInParcel(parcel: Parcel, x: number, z: number) {
+  return x >= parcel.minX && x <= parcel.maxX && z >= parcel.minZ && z <= parcel.maxZ;
+}
+
+async function getBuildPermission(session: Session, x: number, z: number): Promise<BuildPermission> {
+  const parcels = await persistence.listParcels(session.regionId);
+  const parcel = parcels.find((entry) => pointInParcel(entry, x, z)) ?? null;
+
+  if (!parcel) {
+    return {
+      allowed: false,
+      parcel: null,
+      reason: "builds must be placed inside a parcel"
+    };
+  }
+
+  if (parcel.tier === "public") {
+    return { allowed: true, parcel };
+  }
+
+  if (parcel.ownerAccountId === session.accountId) {
+    return { allowed: true, parcel };
+  }
+
+  if (!parcel.ownerAccountId) {
+    return {
+      allowed: false,
+      parcel,
+      reason: "claim this parcel before building here"
+    };
+  }
+
+  return {
+    allowed: false,
+    parcel,
+    reason: `parcel owned by ${parcel.ownerDisplayName ?? "another resident"}`
+  };
+}
+
 export async function claimParcel(token: string, parcelId: string): Promise<Parcel | undefined> {
   const session = sessions.get(token);
 
@@ -182,14 +227,27 @@ export async function createRegionObject(token: string, input: {
   z: number;
   rotationY: number;
   scale: number;
-}): Promise<RegionObject | undefined> {
+}): Promise<{ object?: RegionObject; permission: BuildPermission }> {
   const session = sessions.get(token);
 
   if (!session) {
-    return undefined;
+    return {
+      permission: {
+        allowed: false,
+        parcel: null,
+        reason: "invalid session"
+      }
+    };
   }
 
-  return persistence.createRegionObject({
+  const permission = await getBuildPermission(session, input.x, input.z);
+
+  if (!permission.allowed) {
+    return { permission };
+  }
+
+  return {
+    object: await persistence.createRegionObject({
     id: randomUUID(),
     regionId: session.regionId,
     ownerAccountId: session.accountId,
@@ -201,7 +259,9 @@ export async function createRegionObject(token: string, input: {
     scale: input.scale,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
-  });
+    }),
+    permission
+  };
 }
 
 export async function updateRegionObject(token: string, objectId: string, updates: {
@@ -210,17 +270,32 @@ export async function updateRegionObject(token: string, objectId: string, update
   z: number;
   rotationY: number;
   scale: number;
-}): Promise<RegionObject | undefined> {
+}): Promise<{ object?: RegionObject; permission: BuildPermission }> {
   const session = sessions.get(token);
 
   if (!session) {
-    return undefined;
+    return {
+      permission: {
+        allowed: false,
+        parcel: null,
+        reason: "invalid session"
+      }
+    };
   }
 
-  return persistence.updateRegionObject(objectId, session.accountId, {
-    ...updates,
-    updatedAt: new Date().toISOString()
-  });
+  const permission = await getBuildPermission(session, updates.x, updates.z);
+
+  if (!permission.allowed) {
+    return { permission };
+  }
+
+  return {
+    object: await persistence.updateRegionObject(objectId, session.accountId, {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }),
+    permission
+  };
 }
 
 export async function deleteRegionObject(token: string, objectId: string): Promise<boolean> {

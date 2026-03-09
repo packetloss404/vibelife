@@ -17,8 +17,8 @@ import {
   listRegionObjects,
   listRegions,
   moveAvatar,
-  removeAvatar
-  , updateRegionObject
+  removeAvatar,
+  updateRegionObject
 } from "./world/store.js";
 import { broadcastRegion, joinRegion, leaveRegion } from "./world/region.js";
 
@@ -109,11 +109,13 @@ app.post<{
     scale: scale ?? 1
   });
 
-  if (!object || object.regionId !== request.params.regionId) {
-    return reply.code(403).send({ error: "unable to create object in region" });
+  if (!object.object || object.object.regionId !== request.params.regionId) {
+    return reply.code(403).send({ error: object.permission.reason ?? "unable to create object in region" });
   }
 
-  return reply.send({ object });
+  broadcastRegion(request.params.regionId, { type: "object:created", object: object.object });
+
+  return reply.send({ object: object.object });
 });
 
 app.patch<{
@@ -128,11 +130,14 @@ app.patch<{
 
   const object = await updateRegionObject(token, request.params.objectId, { x, y, z, rotationY, scale });
 
-  if (!object) {
-    return reply.code(404).send({ error: "object not found or not owned" });
+  if (!object.object) {
+    const statusCode = object.permission.allowed ? 404 : 403;
+    return reply.code(statusCode).send({ error: object.permission.reason ?? "object not found or not owned" });
   }
 
-  return reply.send({ object });
+  broadcastRegion(object.object.regionId, { type: "object:updated", object: object.object });
+
+  return reply.send({ object: object.object });
 });
 
 app.delete<{
@@ -145,20 +150,25 @@ app.delete<{
     return reply.code(400).send({ error: "token is required" });
   }
 
+  const session = getSession(token);
   const deleted = await deleteRegionObject(token, request.params.objectId);
 
   if (!deleted) {
     return reply.code(404).send({ error: "object not found or not owned" });
   }
 
+  if (session) {
+    broadcastRegion(session.regionId, { type: "object:deleted", objectId: request.params.objectId });
+  }
+
   return reply.send({ ok: true });
 });
 
-app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {
+app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) => {
   const token = (request.query as { token?: string }).token;
 
   if (!token) {
-    connection.websocket.close(1008, "Missing token");
+    socket.close(1008, "Missing token");
     return;
   }
 
@@ -166,15 +176,16 @@ app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {
   const regionId = (request.params as { regionId: string }).regionId;
 
   if (!session || session.regionId !== regionId) {
-    connection.websocket.close(1008, "Invalid session");
+    socket.close(1008, "Invalid session");
     return;
   }
 
-  joinRegion(regionId, session.avatarId, connection.websocket);
+  joinRegion(regionId, session.avatarId, socket);
 
-  connection.websocket.send(JSON.stringify({
+  socket.send(JSON.stringify({
     type: "snapshot",
-    avatars: getRegionPopulation(regionId)
+    avatars: getRegionPopulation(regionId),
+    objects: await listRegionObjects(regionId)
   }));
 
   const joinedAvatar = getRegionPopulation(regionId).find((avatar) => avatar.avatarId === session.avatarId);
@@ -183,7 +194,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {
     broadcastRegion(regionId, { type: "avatar:joined", avatar: joinedAvatar });
   }
 
-  connection.websocket.on("message", async (rawMessage: Buffer) => {
+  socket.on("message", async (rawMessage: Buffer) => {
     try {
       const message = JSON.parse(rawMessage.toString()) as
         | { type: "move"; x: number; z: number; y?: number }
@@ -212,7 +223,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {
         });
       }
     } catch {
-      connection.websocket.send(JSON.stringify({
+      socket.send(JSON.stringify({
         type: "chat",
         avatarId: "system",
         displayName: "System",
@@ -222,7 +233,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, (connection, request) => {
     }
   });
 
-  connection.websocket.on("close", () => {
+  socket.on("close", () => {
     leaveRegion(regionId, session.avatarId);
     const removed = removeAvatar(token);
 

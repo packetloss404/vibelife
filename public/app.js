@@ -59,7 +59,8 @@ const viewer = {
   dynamicObjects: new Map(),
   selectionHelper: null,
   terrainBounds: 30,
-  assetCache: new Map()
+  assetCache: new Map(),
+  avatarMixers: new Map()
 };
 
 const tempVectorA = new THREE.Vector3();
@@ -302,11 +303,13 @@ const makeTerrain = () => {
 
 const loadGltfAsset = async (url) => {
   if (!viewer.assetCache.has(url)) {
-    viewer.assetCache.set(url, loader.loadAsync(url).then((gltf) => gltf.scene));
+    viewer.assetCache.set(url, loader.loadAsync(url));
   }
 
-  const scene = await viewer.assetCache.get(url);
-  return scene.clone(true);
+  const gltf = await viewer.assetCache.get(url);
+  const scene = gltf.scene.clone(true);
+  scene.animations = gltf.animations;
+  return scene;
 };
 
 const createLanternGlow = () => {
@@ -315,8 +318,54 @@ const createLanternGlow = () => {
   return light;
 };
 
+const createAvatarEntity = async (avatarId, displayName, isSelf) => {
+  try {
+    const object = await loadGltfAsset("/assets/models/avatar-runner.gltf");
+    object.userData.avatarId = avatarId;
+    object.userData.isAvatar = true;
+    object.userData.parts = {};
+    object.userData.targetPosition = new THREE.Vector3();
+    object.userData.displayName = displayName;
+
+    if (isSelf) {
+      object.traverse((child) => {
+        if (child.isMesh && child.material?.color) {
+          child.material = child.material.clone();
+          child.material.color.offsetHSL(0.08, 0.05, 0.02);
+        }
+      });
+    }
+
+    object.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    object.add(makeLabelSprite(displayName));
+
+    const avatarScene = object.getObjectByName("AvatarRoot") ?? object;
+    const mixer = new THREE.AnimationMixer(avatarScene);
+    const actions = {};
+
+    if (object.animations && object.animations.length) {
+      for (const clip of object.animations) {
+        actions[clip.name] = mixer.clipAction(clip);
+      }
+      actions.Idle?.play();
+    }
+
+    viewer.avatarMixers.set(avatarId, { mixer, actions, active: "Idle" });
+    return object;
+  } catch {
+    return createHumanoid(avatarId, displayName, isSelf);
+  }
+};
+
 const buildRenderableObject = async (item, editable = false) => {
   const object = await loadGltfAsset(item.asset);
+  object.animations = object.animations ?? [];
   object.position.set(item.x, item.y, item.z);
   object.rotation.y = item.rotationY ?? 0;
   object.scale.setScalar(item.scale ?? 1);
@@ -391,15 +440,8 @@ const loadRegionScene = async (regionId) => {
   );
 };
 
-const syncRegionObjects = async () => {
-  if (!state.session) {
-    return;
-  }
-
-  const response = await fetch(`/api/regions/${state.session.regionId}/objects`);
-  const data = await response.json();
-  state.regionObjects = data.objects;
-
+const applyRegionObjects = async () => {
+  
   for (const [objectId, mesh] of viewer.dynamicObjects.entries()) {
     if (!state.regionObjects.some((item) => item.id === objectId)) {
       viewer.dynamicRoot.remove(mesh);
@@ -426,6 +468,17 @@ const syncRegionObjects = async () => {
   }
 
   renderBuilderList();
+};
+
+const syncRegionObjects = async () => {
+  if (!state.session) {
+    return;
+  }
+
+  const response = await fetch(`/api/regions/${state.session.regionId}/objects`);
+  const data = await response.json();
+  state.regionObjects = data.objects;
+  await applyRegionObjects();
 };
 
 const ensureViewer = () => {
@@ -507,20 +560,21 @@ const ensureViewer = () => {
   animate();
 };
 
-const syncAvatarMeshes = () => {
+const syncAvatarMeshes = async () => {
   ensureViewer();
 
   for (const [avatarId, mesh] of state.avatarMeshes.entries()) {
     if (!state.avatars.has(avatarId)) {
       viewer.avatarRoot.remove(mesh);
       state.avatarMeshes.delete(avatarId);
+      viewer.avatarMixers.delete(avatarId);
     }
   }
 
   for (const [avatarId, avatar] of state.avatars.entries()) {
     let mesh = state.avatarMeshes.get(avatarId);
     if (!mesh) {
-      mesh = createHumanoid(avatarId, avatar.displayName, state.session && avatarId === state.session.avatarId);
+      mesh = await createAvatarEntity(avatarId, avatar.displayName, state.session && avatarId === state.session.avatarId);
       viewer.avatarRoot.add(mesh);
       state.avatarMeshes.set(avatarId, mesh);
     }
@@ -558,6 +612,7 @@ const updateCamera = () => {
 
 const animateAvatars = () => {
   const elapsed = state.clock.getElapsedTime();
+  const deltaTime = state.clock.getDelta();
 
   for (const [avatarId, mesh] of state.avatarMeshes.entries()) {
     const target = mesh.userData.targetPosition;
@@ -575,21 +630,33 @@ const animateAvatars = () => {
 
     const stride = Math.min(1, delta * 32);
     const swing = Math.sin(elapsed * 8 + avatarId.length) * stride;
-    mesh.userData.parts.leftLeg.rotation.x = swing;
-    mesh.userData.parts.rightLeg.rotation.x = -swing;
-    mesh.userData.parts.leftArm.rotation.x = -swing * 0.7;
-    mesh.userData.parts.rightArm.rotation.x = swing * 0.7;
+    if (mesh.userData.parts?.leftLeg) {
+      mesh.userData.parts.leftLeg.rotation.x = swing;
+      mesh.userData.parts.rightLeg.rotation.x = -swing;
+      mesh.userData.parts.leftArm.rotation.x = -swing * 0.7;
+      mesh.userData.parts.rightArm.rotation.x = swing * 0.7;
+    }
+
+    const controller = viewer.avatarMixers.get(avatarId);
+    if (controller) {
+      controller.mixer.update(deltaTime);
+      const nextAction = stride > 0.08 ? "Walk" : "Idle";
+      if (controller.active !== nextAction && controller.actions[nextAction]) {
+        controller.actions[controller.active]?.fadeOut(0.18);
+        controller.actions[nextAction].reset().fadeIn(0.18).play();
+        controller.active = nextAction;
+      }
+    }
   }
 };
 
 const updateLocalMovement = () => {
   const selfAvatar = getSelfAvatar();
   if (!selfAvatar || !state.socket || state.socket.readyState !== WebSocket.OPEN) {
-    state.clock.getDelta();
     return;
   }
 
-  const delta = Math.min(0.05, state.clock.getDelta());
+  const delta = Math.min(0.05, 1 / 60);
   state.movementVector.set(0, 0, 0);
   if (state.keys.has("KeyW")) state.movementVector.z -= 1;
   if (state.keys.has("KeyS")) state.movementVector.z += 1;
@@ -766,7 +833,7 @@ const connect = async () => {
   state.avatars = new Map([[data.avatar.avatarId, data.avatar]]);
   renderInventory(data.inventory);
   renderParcels();
-  syncAvatarMeshes();
+  await syncAvatarMeshes();
   await loadRegionScene(state.session.regionId);
   await syncRegionObjects();
 
@@ -787,6 +854,8 @@ const connect = async () => {
 
     if (message.type === "snapshot") {
       state.avatars = new Map(message.avatars.map((avatar) => [avatar.avatarId, avatar]));
+      state.regionObjects = message.objects;
+      void applyRegionObjects();
     }
     if (message.type === "avatar:joined" || message.type === "avatar:moved") {
       state.avatars.set(message.avatar.avatarId, message.avatar);
@@ -798,7 +867,22 @@ const connect = async () => {
       appendChat(`${message.displayName}: ${message.message}`);
     }
 
-    syncAvatarMeshes();
+    if (message.type === "object:created") {
+      state.regionObjects = [...state.regionObjects.filter((item) => item.id !== message.object.id), message.object];
+      void applyRegionObjects();
+    }
+
+    if (message.type === "object:updated") {
+      state.regionObjects = state.regionObjects.map((item) => item.id === message.object.id ? message.object : item);
+      void applyRegionObjects();
+    }
+
+    if (message.type === "object:deleted") {
+      state.regionObjects = state.regionObjects.filter((item) => item.id !== message.objectId);
+      void applyRegionObjects();
+    }
+
+    void syncAvatarMeshes();
   });
 
   socket.addEventListener("close", () => {
