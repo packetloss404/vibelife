@@ -18,6 +18,7 @@ import {
   listRegions,
   moveAvatar,
   removeAvatar,
+  updateAvatarAppearance,
   updateRegionObject
 } from "./world/store.js";
 import { broadcastRegion, joinRegion, leaveRegion } from "./world/region.js";
@@ -61,16 +62,48 @@ app.get<{ Params: { regionId: string } }>("/api/regions/:regionId/objects", asyn
 
 app.post<{ Body: { displayName?: string; regionId?: string } }>("/api/auth/guest", async (request, reply) => {
   const displayName = (request.body.displayName ?? "Guest Voyager").trim().slice(0, 32) || "Guest Voyager";
-  const { account, inventory, parcels, session, avatar } = await createGuestSession(displayName, request.body.regionId);
+  const { account, inventory, parcels, appearance, session, avatar } = await createGuestSession(displayName, request.body.regionId);
 
   return reply.send({
     session,
     account,
     inventory,
     parcels,
+    appearance,
     avatar,
     persistence: getPersistenceMode()
   });
+});
+
+app.patch<{
+  Body: {
+    token?: string;
+    bodyColor?: string;
+    accentColor?: string;
+    headColor?: string;
+    hairColor?: string;
+    outfit?: string;
+    accessory?: string;
+  };
+}>("/api/avatar/appearance", async (request, reply) => {
+  const { token, bodyColor, accentColor, headColor, hairColor, outfit, accessory } = request.body;
+
+  if (!token || !bodyColor || !accentColor || !headColor || !hairColor || !outfit || !accessory) {
+    return reply.code(400).send({ error: "complete avatar appearance payload is required" });
+  }
+
+  const avatar = await updateAvatarAppearance(token, { bodyColor, accentColor, headColor, hairColor, outfit, accessory });
+
+  if (!avatar) {
+    return reply.code(404).send({ error: "avatar session not found" });
+  }
+
+  const session = getSession(token);
+  if (session) {
+    broadcastRegion(session.regionId, { type: "avatar:updated", avatar });
+  }
+
+  return reply.send({ avatar });
 });
 
 app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", async (request, reply) => {

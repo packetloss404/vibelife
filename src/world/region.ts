@@ -10,6 +10,7 @@ type RegionEvent =
   | { type: "snapshot"; avatars: AvatarState[]; objects: RegionObject[] }
   | { type: "avatar:joined"; avatar: AvatarState }
   | { type: "avatar:moved"; avatar: AvatarState }
+  | { type: "avatar:updated"; avatar: AvatarState }
   | { type: "avatar:left"; avatarId: string }
   | { type: "chat"; avatarId: string; displayName: string; message: string; createdAt: string }
   | { type: "object:created"; object: RegionObject }

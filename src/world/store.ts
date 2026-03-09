@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   createPersistenceLayer,
   type AccountRecord,
+  type AvatarAppearanceRecord,
   type AvatarPositionRecord,
   type InventoryItemRecord,
   type ParcelRecord,
@@ -14,6 +15,7 @@ export type RegionSummary = RegionRecord;
 export type Account = AccountRecord;
 
 export type InventoryItem = InventoryItemRecord;
+export type AvatarAppearance = AvatarAppearanceRecord;
 
 export type Parcel = ParcelRecord;
 
@@ -37,6 +39,7 @@ export type AvatarState = {
   avatarId: string;
   accountId: string;
   displayName: string;
+  appearance: AvatarAppearance;
   x: number;
   y: number;
   z: number;
@@ -71,12 +74,14 @@ export async function createGuestSession(displayName: string, regionId?: string)
   account: Account;
   inventory: InventoryItem[];
   parcels: Parcel[];
+  appearance: AvatarAppearance;
   session: Session;
   avatar: AvatarState;
 }> {
   const region = regions.find((entry) => entry.id === regionId) ?? regions[0];
   const { account } = await persistence.getOrCreateGuestAccount(displayName);
   const inventory = await persistence.getInventory(account.id);
+  const appearance = await persistence.getAvatarAppearance(account.id);
   const parcels = await persistence.listParcels(region.id);
   const savedPosition = await persistence.getAvatarPosition(account.id, region.id);
   const avatarId = randomUUID();
@@ -93,6 +98,7 @@ export async function createGuestSession(displayName: string, regionId?: string)
     avatarId,
     accountId: account.id,
     displayName,
+    appearance,
     x: spawn.x,
     y: spawn.y,
     z: spawn.z,
@@ -118,7 +124,7 @@ export async function createGuestSession(displayName: string, regionId?: string)
     updatedAt: avatar.updatedAt
   });
 
-  return { account, inventory, parcels, session, avatar };
+  return { account, inventory, parcels, appearance, session, avatar };
 }
 
 export function getSession(token: string): Session | undefined {
@@ -160,6 +166,36 @@ export async function moveAvatar(token: string, x: number, z: number, y = 0): Pr
     z: nextState.z,
     updatedAt: nextState.updatedAt
   });
+  return nextState;
+}
+
+export async function updateAvatarAppearance(token: string, updates: Omit<AvatarAppearance, "accountId" | "updatedAt">): Promise<AvatarState | undefined> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  const region = avatarsByRegion.get(session.regionId);
+  const avatar = region?.get(session.avatarId);
+
+  if (!region || !avatar) {
+    return undefined;
+  }
+
+  const appearance = await persistence.saveAvatarAppearance({
+    accountId: session.accountId,
+    ...updates,
+    updatedAt: new Date().toISOString()
+  });
+
+  const nextState: AvatarState = {
+    ...avatar,
+    appearance,
+    updatedAt: new Date().toISOString()
+  };
+
+  region.set(session.avatarId, nextState);
   return nextState;
 }
 

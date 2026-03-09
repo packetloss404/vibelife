@@ -14,6 +14,8 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - imported avatar models with idle and walk clips
 - live WebSocket sync for object creation, updates, and deletion
 - parcel-aware build permissions for public and owned land
+- avatar appearance controls with outfits, accessories, and synced style updates
+- mouse transform gizmos for move, rotate, and scale editing
 
 ## Why this is a good 2026-style starting point
 
@@ -64,8 +66,16 @@ npm run dev:postgres
 - enable build mode in the sidebar after joining a region
 - click terrain to place the selected asset
 - click one of your placed objects to select it
+- use move, rotate, and scale gizmo buttons for mouse-driven editing
 - use arrow keys to move, `Q` and `E` to rotate, `R` and `F` to scale, and `Delete` to remove it
 - public parcels allow open building, while owned parcels only allow the owner to place or move objects there
+
+## Avatar styling
+
+- change body, accent, and hair colors from the sidebar
+- switch between voyager, pilot, and formal outfits
+- add visor, cape, or utility pack accessories
+- style updates sync live to everyone in the same region
 
 ## Suggested next milestones
 

@@ -111,6 +111,11 @@
         background: rgba(4, 10, 14, 0.8);
       }
 
+      input[type="color"] {
+        min-height: 48px;
+        padding: 6px;
+      }
+
       button {
         cursor: pointer;
         color: #072018;
@@ -240,6 +245,43 @@
 
         <div class="card stack">
           <div>
+            <p class="muted">Avatar styling</p>
+            <h2>Appearance and clothing</h2>
+          </div>
+          <label>
+            Body color
+            <input id="bodyColor" type="color" value="#8cd8ff" />
+          </label>
+          <label>
+            Accent color
+            <input id="accentColor" type="color" value="#17323f" />
+          </label>
+          <label>
+            Hair and accessory color
+            <input id="hairColor" type="color" value="#1b1d27" />
+          </label>
+          <label>
+            Outfit
+            <select id="outfitSelect">
+              <option value="voyager">Voyager coat</option>
+              <option value="pilot">Pilot jacket</option>
+              <option value="formal">Formal sash</option>
+            </select>
+          </label>
+          <label>
+            Accessory
+            <select id="accessorySelect">
+              <option value="none">None</option>
+              <option value="visor">Visor</option>
+              <option value="cape">Cape</option>
+              <option value="pack">Utility pack</option>
+            </select>
+          </label>
+          <button id="saveAvatarButton">Save avatar style</button>
+        </div>
+
+        <div class="card stack">
+          <div>
             <p class="muted">Build tools</p>
             <h2>Sandbox editor</h2>
           </div>
@@ -255,6 +297,11 @@
               <option value="/assets/models/dock-crate.gltf">Dock crate</option>
             </select>
           </label>
+          <div id="gizmoModeButtons" class="chat-row">
+            <button data-gizmo-mode="translate">Move</button>
+            <button data-gizmo-mode="rotate">Rotate</button>
+            <button data-gizmo-mode="scale">Scale</button>
+          </div>
           <div id="builderHelp" class="muted">Join a region to place and edit objects.</div>
           <div id="builderObjectList" class="stack muted">No editable objects yet.</div>
         </div>

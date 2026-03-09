@@ -1,5 +1,6 @@
 import * as THREE from "https://unpkg.com/three@0.179.1/build/three.module.js";
 import { GLTFLoader } from "https://unpkg.com/three@0.179.1/examples/jsm/loaders/GLTFLoader.js";
+import { TransformControls } from "https://unpkg.com/three@0.179.1/examples/jsm/controls/TransformControls.js";
 
 const elements = {
   displayName: document.querySelector("#displayName"),
@@ -17,7 +18,14 @@ const elements = {
   buildModeButton: document.querySelector("#buildModeButton"),
   buildAssetSelect: document.querySelector("#buildAssetSelect"),
   builderHelp: document.querySelector("#builderHelp"),
-  builderObjectList: document.querySelector("#builderObjectList")
+  builderObjectList: document.querySelector("#builderObjectList"),
+  bodyColor: document.querySelector("#bodyColor"),
+  accentColor: document.querySelector("#accentColor"),
+  hairColor: document.querySelector("#hairColor"),
+  outfitSelect: document.querySelector("#outfitSelect"),
+  accessorySelect: document.querySelector("#accessorySelect"),
+  saveAvatarButton: document.querySelector("#saveAvatarButton"),
+  gizmoModeButtons: document.querySelector("#gizmoModeButtons")
 };
 
 const loader = new GLTFLoader();
@@ -34,6 +42,8 @@ const state = {
   regionObjects: [],
   buildMode: false,
   selectedObjectId: null,
+  appearance: null,
+  gizmoMode: "translate",
   keys: new Set(),
   pointerActive: false,
   pointerMoved: false,
@@ -58,6 +68,7 @@ const viewer = {
   parcelLines: new Map(),
   dynamicObjects: new Map(),
   selectionHelper: null,
+  transformControls: null,
   terrainBounds: 30,
   assetCache: new Map(),
   avatarMixers: new Map()
@@ -89,6 +100,27 @@ const renderInventory = (items = []) => {
   elements.inventoryList.innerHTML = items
     .map((item) => `<div>${item.name} - ${item.kind} - ${item.rarity}</div>`)
     .join("");
+};
+
+const getAppearanceFormValue = () => ({
+  bodyColor: elements.bodyColor.value,
+  accentColor: elements.accentColor.value,
+  headColor: "#f2c7a8",
+  hairColor: elements.hairColor.value,
+  outfit: elements.outfitSelect.value,
+  accessory: elements.accessorySelect.value
+});
+
+const renderAppearanceControls = (appearance) => {
+  if (!appearance) {
+    return;
+  }
+
+  elements.bodyColor.value = appearance.bodyColor;
+  elements.accentColor.value = appearance.accentColor;
+  elements.hairColor.value = appearance.hairColor;
+  elements.outfitSelect.value = appearance.outfit;
+  elements.accessorySelect.value = appearance.accessory;
 };
 
 const renderParcels = () => {
@@ -318,6 +350,92 @@ const createLanternGlow = () => {
   return light;
 };
 
+const addOutfitMesh = (root, appearance) => {
+  const material = new THREE.MeshStandardMaterial({ color: appearance.accentColor, roughness: 0.55, metalness: 0.16 });
+
+  if (appearance.outfit === "voyager") {
+    const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.72, 1.6, 8, 1, true), material);
+    coat.position.y = 2.05;
+    coat.userData.generatedWearable = true;
+    root.add(coat);
+  }
+
+  if (appearance.outfit === "pilot") {
+    const jacket = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.45, 0.72), material);
+    jacket.position.y = 2.1;
+    jacket.userData.generatedWearable = true;
+    root.add(jacket);
+  }
+
+  if (appearance.outfit === "formal") {
+    const sash = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.12, 8, 20), material);
+    sash.rotation.x = Math.PI / 2;
+    sash.position.set(0, 2.2, 0.1);
+    sash.userData.generatedWearable = true;
+    root.add(sash);
+  }
+};
+
+const addAccessoryMesh = (root, appearance) => {
+  const material = new THREE.MeshStandardMaterial({ color: appearance.hairColor, roughness: 0.62, metalness: 0.08 });
+
+  if (appearance.accessory === "visor") {
+    const visor = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.05, 8, 24), material);
+    visor.rotation.x = Math.PI / 2;
+    visor.position.set(0, 3.38, 0.22);
+    visor.userData.generatedWearable = true;
+    root.add(visor);
+  }
+
+  if (appearance.accessory === "cape") {
+    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.4, 0.08), material);
+    cape.position.set(0, 1.95, -0.36);
+    cape.userData.generatedWearable = true;
+    root.add(cape);
+  }
+
+  if (appearance.accessory === "pack") {
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.82, 0.32), material);
+    pack.position.set(0, 2.02, -0.42);
+    pack.userData.generatedWearable = true;
+    root.add(pack);
+  }
+};
+
+const applyAppearanceToAvatar = (object, appearance) => {
+  if (!appearance) {
+    return;
+  }
+
+  object.userData.appearance = appearance;
+  object.children
+    .filter((child) => child.userData.generatedWearable)
+    .forEach((child) => object.remove(child));
+  object.traverse((child) => {
+    if (!child.isMesh || !child.material?.color) {
+      return;
+    }
+
+    if (child.name.includes("Torso")) {
+      child.material = child.material.clone();
+      child.material.color.set(appearance.bodyColor);
+    }
+
+    if (child.name.includes("LeftArm") || child.name.includes("RightArm") || child.name.includes("LeftLeg") || child.name.includes("RightLeg")) {
+      child.material = child.material.clone();
+      child.material.color.set(appearance.accentColor);
+    }
+
+    if (child.name.includes("Head")) {
+      child.material = child.material.clone();
+      child.material.color.set(appearance.headColor);
+    }
+  });
+
+  addOutfitMesh(object, appearance);
+  addAccessoryMesh(object, appearance);
+};
+
 const createAvatarEntity = async (avatarId, displayName, isSelf) => {
   try {
     const object = await loadGltfAsset("/assets/models/avatar-runner.gltf");
@@ -326,15 +444,7 @@ const createAvatarEntity = async (avatarId, displayName, isSelf) => {
     object.userData.parts = {};
     object.userData.targetPosition = new THREE.Vector3();
     object.userData.displayName = displayName;
-
-    if (isSelf) {
-      object.traverse((child) => {
-        if (child.isMesh && child.material?.color) {
-          child.material = child.material.clone();
-          child.material.color.offsetHSL(0.08, 0.05, 0.02);
-        }
-      });
-    }
+    object.userData.appearance = null;
 
     object.traverse((child) => {
       if (child.isMesh) {
@@ -403,12 +513,27 @@ const selectObject = (objectId) => {
     viewer.scene.add(viewer.selectionHelper);
   }
 
+  syncTransformSelection();
+
   renderBuilderList();
 };
 
 const refreshSelectionHelper = () => {
   if (viewer.selectionHelper) {
     viewer.selectionHelper.update();
+  }
+};
+
+const syncTransformSelection = () => {
+  if (!viewer.transformControls) {
+    return;
+  }
+
+  if (state.selectedObjectId && viewer.dynamicObjects.has(state.selectedObjectId)) {
+    viewer.transformControls.attach(viewer.dynamicObjects.get(state.selectedObjectId));
+    viewer.transformControls.setMode(state.gizmoMode);
+  } else {
+    viewer.transformControls.detach();
   }
 };
 
@@ -467,6 +592,7 @@ const applyRegionObjects = async () => {
     selectObject(null);
   }
 
+  syncTransformSelection();
   renderBuilderList();
 };
 
@@ -529,6 +655,30 @@ const ensureViewer = () => {
   viewer.avatarRoot = new THREE.Group();
   viewer.scene.add(viewer.terrain, viewer.staticRoot, viewer.dynamicRoot, viewer.avatarRoot);
 
+  viewer.transformControls = new TransformControls(viewer.camera, viewer.renderer.domElement);
+  viewer.transformControls.setMode(state.gizmoMode);
+  viewer.transformControls.addEventListener("dragging-changed", (event) => {
+    state.pointerActive = event.value;
+  });
+  viewer.transformControls.addEventListener("objectChange", () => {
+    refreshSelectionHelper();
+  });
+  viewer.transformControls.addEventListener("mouseUp", async () => {
+    if (!state.selectedObjectId || !viewer.dynamicObjects.has(state.selectedObjectId)) {
+      return;
+    }
+
+    const object = viewer.dynamicObjects.get(state.selectedObjectId);
+    await updateSelectedObject({
+      x: Number(object.position.x.toFixed(2)),
+      y: Number(object.position.y.toFixed(2)),
+      z: Number(object.position.z.toFixed(2)),
+      rotationY: Number(object.rotation.y.toFixed(2)),
+      scale: Number(object.scale.x.toFixed(2))
+    });
+  });
+  viewer.scene.add(viewer.transformControls);
+
   const waterRing = new THREE.Mesh(
     new THREE.RingGeometry(28, 38, 80),
     new THREE.MeshBasicMaterial({ color: 0x4ee4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
@@ -577,6 +727,10 @@ const syncAvatarMeshes = async () => {
       mesh = await createAvatarEntity(avatarId, avatar.displayName, state.session && avatarId === state.session.avatarId);
       viewer.avatarRoot.add(mesh);
       state.avatarMeshes.set(avatarId, mesh);
+    }
+
+    if (JSON.stringify(mesh.userData.appearance) !== JSON.stringify(avatar.appearance)) {
+      applyAppearanceToAvatar(mesh, avatar.appearance);
     }
 
     if (!mesh.userData.targetPosition) {
@@ -828,10 +982,12 @@ const connect = async () => {
   const data = await response.json();
   state.session = data.session;
   state.account = data.account;
+  state.appearance = data.appearance;
   state.persistence = data.persistence;
   state.parcels = data.parcels;
   state.avatars = new Map([[data.avatar.avatarId, data.avatar]]);
   renderInventory(data.inventory);
+  renderAppearanceControls(data.appearance);
   renderParcels();
   await syncAvatarMeshes();
   await loadRegionScene(state.session.regionId);
@@ -839,7 +995,7 @@ const connect = async () => {
 
   elements.activeRegion.textContent = state.regions.find((region) => region.id === state.session.regionId)?.name ?? state.session.regionId;
   elements.viewerHint.textContent = `Scene streaming live - ${state.session.regionId}`;
-  elements.builderHelp.textContent = "Enable build mode, click terrain to place, click your object to select, arrows move, Q/E rotate, R/F scale, Delete removes.";
+  elements.builderHelp.textContent = "Enable build mode, click terrain to place, click your object to select, use gizmo buttons for drag editing, arrows still nudge, Q/E rotate, R/F scale, Delete removes.";
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}/ws/regions/${state.session.regionId}?token=${state.session.token}`);
@@ -910,6 +1066,45 @@ elements.buildModeButton.addEventListener("click", () => {
   state.buildMode = !state.buildMode;
   elements.buildModeButton.textContent = state.buildMode ? "Disable build mode" : "Enable build mode";
   status(state.buildMode ? "Build mode enabled." : "Build mode disabled.");
+});
+
+elements.saveAvatarButton.addEventListener("click", async () => {
+  if (!state.session) {
+    return;
+  }
+
+  const response = await fetch("/api/avatar/appearance", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: state.session.token, ...getAppearanceFormValue() })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    status(error.error ?? "Unable to save avatar style.", true);
+    return;
+  }
+
+  const data = await response.json();
+  state.appearance = data.avatar.appearance;
+  state.avatars.set(data.avatar.avatarId, data.avatar);
+  await syncAvatarMeshes();
+  status("Avatar style updated.");
+});
+
+elements.gizmoModeButtons.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const modeButton = target.closest("[data-gizmo-mode]");
+  if (!(modeButton instanceof HTMLElement)) {
+    return;
+  }
+
+  state.gizmoMode = modeButton.dataset.gizmoMode;
+  syncTransformSelection();
 });
 
 elements.builderObjectList.addEventListener("click", (event) => {

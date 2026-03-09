@@ -19,6 +19,17 @@ export type AccountRecord = {
   createdAt: string;
 };
 
+export type AvatarAppearanceRecord = {
+  accountId: string;
+  bodyColor: string;
+  accentColor: string;
+  headColor: string;
+  hairColor: string;
+  outfit: string;
+  accessory: string;
+  updatedAt: string;
+};
+
 export type InventoryItemRecord = {
   id: string;
   accountId: string;
@@ -70,6 +81,8 @@ export type PersistenceLayer = {
   listRegions(): Promise<RegionRecord[]>;
   getOrCreateGuestAccount(displayName: string): Promise<{ account: AccountRecord; isNew: boolean }>;
   getInventory(accountId: string): Promise<InventoryItemRecord[]>;
+  getAvatarAppearance(accountId: string): Promise<AvatarAppearanceRecord>;
+  saveAvatarAppearance(appearance: AvatarAppearanceRecord): Promise<AvatarAppearanceRecord>;
   getAvatarPosition(accountId: string, regionId: string): Promise<AvatarPositionRecord | undefined>;
   saveAvatarPosition(position: AvatarPositionRecord): Promise<void>;
   listParcels(regionId: string): Promise<ParcelRecord[]>;
@@ -152,6 +165,19 @@ const starterInventory = [
   { name: "Welcome Drone Companion", kind: "pet", rarity: "rare" }
 ];
 
+function createDefaultAppearance(accountId: string): AvatarAppearanceRecord {
+  return {
+    accountId,
+    bodyColor: "#8cd8ff",
+    accentColor: "#17323f",
+    headColor: "#f2c7a8",
+    hairColor: "#1b1d27",
+    outfit: "voyager",
+    accessory: "none",
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function normalizeDisplayName(displayName: string) {
   return displayName.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -171,6 +197,7 @@ function createMemoryPersistence(): PersistenceLayer {
   const accountsById = new Map<string, AccountRecord>();
   const accountIdsByName = new Map<string, string>();
   const inventory = new Map<string, InventoryItemRecord[]>();
+  const appearances = new Map<string, AvatarAppearanceRecord>();
   const positions = new Map<string, AvatarPositionRecord>();
   const parcels = new Map<string, ParcelRecord>(
     seededParcels.map((parcel) => [parcel.id, { ...parcel, ownerDisplayName: null }])
@@ -210,11 +237,23 @@ function createMemoryPersistence(): PersistenceLayer {
           createdAt: new Date().toISOString()
         }))
       );
+      appearances.set(account.id, createDefaultAppearance(account.id));
 
       return { account, isNew: true };
     },
     async getInventory(accountId) {
       return inventory.get(accountId) ?? [];
+    },
+    async getAvatarAppearance(accountId) {
+      if (!appearances.has(accountId)) {
+        appearances.set(accountId, createDefaultAppearance(accountId));
+      }
+
+      return appearances.get(accountId) as AvatarAppearanceRecord;
+    },
+    async saveAvatarAppearance(appearance) {
+      appearances.set(appearance.accountId, appearance);
+      return appearance;
     },
     async getAvatarPosition(accountId, regionId) {
       return positions.get(`${accountId}:${regionId}`);
@@ -308,6 +347,19 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       kind TEXT NOT NULL,
       rarity TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS avatar_appearances (
+      account_id UUID PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+      body_color TEXT NOT NULL,
+      accent_color TEXT NOT NULL,
+      head_color TEXT NOT NULL,
+      hair_color TEXT NOT NULL,
+      outfit TEXT NOT NULL,
+      accessory TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
     )
   `);
 
@@ -461,6 +513,12 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         );
       }
 
+      const appearance = createDefaultAppearance(account.id);
+      await pool.query(
+        "INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [appearance.accountId, appearance.bodyColor, appearance.accentColor, appearance.headColor, appearance.hairColor, appearance.outfit, appearance.accessory, appearance.updatedAt]
+      );
+
       return { account, isNew: true };
     },
     async getInventory(accountId) {
@@ -484,6 +542,62 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         rarity: row.rarity,
         createdAt: row.created_at
       }));
+    },
+    async getAvatarAppearance(accountId) {
+      const result = await pool.query<{
+        account_id: string;
+        body_color: string;
+        accent_color: string;
+        head_color: string;
+        hair_color: string;
+        outfit: string;
+        accessory: string;
+        updated_at: string;
+      }>(
+        "SELECT account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at FROM avatar_appearances WHERE account_id = $1 LIMIT 1",
+        [accountId]
+      );
+
+      const row = result.rows[0];
+
+      if (!row) {
+        const appearance = createDefaultAppearance(accountId);
+        await pool.query(
+          "INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+          [appearance.accountId, appearance.bodyColor, appearance.accentColor, appearance.headColor, appearance.hairColor, appearance.outfit, appearance.accessory, appearance.updatedAt]
+        );
+        return appearance;
+      }
+
+      return {
+        accountId: row.account_id,
+        bodyColor: row.body_color,
+        accentColor: row.accent_color,
+        headColor: row.head_color,
+        hairColor: row.hair_color,
+        outfit: row.outfit,
+        accessory: row.accessory,
+        updatedAt: row.updated_at
+      };
+    },
+    async saveAvatarAppearance(appearance) {
+      await pool.query(
+        `
+          INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          ON CONFLICT (account_id) DO UPDATE SET
+            body_color = EXCLUDED.body_color,
+            accent_color = EXCLUDED.accent_color,
+            head_color = EXCLUDED.head_color,
+            hair_color = EXCLUDED.hair_color,
+            outfit = EXCLUDED.outfit,
+            accessory = EXCLUDED.accessory,
+            updated_at = EXCLUDED.updated_at
+        `,
+        [appearance.accountId, appearance.bodyColor, appearance.accentColor, appearance.headColor, appearance.hairColor, appearance.outfit, appearance.accessory, appearance.updatedAt]
+      );
+
+      return appearance;
     },
     async getAvatarPosition(accountId, regionId) {
       const result = await pool.query<{
