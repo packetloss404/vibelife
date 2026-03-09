@@ -42,6 +42,8 @@ current = true
 
 [node name="Gizmos" type="Node3D" parent="."]
 
+[node name="Parcels" type="Node3D" parent="."]
+
 [node name="Network" type="Node" parent="."]
 
 [node name="RegionsRequest" type="HTTPRequest" parent="Network"]
@@ -112,6 +114,11 @@ theme_override_constants/separation = 10
 
 [node name="BackendLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
 text = "Backend URL"
+
+[node name="ProfileSelect" type="OptionButton" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+
+[node name="SaveProfileButton" type="Button" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Save backend profile"
 
 [node name="BackendUrlInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
 text = "http://127.0.0.1:3000"

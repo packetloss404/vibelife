@@ -11,6 +11,7 @@ const WS_SNAPSHOT := "snapshot"
 @onready var dynamic_world: Node3D = $DynamicWorld
 @onready var avatars_root: Node3D = $Avatars
 @onready var gizmos_root: Node3D = $Gizmos
+@onready var parcels_root: Node3D = $Parcels
 @onready var regions_request: HTTPRequest = $Network/RegionsRequest
 @onready var auth_request: HTTPRequest = $Network/AuthRequest
 @onready var scene_request: HTTPRequest = $Network/SceneRequest
@@ -19,6 +20,8 @@ const WS_SNAPSHOT := "snapshot"
 @onready var update_object_request: HTTPRequest = $Network/UpdateObjectRequest
 @onready var delete_object_request: HTTPRequest = $Network/DeleteObjectRequest
 @onready var backend_url_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/BackendUrlInput
+@onready var profile_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/ProfileSelect
+@onready var save_profile_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/SaveProfileButton
 @onready var display_name_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/DisplayNameInput
 @onready var region_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/RegionSelect
 @onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
@@ -63,6 +66,9 @@ var active_parcel: Dictionary = {}
 var gizmo_handles := {}
 var active_drag_axis := ""
 var selected_inventory_index := -1
+var backend_profiles: Array = []
+var parcel_nodes := {}
+const PROFILE_SAVE_PATH := "user://backend_profiles.json"
 var build_assets := [
 	"/assets/models/market-hall.gltf",
 	"/assets/models/skyport-tower.gltf",
@@ -75,6 +81,8 @@ var build_assets := [
 func _ready() -> void:
 	_setup_ground()
 	refresh_regions_button.pressed.connect(_fetch_regions)
+	profile_select.item_selected.connect(_on_profile_selected)
+	save_profile_button.pressed.connect(_save_current_profile)
 	join_button.pressed.connect(_join_world)
 	send_chat_button.pressed.connect(_send_chat)
 	chat_input.text_submitted.connect(func(_text: String): _send_chat())
@@ -92,6 +100,7 @@ func _ready() -> void:
 	scene_request.request_completed.connect(_on_scene_loaded)
 	objects_request.request_completed.connect(_on_objects_loaded)
 	_fetch_regions()
+	_load_profiles()
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
 	_set_gizmo_mode("move")
@@ -176,6 +185,7 @@ func _on_regions_loaded(_result: int, response_code: int, _headers: PackedString
 		region_select.add_item("%s - %s/%s" % [region.name, region.population, region.capacity])
 	status_label.text = "Ready to join."
 	status_pill.text = "Ready"
+	_save_login_state()
 
 
 func _join_world() -> void:
@@ -206,9 +216,11 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	avatar_states[payload.avatar.avatarId] = payload.avatar
 	status_label.text = "Connected as %s" % session.displayName
 	status_pill.text = "Connected"
+	_save_login_state()
 	inventory = payload.get("inventory", [])
 	parcels = payload.get("parcels", [])
 	_render_inventory()
+	_render_parcels()
 	_append_chat("System: joined %s" % session.regionId)
 	await _load_region_scene(session.regionId)
 	await _load_region_objects(session.regionId)
@@ -333,6 +345,7 @@ func _sync_objects(items: Array) -> void:
 	object_nodes.clear()
 	for item in items:
 		_sync_single_object(item)
+	_render_parcels()
 
 
 func _sync_single_object(item: Dictionary) -> void:
@@ -799,6 +812,131 @@ func _get_parcel_at(position: Vector3) -> Dictionary:
 		if position.x >= float(parcel.minX) and position.x <= float(parcel.maxX) and position.z >= float(parcel.minZ) and position.z <= float(parcel.maxZ):
 			return parcel
 	return {}
+
+
+func _render_parcels() -> void:
+	for child in parcels_root.get_children():
+		child.queue_free()
+	parcel_nodes.clear()
+	for parcel in parcels:
+		var root := Node3D.new()
+		var width := float(parcel.maxX) - float(parcel.minX)
+		var depth := float(parcel.maxZ) - float(parcel.minZ)
+		var center := Vector3((float(parcel.minX) + float(parcel.maxX)) / 2.0, 0.03, (float(parcel.minZ) + float(parcel.maxZ)) / 2.0)
+
+		var fill := MeshInstance3D.new()
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(width, depth)
+		fill.mesh = plane
+		fill.rotation_degrees.x = -90
+		fill.position = center
+		var fill_material := StandardMaterial3D.new()
+		fill_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fill_material.albedo_color = _parcel_color(parcel, true)
+		fill_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fill.set_surface_override_material(0, fill_material)
+		root.add_child(fill)
+
+		var line_material := StandardMaterial3D.new()
+		line_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		line_material.albedo_color = _parcel_color(parcel, false)
+		line_material.emission_enabled = true
+		line_material.emission = _parcel_color(parcel, false)
+		for edge in _parcel_edges(parcel):
+			var edge_mesh := MeshInstance3D.new()
+			var box := BoxMesh.new()
+			box.size = edge["size"]
+			edge_mesh.mesh = box
+			edge_mesh.position = edge["position"]
+			edge_mesh.set_surface_override_material(0, line_material)
+			root.add_child(edge_mesh)
+
+		var label := Label3D.new()
+		label.text = "%s (%s)" % [parcel.name, parcel.ownerDisplayName if parcel.ownerDisplayName != null else parcel.tier]
+		label.position = center + Vector3(0, 0.25, 0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		root.add_child(label)
+
+		parcels_root.add_child(root)
+		parcel_nodes[parcel.id] = root
+
+
+func _load_profiles() -> void:
+	backend_profiles.clear()
+	profile_select.clear()
+	if FileAccess.file_exists(PROFILE_SAVE_PATH):
+		var file := FileAccess.open(PROFILE_SAVE_PATH, FileAccess.READ)
+		if file:
+			var parsed = JSON.parse_string(file.get_as_text())
+			if parsed is Array:
+				backend_profiles = parsed
+	if backend_profiles.is_empty():
+		backend_profiles.append({"name": "Local Default", "backendUrl": backend_url_input.text, "displayName": display_name_input.text})
+	for profile in backend_profiles:
+		profile_select.add_item(profile.get("name", "Profile"))
+	_on_profile_selected(0)
+
+
+func _persist_profiles() -> void:
+	var file := FileAccess.open(PROFILE_SAVE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(backend_profiles))
+
+
+func _save_current_profile() -> void:
+	var name := "Profile %s" % str(backend_profiles.size() + 1)
+	if not display_name_input.text.strip_edges().is_empty():
+		name = display_name_input.text.strip_edges()
+	backend_profiles.append({
+		"name": name,
+		"backendUrl": backend_url_input.text.strip_edges(),
+		"displayName": display_name_input.text.strip_edges()
+	})
+	_persist_profiles()
+	_load_profiles()
+	status_label.text = "Saved backend profile %s" % name
+
+
+func _on_profile_selected(index: int) -> void:
+	if index < 0 or index >= backend_profiles.size():
+		return
+	var profile: Dictionary = backend_profiles[index]
+	backend_url_input.text = profile.get("backendUrl", backend_url_input.text)
+	display_name_input.text = profile.get("displayName", display_name_input.text)
+
+
+func _save_login_state() -> void:
+	if profile_select.selected >= 0 and profile_select.selected < backend_profiles.size():
+		backend_profiles[profile_select.selected]["backendUrl"] = backend_url_input.text.strip_edges()
+		backend_profiles[profile_select.selected]["displayName"] = display_name_input.text.strip_edges()
+		_persist_profiles()
+
+
+func _parcel_color(parcel: Dictionary, transparent: bool) -> Color:
+	if not active_parcel.is_empty() and parcel.id == active_parcel.get("id", ""):
+		return Color(1.0, 0.95, 0.54, 0.18 if transparent else 1.0)
+	if parcel.tier == "public":
+		return Color(0.4, 1.0, 0.82, 0.08 if transparent else 1.0)
+	if parcel.ownerAccountId == null:
+		return Color(0.95, 0.58, 0.35, 0.08 if transparent else 1.0)
+	if String(parcel.ownerAccountId) == String(session.get("accountId", "")):
+		return Color(1.0, 0.7, 0.42, 0.1 if transparent else 1.0)
+	return Color(0.92, 0.35, 0.35, 0.08 if transparent else 1.0)
+
+
+func _parcel_edges(parcel: Dictionary) -> Array:
+	var min_x := float(parcel.minX)
+	var max_x := float(parcel.maxX)
+	var min_z := float(parcel.minZ)
+	var max_z := float(parcel.maxZ)
+	var center_x := (min_x + max_x) / 2.0
+	var center_z := (min_z + max_z) / 2.0
+	return [
+		{"position": Vector3(center_x, 0.08, min_z), "size": Vector3(max_x - min_x, 0.08, 0.08)},
+		{"position": Vector3(center_x, 0.08, max_z), "size": Vector3(max_x - min_x, 0.08, 0.08)},
+		{"position": Vector3(min_x, 0.08, center_z), "size": Vector3(0.08, 0.08, max_z - min_z)},
+		{"position": Vector3(max_x, 0.08, center_z), "size": Vector3(0.08, 0.08, max_z - min_z)}
+	]
 
 
 func _can_build_in_parcel(parcel: Dictionary) -> bool:

@@ -16,6 +16,8 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - includes a cleaner docked HUD with top status, left login/build controls, and right inventory/chat panels
 - supports click-selecting world objects and dragging native gizmo axes
 - supports equip and use actions from the native inventory panel
+- saves backend/display-name profiles locally in the native client
+- draws parcel overlays and ownership colors directly in the 3D world
 
 ## Open it
 
