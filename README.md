@@ -84,6 +84,14 @@ npm run dev:postgres
 - parcel ownership changes now propagate live over WebSocket to both native and browser debug clients
 - register/login auth endpoints now exist alongside guest access, with admin moderation controls for parcel reassignment and object cleanup
 - browser debug and Godot native clients now both support auth modes and admin parcel/object moderation flows
+- admin audit logs now surface in both clients and register/login flows support account-mode switching
+
+## Auth notes
+
+- guest, register, and login flows now exist side by side
+- admin registration now requires `ADMIN_BOOTSTRAP_TOKEN`; display name alone no longer grants admin access
+- registered password hashes now use per-account salts instead of a single shared salt
+- session expiry is now enforced server-side
 
 ## Building tools
 

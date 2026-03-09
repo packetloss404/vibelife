@@ -55,6 +55,7 @@ const WS_SNAPSHOT := "snapshot"
 @onready var release_parcel_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ReleaseParcelButton
 @onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
 @onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
+@onready var admin_audit_log: RichTextLabel = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/AdminAuditLog
 
 var websocket := WebSocketPeer.new()
 var regions: Array = []
@@ -247,6 +248,7 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	parcels = payload.get("parcels", [])
 	_render_inventory()
 	_render_parcels()
+	await _load_admin_audit_logs()
 	_append_chat("System: joined %s" % session.regionId)
 	await _load_region_scene(session.regionId)
 	await _load_region_objects(session.regionId)
@@ -1132,6 +1134,7 @@ func _claim_button_state() -> void:
 	var is_admin := session.get("role", "resident") == "admin"
 	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or (active_parcel.get("ownerAccountId", null) != null and not is_admin)
 	release_parcel_button.disabled = active_parcel.is_empty() or (String(active_parcel.get("ownerAccountId", "")) != String(session.get("accountId", "")) and not is_admin)
+	admin_audit_log.visible = is_admin
 
 
 func _claim_active_parcel() -> void:
@@ -1155,6 +1158,7 @@ func _claim_active_parcel() -> void:
 			_render_parcels()
 			_claim_button_state()
 			status_label.text = "%s %s" % [is_admin ? "Admin claimed" : "Claimed", parcel.get("name", "parcel")]
+			await _load_admin_audit_logs()
 		else:
 			status_label.text = "Parcel claim failed"
 	request.queue_free()
@@ -1181,8 +1185,27 @@ func _release_active_parcel() -> void:
 			_render_parcels()
 			_claim_button_state()
 			status_label.text = "%s %s" % [is_admin ? "Admin cleared" : "Released", parcel.get("name", "parcel")]
+			await _load_admin_audit_logs()
 		else:
 			status_label.text = "Parcel release failed"
+	request.queue_free()
+
+
+func _load_admin_audit_logs() -> void:
+	if session.get("role", "resident") != "admin":
+		admin_audit_log.text = ""
+		return
+	var request := HTTPRequest.new()
+	add_child(request)
+	var url := "%s/api/admin/audit-logs?token=%s&limit=10" % [backend_url_input.text.rstrip("/"), session.token]
+	if request.request(url) == OK:
+		var result := await request.request_completed
+		if int(result[1]) == 200:
+			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+			var lines: Array[String] = []
+			for entry in payload.get("logs", []):
+				lines.append("%s - %s" % [entry.action, entry.details])
+			admin_audit_log.text = "\n".join(lines)
 	request.queue_free()
 
 

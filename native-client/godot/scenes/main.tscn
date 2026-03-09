@@ -249,6 +249,13 @@ text = "Delete selected"
 text = "In build mode, left click places or selects. Arrow keys move, Q/E rotate, R/F scale."
 autowrap_mode = 3
 
+[node name="AdminAuditLabel" type="Label" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Admin history"
+
+[node name="AdminAuditLog" type="RichTextLabel" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+custom_minimum_size = Vector2(0, 120)
+scroll_following = true
+
 [node name="RightDock" type="PanelContainer" parent="CanvasLayer/UI"]
 offset_left = 1210.0
 offset_top = 90.0

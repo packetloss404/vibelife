@@ -24,6 +24,18 @@ export type AccountAuthRecord = AccountRecord & {
   passwordHash: string | null;
 };
 
+export type AuditLogRecord = {
+  id: string;
+  actorAccountId: string;
+  actorDisplayName: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  regionId: string | null;
+  details: string;
+  createdAt: string;
+};
+
 export type AvatarAppearanceRecord = {
   accountId: string;
   bodyColor: string;
@@ -89,7 +101,7 @@ export type PersistenceLayer = {
   listRegions(): Promise<RegionRecord[]>;
   getOrCreateGuestAccount(displayName: string): Promise<{ account: AccountRecord; isNew: boolean }>;
   registerAccount(displayName: string, passwordHash: string, role: "resident" | "admin"): Promise<{ account: AccountRecord; isNew: boolean }>;
-  authenticateAccount(displayName: string, passwordHash: string): Promise<AccountRecord | undefined>;
+  authenticateAccount(displayName: string): Promise<AccountAuthRecord | undefined>;
   getInventory(accountId: string): Promise<InventoryItemRecord[]>;
   equipInventoryItem(accountId: string, itemId: string): Promise<InventoryItemRecord[]>;
   getAvatarAppearance(accountId: string): Promise<AvatarAppearanceRecord>;
@@ -105,6 +117,8 @@ export type PersistenceLayer = {
   updateRegionObject(objectId: string, ownerAccountId: string, updates: Pick<RegionObjectRecord, "x" | "y" | "z" | "rotationY" | "scale" | "updatedAt">): Promise<RegionObjectRecord | undefined>;
   deleteRegionObject(objectId: string, ownerAccountId: string): Promise<boolean>;
   adminDeleteRegionObject(objectId: string): Promise<boolean>;
+  appendAuditLog(entry: AuditLogRecord): Promise<void>;
+  listAuditLogs(limit: number): Promise<AuditLogRecord[]>;
 };
 
 const seededRegions: RegionRecord[] = [
@@ -224,6 +238,7 @@ function createMemoryPersistence(): PersistenceLayer {
     seededParcels.map((parcel) => [parcel.id, { ...parcel, ownerDisplayName: null }])
   );
   const regionObjects = new Map<string, RegionObjectRecord>();
+  const auditLogs: AuditLogRecord[] = [];
 
   return {
     mode: "memory",
@@ -304,7 +319,7 @@ function createMemoryPersistence(): PersistenceLayer {
 
       return { account, isNew: true };
     },
-    async authenticateAccount(displayName, passwordHash) {
+    async authenticateAccount(displayName) {
       const key = normalizeDisplayName(displayName);
       const existingId = accountIdsByName.get(key);
 
@@ -312,12 +327,10 @@ function createMemoryPersistence(): PersistenceLayer {
         return undefined;
       }
 
-      if (passwordHashesById.get(existingId) !== passwordHash) {
-        return undefined;
-      }
-
       const account = accountsById.get(existingId);
-      return account?.kind === "registered" ? account : undefined;
+      return account?.kind === "registered"
+        ? { ...account, passwordHash: passwordHashesById.get(existingId) ?? null }
+        : undefined;
     },
     async getInventory(accountId) {
       return inventory.get(accountId) ?? [];
@@ -447,6 +460,12 @@ function createMemoryPersistence(): PersistenceLayer {
     },
     async adminDeleteRegionObject(objectId) {
       return regionObjects.delete(objectId);
+    },
+    async appendAuditLog(entry) {
+      auditLogs.unshift(entry);
+    },
+    async listAuditLogs(limit) {
+      return auditLogs.slice(0, limit);
     }
   };
 }
@@ -507,6 +526,19 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
   `);
   await pool.query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'resident'");
   await pool.query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS password_hash TEXT");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id UUID PRIMARY KEY,
+      actor_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      actor_display_name TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      region_id TEXT,
+      details TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inventory_items (
@@ -755,7 +787,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
 
       return { account, isNew: true };
     },
-    async authenticateAccount(displayName, passwordHash) {
+    async authenticateAccount(displayName) {
       const displayNameKey = normalizeDisplayName(displayName);
       const result = await pool.query<{
         id: string;
@@ -770,7 +802,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       );
 
       const row = result.rows[0];
-      if (!row || row.kind !== "registered" || row.password_hash !== passwordHash) {
+      if (!row || row.kind !== "registered") {
         return undefined;
       }
 
@@ -779,6 +811,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         displayName: row.display_name,
         kind: row.kind,
         role: row.role,
+        passwordHash: row.password_hash,
         createdAt: row.created_at
       };
     },
@@ -1208,6 +1241,40 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
     async adminDeleteRegionObject(objectId) {
       const result = await pool.query("DELETE FROM region_objects WHERE id = $1", [objectId]);
       return (result.rowCount ?? 0) > 0;
+    },
+    async appendAuditLog(entry) {
+      await pool.query(
+        "INSERT INTO audit_logs (id, actor_account_id, actor_display_name, action, target_type, target_id, region_id, details, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+        [entry.id, entry.actorAccountId, entry.actorDisplayName, entry.action, entry.targetType, entry.targetId, entry.regionId, entry.details, entry.createdAt]
+      );
+    },
+    async listAuditLogs(limit) {
+      const result = await pool.query<{
+        id: string;
+        actor_account_id: string;
+        actor_display_name: string;
+        action: string;
+        target_type: string;
+        target_id: string;
+        region_id: string | null;
+        details: string;
+        created_at: string;
+      }>(
+        "SELECT id, actor_account_id, actor_display_name, action, target_type, target_id, region_id, details, created_at FROM audit_logs ORDER BY created_at DESC LIMIT $1",
+        [limit]
+      );
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        actorAccountId: row.actor_account_id,
+        actorDisplayName: row.actor_display_name,
+        action: row.action,
+        targetType: row.target_type,
+        targetId: row.target_id,
+        regionId: row.region_id,
+        details: row.details,
+        createdAt: row.created_at
+      }));
     }
   };
 }

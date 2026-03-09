@@ -1,5 +1,4 @@
 import path from "node:path";
-import { scryptSync } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
@@ -10,6 +9,7 @@ import {
   adminDeleteRegionObject,
 } from "./world/store.js";
 import {
+  appendAuditLog,
   claimParcel,
   createRegionObject,
   createGuestSession,
@@ -22,6 +22,7 @@ import {
   listParcels,
   listRegionObjects,
   listRegions,
+  listAuditLogs,
   loginSession,
   moveAvatar,
   registerSession,
@@ -37,10 +38,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
 const threeDir = path.resolve(__dirname, "../node_modules/three");
-
-function hashPassword(password: string) {
-  return scryptSync(password, "thirdlife-2026", 64).toString("hex");
-}
 
 await initializeWorldStore();
 
@@ -98,16 +95,19 @@ app.post<{ Body: { displayName?: string; regionId?: string } }>("/api/auth/guest
 app.post<{ Body: { displayName?: string; password?: string; regionId?: string } }>("/api/auth/register", async (request, reply) => {
   const displayName = (request.body.displayName ?? "").trim().slice(0, 32);
   const password = (request.body.password ?? "").trim();
+  const adminBootstrapToken = (request.body as { adminBootstrapToken?: string }).adminBootstrapToken;
 
   if (!displayName || password.length < 4) {
     return reply.code(400).send({ error: "displayName and password are required" });
   }
 
-  const result = await registerSession(displayName, hashPassword(password), request.body.regionId);
+  const result = await registerSession(displayName, password, request.body.regionId, adminBootstrapToken);
 
   if (!result.ok) {
     return reply.code(409).send({ error: result.reason });
   }
+
+  await appendAuditLog(result.session.token, "auth.register", "account", result.account.id, `registered ${result.account.kind}/${result.account.role}`, result.session.regionId);
 
   return reply.send({
     session: result.session,
@@ -128,11 +128,13 @@ app.post<{ Body: { displayName?: string; password?: string; regionId?: string } 
     return reply.code(400).send({ error: "displayName and password are required" });
   }
 
-  const result = await loginSession(displayName, hashPassword(password), request.body.regionId);
+  const result = await loginSession(displayName, password, request.body.regionId);
 
   if (!result.ok) {
     return reply.code(401).send({ error: result.reason });
   }
+
+  await appendAuditLog(result.session.token, "auth.login", "account", result.account.id, `login ${result.account.kind}/${result.account.role}`, result.session.regionId);
 
   return reply.send({
     session: result.session,
@@ -212,6 +214,7 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", 
 
   if (session) {
     broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    await appendAuditLog(token, "parcel.claim", "parcel", parcel.id, `claimed ${parcel.name}`, session.regionId);
   }
 
   return reply.send({ parcel });
@@ -235,6 +238,7 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/release"
 
   if (session) {
     broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    await appendAuditLog(token, "parcel.release", "parcel", parcel.id, `released ${parcel.name}`, session.regionId);
   }
 
   return reply.send({ parcel });
@@ -256,6 +260,7 @@ app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | 
   const session = getSession(token);
   if (session) {
     broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+    await appendAuditLog(token, "admin.parcel.assign", "parcel", parcel.id, `assigned ${parcel.name} to ${ownerAccountId ?? "none"}`, session.regionId);
   }
 
   return reply.send({ parcel });
@@ -276,7 +281,25 @@ app.post<{ Body: { token?: string; objectId?: string } }>("/api/admin/objects/de
   }
 
   broadcastRegion(session.regionId, { type: "object:deleted", objectId });
+  await appendAuditLog(token, "admin.object.delete", "object", objectId, "admin deleted region object", session.regionId);
   return reply.send({ ok: true });
+});
+
+app.get<{ Querystring: { token?: string; limit?: string } }>("/api/admin/audit-logs", async (request, reply) => {
+  const token = request.query.token;
+  const limit = Number(request.query.limit ?? 50);
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const logs = await listAuditLogs(token, Math.max(1, Math.min(200, limit)));
+
+  if (!logs) {
+    return reply.code(403).send({ error: "admin audit access denied" });
+  }
+
+  return reply.send({ logs });
 });
 
 app.post<{

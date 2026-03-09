@@ -23,6 +23,8 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - saves fullscreen, mouse sensitivity, invert look, FOV, and shadow settings locally
 - supports guest, register, and login account modes, plus admin parcel/object moderation when logged into an admin account
 - saved backend profiles now remember the selected auth mode for faster account switching
+- admin accounts can now review audit history directly in the native HUD
+- for admin bootstrap in development, set `ADMIN_BOOTSTRAP_TOKEN` on the backend and use that token during registration
 
 ## Open it
 

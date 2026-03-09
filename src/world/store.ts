@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import {
   createPersistenceLayer,
   type AccountAuthRecord,
@@ -46,6 +46,7 @@ export type Session = {
   displayName: string;
   regionId: string;
   role: "resident" | "admin";
+  expiresAt: number;
 };
 
 export type AvatarState = {
@@ -63,6 +64,7 @@ let persistence = await createPersistenceLayer();
 let regions: RegionSummary[] = [];
 const sessions = new Map<string, Session>();
 const avatarsByRegion = new Map<string, Map<string, AvatarState>>();
+const SESSION_TTL_MS = 1000 * 60 * 60 * 8;
 
 export async function initializeWorldStore() {
   persistence = await createPersistenceLayer();
@@ -87,8 +89,24 @@ function getBootstrapAdminDisplayName() {
   return (process.env.ADMIN_DISPLAY_NAME ?? "Admin").trim().toLowerCase();
 }
 
-function shouldBootstrapAdmin(displayName: string) {
-  return displayName.trim().toLowerCase() === getBootstrapAdminDisplayName();
+function getBootstrapAdminToken() {
+  return (process.env.ADMIN_BOOTSTRAP_TOKEN ?? "").trim();
+}
+
+function makePasswordHash(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string | null) {
+  if (!stored || !stored.includes(":")) {
+    return false;
+  }
+
+  const [salt, expected] = stored.split(":");
+  const actual = scryptSync(password, salt, 64).toString("hex");
+  return timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
 }
 
 async function createSessionForAccount(account: Account, displayName: string, regionId?: string): Promise<{
@@ -131,7 +149,8 @@ async function createSessionForAccount(account: Account, displayName: string, re
     avatarId,
     displayName: displayName || account.displayName,
     regionId: region.id,
-    role: account.role
+    role: account.role,
+    expiresAt: Date.now() + SESSION_TTL_MS
   };
 
   sessions.set(token, session);
@@ -160,8 +179,9 @@ export async function createGuestSession(displayName: string, regionId?: string)
   return createSessionForAccount(account, displayName, regionId);
 }
 
-export async function registerSession(displayName: string, passwordHash: string, regionId?: string) {
-  const result = await persistence.registerAccount(displayName, passwordHash, shouldBootstrapAdmin(displayName) ? "admin" : "resident");
+export async function registerSession(displayName: string, password: string, regionId?: string, adminBootstrapToken?: string) {
+  const wantsAdmin = Boolean(adminBootstrapToken) && adminBootstrapToken === getBootstrapAdminToken() && getBootstrapAdminToken().length > 0;
+  const result = await persistence.registerAccount(displayName, makePasswordHash(password), wantsAdmin ? "admin" : "resident");
 
   if (!result.isNew) {
     return { ok: false as const, reason: "display name already exists" };
@@ -170,10 +190,10 @@ export async function registerSession(displayName: string, passwordHash: string,
   return { ok: true as const, ...(await createSessionForAccount(result.account, displayName, regionId)) };
 }
 
-export async function loginSession(displayName: string, passwordHash: string, regionId?: string) {
-  const account = await persistence.authenticateAccount(displayName, passwordHash);
+export async function loginSession(displayName: string, password: string, regionId?: string) {
+  const account = await persistence.authenticateAccount(displayName);
 
-  if (!account) {
+  if (!account || !verifyPassword(password, account.passwordHash)) {
     return { ok: false as const, reason: "invalid credentials" };
   }
 
@@ -181,7 +201,20 @@ export async function loginSession(displayName: string, passwordHash: string, re
 }
 
 export function getSession(token: string): Session | undefined {
-  return sessions.get(token);
+  const session = getSession(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  if (session.expiresAt < Date.now()) {
+    sessions.delete(token);
+    return undefined;
+  }
+
+  session.expiresAt = Date.now() + SESSION_TTL_MS;
+  sessions.set(token, session);
+  return session;
 }
 
 export function getRegionPopulation(regionId: string): AvatarState[] {
@@ -189,7 +222,7 @@ export function getRegionPopulation(regionId: string): AvatarState[] {
 }
 
 export async function moveAvatar(token: string, x: number, z: number, y = 0): Promise<AvatarState | undefined> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return undefined;
@@ -223,7 +256,7 @@ export async function moveAvatar(token: string, x: number, z: number, y = 0): Pr
 }
 
 export async function updateAvatarAppearance(token: string, updates: Omit<AvatarAppearance, "accountId" | "updatedAt">): Promise<AvatarState | undefined> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return undefined;
@@ -253,7 +286,7 @@ export async function updateAvatarAppearance(token: string, updates: Omit<Avatar
 }
 
 export async function equipInventoryItem(token: string, itemId: string): Promise<{ inventory: InventoryItem[]; avatar?: AvatarState }> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return { inventory: [] };
@@ -325,7 +358,7 @@ async function getBuildPermission(session: Session, x: number, z: number): Promi
 }
 
 export async function claimParcel(token: string, parcelId: string): Promise<Parcel | undefined> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return undefined;
@@ -335,7 +368,7 @@ export async function claimParcel(token: string, parcelId: string): Promise<Parc
 }
 
 export async function releaseParcel(token: string, parcelId: string): Promise<Parcel | undefined> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return undefined;
@@ -348,8 +381,20 @@ function isAdminSession(session: Session | undefined) {
   return session?.role === "admin";
 }
 
+export type AuditLog = {
+  id: string;
+  actorAccountId: string;
+  actorDisplayName: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  regionId: string | null;
+  details: string;
+  createdAt: string;
+};
+
 export async function adminAssignParcel(token: string, parcelId: string, ownerAccountId: string | null): Promise<Parcel | undefined> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!isAdminSession(session)) {
     return undefined;
@@ -359,13 +404,43 @@ export async function adminAssignParcel(token: string, parcelId: string, ownerAc
 }
 
 export async function adminDeleteRegionObject(token: string, objectId: string): Promise<boolean> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!isAdminSession(session)) {
     return false;
   }
 
   return persistence.adminDeleteRegionObject(objectId);
+}
+
+export async function appendAuditLog(token: string, action: string, targetType: string, targetId: string, details: string, regionId: string | null) {
+  const session = getSession(token);
+
+  if (!session) {
+    return;
+  }
+
+  await persistence.appendAuditLog({
+    id: randomUUID(),
+    actorAccountId: session.accountId,
+    actorDisplayName: session.displayName,
+    action,
+    targetType,
+    targetId,
+    regionId,
+    details,
+    createdAt: new Date().toISOString()
+  });
+}
+
+export async function listAuditLogs(token: string, limit = 50): Promise<AuditLog[] | undefined> {
+  const session = getSession(token);
+
+  if (!isAdminSession(session)) {
+    return undefined;
+  }
+
+  return persistence.listAuditLogs(limit);
 }
 
 export async function listRegionObjects(regionId: string): Promise<RegionObject[]> {

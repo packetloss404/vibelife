@@ -38,6 +38,7 @@ const elements = {
   adminClearParcelButton: document.querySelector("#adminClearParcelButton"),
   adminDeleteObjectButton: document.querySelector("#adminDeleteObjectButton"),
   adminNotice: document.querySelector("#adminNotice"),
+  adminAuditList: document.querySelector("#adminAuditList"),
   toast: document.querySelector("#toast")
 };
 
@@ -222,6 +223,24 @@ const updateAdminPanel = () => {
   elements.adminTakeParcelButton.disabled = !active || active.ownerAccountId === state.session?.accountId;
   elements.adminClearParcelButton.disabled = !active || !active.ownerAccountId;
   elements.adminDeleteObjectButton.disabled = !state.selectedObjectId;
+};
+
+const loadAdminAuditLogs = async () => {
+  if (state.account?.role !== "admin" || !state.session) {
+    elements.adminAuditList.textContent = "No admin history loaded.";
+    return;
+  }
+
+  const response = await fetch(`/api/admin/audit-logs?token=${encodeURIComponent(state.session.token)}&limit=12`);
+  const data = await response.json();
+  if (!response.ok) {
+    elements.adminAuditList.textContent = data.error ?? "Unable to load admin history.";
+    return;
+  }
+
+  elements.adminAuditList.innerHTML = data.logs.length
+    ? data.logs.map((entry) => `<div class="compact-card">${entry.action} - ${entry.details}</div>`).join("")
+    : "No admin history yet.";
 };
 
 const renderBuilderList = () => {
@@ -1357,6 +1376,7 @@ const connect = async () => {
   renderAppearanceControls(data.appearance);
   renderParcels();
   updateAdminPanel();
+  await loadAdminAuditLogs();
   await syncAvatarMeshes();
   await loadRegionScene(state.session.regionId);
   await syncRegionObjects();
@@ -1420,6 +1440,7 @@ const connect = async () => {
         : [...state.parcels, message.parcel];
       renderParcels();
       updateAdminPanel();
+      void loadAdminAuditLogs();
     }
 
     void syncAvatarMeshes();
@@ -1596,6 +1617,7 @@ elements.adminTakeParcelButton.addEventListener("click", async () => {
   const data = await response.json();
   if (!response.ok) return toast(data.error ?? "Admin parcel assignment failed.", true);
   toast(`Admin took parcel ${data.parcel.name}.`);
+  await loadAdminAuditLogs();
 });
 
 elements.adminClearParcelButton.addEventListener("click", async () => {
@@ -1608,6 +1630,7 @@ elements.adminClearParcelButton.addEventListener("click", async () => {
   const data = await response.json();
   if (!response.ok) return toast(data.error ?? "Admin parcel clear failed.", true);
   toast(`Admin cleared parcel ${data.parcel.name}.`);
+  await loadAdminAuditLogs();
 });
 
 elements.adminDeleteObjectButton.addEventListener("click", async () => {
@@ -1620,6 +1643,7 @@ elements.adminDeleteObjectButton.addEventListener("click", async () => {
   const data = await response.json();
   if (!response.ok) return toast(data.error ?? "Admin object cleanup failed.", true);
   toast("Admin deleted selected object.");
+  await loadAdminAuditLogs();
 });
 
 elements.inventoryList.addEventListener("click", async (event) => {
