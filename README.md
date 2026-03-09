@@ -36,6 +36,12 @@ npm run dev
 
 That starts the backend on `http://localhost:3000`.
 
+Verification:
+
+```bash
+npm run check
+```
+
 Open the native client from `native-client/godot/project.godot` in Godot 4.2+.
 
 The browser client under `public/` is still available as a debug/admin prototype, but it is no longer the primary client direction.
@@ -85,6 +91,11 @@ npm run dev:postgres
 - register/login auth endpoints now exist alongside guest access, with admin moderation controls for parcel reassignment and object cleanup
 - browser debug and Godot native clients now both support auth modes and admin parcel/object moderation flows
 - admin audit logs now surface in both clients and register/login flows support account-mode switching
+
+## Shared contracts
+
+- shared runtime contract types now live in `src/contracts.ts`
+- `scripts/check.mjs` verifies TypeScript build health, Godot duplicate-function regressions, and browser/native asset copy drift
 
 ## Auth notes
 

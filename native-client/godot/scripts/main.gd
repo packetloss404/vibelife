@@ -115,13 +115,13 @@ func _ready() -> void:
 	auth_request.request_completed.connect(_on_auth_completed)
 	scene_request.request_completed.connect(_on_scene_loaded)
 	objects_request.request_completed.connect(_on_objects_loaded)
-	_fetch_regions()
-	_load_profiles()
-	_load_client_settings()
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
 	for auth_mode in ["Guest", "Register", "Login"]:
 		auth_mode_select.add_item(auth_mode)
+	_load_profiles()
+	_load_client_settings()
+	_fetch_regions()
 	_set_gizmo_mode("move")
 
 
@@ -1207,48 +1207,6 @@ func _load_admin_audit_logs() -> void:
 				lines.append("%s - %s" % [entry.action, entry.details])
 			admin_audit_log.text = "\n".join(lines)
 	request.queue_free()
-
-
-func _on_inventory_item_selected(index: int) -> void:
-	selected_inventory_index = index
-	var item: Dictionary = inventory[index]
-	inventory_selection_label.text = "%s - %s" % [item.name, item.kind]
-
-
-func _equip_selected_inventory_item() -> void:
-	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size() or session.is_empty():
-		return
-	var item: Dictionary = inventory[selected_inventory_index]
-	if item.get("slot", null) == null:
-		status_label.text = "Selected item cannot be equipped"
-		return
-	var request := HTTPRequest.new()
-	add_child(request)
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({"token": session.token, "itemId": item.id})
-	var url := "%s/api/inventory/equip" % backend_url_input.text.rstrip("/")
-	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-		var result := await request.request_completed
-		var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
-		inventory = payload.get("inventory", inventory)
-		_render_inventory()
-		status_label.text = "Equipped %s" % item.name
-	request.queue_free()
-
-
-func _use_selected_inventory_item() -> void:
-	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size():
-		return
-	var item: Dictionary = inventory[selected_inventory_index]
-	if item.get("slot", null) != null:
-		await _equip_selected_inventory_item()
-		return
-	if item.kind == "tool":
-		status_label.text = "%s ready for parcel editing" % item.name
-	elif item.kind == "pet":
-		_append_chat("System: %s companion activated" % item.name)
-	else:
-		status_label.text = "%s used" % item.name
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:

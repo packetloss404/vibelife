@@ -307,9 +307,14 @@ app.post<{
   Body: { token?: string; asset?: string; x?: number; y?: number; z?: number; rotationY?: number; scale?: number };
 }>("/api/regions/:regionId/objects", async (request, reply) => {
   const { token, asset, x, y, z, rotationY, scale } = request.body;
+  const session = token ? getSession(token) : undefined;
 
   if (!token || !asset || x === undefined || y === undefined || z === undefined) {
     return reply.code(400).send({ error: "token, asset, x, y, and z are required" });
+  }
+
+  if (!session || session.regionId !== request.params.regionId) {
+    return reply.code(403).send({ error: "session is not active in this region" });
   }
 
   const object = await createRegionObject(token, {

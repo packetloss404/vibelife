@@ -201,7 +201,7 @@ export async function loginSession(displayName: string, password: string, region
 }
 
 export function getSession(token: string): Session | undefined {
-  const session = getSession(token);
+  const session = sessions.get(token);
 
   if (!session) {
     return undefined;
@@ -209,6 +209,7 @@ export function getSession(token: string): Session | undefined {
 
   if (session.expiresAt < Date.now()) {
     sessions.delete(token);
+    avatarsByRegion.get(session.regionId)?.delete(session.avatarId);
     return undefined;
   }
 
@@ -455,7 +456,7 @@ export async function createRegionObject(token: string, input: {
   rotationY: number;
   scale: number;
 }): Promise<{ object?: RegionObject; permission: BuildPermission }> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return {
@@ -498,7 +499,7 @@ export async function updateRegionObject(token: string, objectId: string, update
   rotationY: number;
   scale: number;
 }): Promise<{ object?: RegionObject; permission: BuildPermission }> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return {
@@ -526,7 +527,7 @@ export async function updateRegionObject(token: string, objectId: string, update
 }
 
 export async function deleteRegionObject(token: string, objectId: string): Promise<boolean> {
-  const session = sessions.get(token);
+  const session = getSession(token);
 
   if (!session) {
     return false;
