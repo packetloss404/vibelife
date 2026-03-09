@@ -1,0 +1,114 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_8w1l2"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_y6mab"]
+sky_top_color = Color(0.423529, 0.760784, 1, 1)
+sky_horizon_color = Color(0.117647, 0.262745, 0.341176, 1)
+ground_bottom_color = Color(0.0196078, 0.0431373, 0.0627451, 1)
+
+[sub_resource type="Environment" id="Environment_3v5s2"]
+background_mode = 2
+sky = SubResource("ProceduralSkyMaterial_y6mab")
+ambient_light_source = 3
+ambient_light_color = Color(0.552941, 0.72549, 0.796078, 1)
+ambient_light_energy = 1.2
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_8w1l2")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_3v5s2")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+position = Vector3(8, 18, 7)
+rotation = Vector3(-0.9, 0.8, 0)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="CameraRig" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+position = Vector3(0, 8, 14)
+current = true
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+
+[node name="StaticWorld" type="Node3D" parent="."]
+
+[node name="DynamicWorld" type="Node3D" parent="."]
+
+[node name="Avatars" type="Node3D" parent="."]
+
+[node name="Network" type="Node" parent="."]
+
+[node name="RegionsRequest" type="HTTPRequest" parent="Network"]
+
+[node name="AuthRequest" type="HTTPRequest" parent="Network"]
+
+[node name="SceneRequest" type="HTTPRequest" parent="Network"]
+
+[node name="ObjectsRequest" type="HTTPRequest" parent="Network"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Sidebar" type="PanelContainer" parent="CanvasLayer/UI"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 380.0
+offset_bottom = 340.0
+
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/UI/Sidebar"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UI/Sidebar/Margin"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "ThirdLife Native Client"
+
+[node name="BackendLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Backend URL"
+
+[node name="BackendUrlInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "http://127.0.0.1:3000"
+
+[node name="DisplayNameLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Display name"
+
+[node name="DisplayNameInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Guest Voyager"
+
+[node name="RegionLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Region"
+
+[node name="RegionSelect" type="OptionButton" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+
+[node name="RefreshRegionsButton" type="Button" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Refresh regions"
+
+[node name="JoinButton" type="Button" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Join world"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Fetching regions..."
+autowrap_mode = 3
+
+[node name="Help" type="Label" parent="CanvasLayer/UI"]
+offset_left = 410.0
+offset_top = 20.0
+offset_right = 1000.0
+offset_bottom = 56.0
+text = "WASD move, hold right mouse to orbit, mouse wheel zoom. This is the primary native 3D client scaffold."
+autowrap_mode = 3

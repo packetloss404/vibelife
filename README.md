@@ -1,6 +1,6 @@
 # ThirdLife 2026 Prototype
 
-This is a minimal Second Life-inspired prototype using a modern TypeScript service instead of the original multi-daemon era architecture.
+This is a Second Life-inspired prototype with a modern TypeScript backend and a Godot-based native client direction.
 
 ## What is included
 
@@ -8,7 +8,7 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - region directory endpoint
 - Postgres-ready region, account, and inventory persistence
 - WebSocket region presence and chat
-- browser 3D viewer with click-to-move avatar sync
+- Godot native client scaffold connected to the live backend
 - region scene manifests and generated glTF assets
 - in-world object placement, selection, transform, and deletion tools
 - imported avatar models with idle and walk clips
@@ -25,7 +25,7 @@ This is a minimal Second Life-inspired prototype using a modern TypeScript servi
 - one deployable service for fast iteration
 - clean split between auth, region state, and transport layers
 - optional Postgres bootstrap gives you a real persistence path without breaking local development
-- browser-first 3D client lets you validate social loops before investing in a heavier custom viewer
+- the backend is already usable from a native viewer instead of being locked to the browser
 
 ## Run it
 
@@ -34,7 +34,11 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:3000`.
+That starts the backend on `http://localhost:3000`.
+
+Open the native client from `native-client/godot/project.godot` in Godot 4.2+.
+
+The browser client under `public/` is still available as a debug/admin prototype, but it is no longer the primary client direction.
 
 ## Optional Postgres mode
 
@@ -64,6 +68,12 @@ npm run dev:postgres
 - reusable world assets live in `public/assets/models/*.gltf`
 - regenerate assets with `npm run generate:assets`
 
+## Native client
+
+- primary client scaffold lives in `native-client/godot`
+- uses the existing `/api/regions`, `/api/auth/guest`, `/api/regions/:id/objects`, and `/ws/regions/:regionId` backend flow
+- currently renders backend content as native placeholder geometry while the server contract stabilizes
+
 ## Building tools
 
 - enable build mode in the sidebar after joining a region
@@ -87,7 +97,7 @@ npm run dev:postgres
 ## Suggested next milestones
 
 1. Split region simulation into dedicated workers with interest management.
-2. Replace the browser viewer with a WebGPU or Unity/Godot production client.
+2. Expand the Godot client into a production viewer with imported assets, animation controllers, and native UI.
 3. Add parcel ownership, scripts, and permission graphs.
 4. Introduce asset storage and CDN delivery.
 5. Add federation or shard-to-shard travel.
