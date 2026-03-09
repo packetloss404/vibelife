@@ -8,7 +8,9 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 - authenticates with the guest login endpoint
 - connects to the existing region WebSocket
 - renders avatars and world objects in a native 3D scene
+- loads imported glTF world assets from `native-client/godot/assets/models`
 - supports basic third-person camera orbit and WASD movement
+- includes native login, region selection, chat, and inventory panels
 
 ## Open it
 
@@ -19,6 +21,6 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 
 ## Notes
 
-- The current native client uses Godot-generated placeholder geometry for backend assets.
+- The client first tries imported local glTF assets and falls back to simple native placeholder geometry when needed.
 - It already connects to the real backend API and WebSocket flow.
 - The browser client remains in `public/` as a debug/admin prototype, not the primary viewer.

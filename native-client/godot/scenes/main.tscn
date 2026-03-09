@@ -105,6 +105,29 @@ text = "Join world"
 text = "Fetching regions..."
 autowrap_mode = 3
 
+[node name="InventoryLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Inventory"
+
+[node name="InventoryList" type="ItemList" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+custom_minimum_size = Vector2(0, 120)
+
+[node name="ChatLabel" type="Label" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+text = "Region chat"
+
+[node name="ChatLog" type="RichTextLabel" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+custom_minimum_size = Vector2(0, 120)
+bbcode_enabled = false
+scroll_following = true
+
+[node name="ChatInputRow" type="HBoxContainer" parent="CanvasLayer/UI/Sidebar/Margin/VBox"]
+
+[node name="ChatInput" type="LineEdit" parent="CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow"]
+size_flags_horizontal = 3
+placeholder_text = "Say something"
+
+[node name="SendChatButton" type="Button" parent="CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow"]
+text = "Send"
+
 [node name="Help" type="Label" parent="CanvasLayer/UI"]
 offset_left = 410.0
 offset_top = 20.0

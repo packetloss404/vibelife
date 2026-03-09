@@ -20,6 +20,10 @@ const WS_SNAPSHOT := "snapshot"
 @onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
 @onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/JoinButton
 @onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/VBox/StatusLabel
+@onready var inventory_list: ItemList = $CanvasLayer/UI/Sidebar/Margin/VBox/InventoryList
+@onready var chat_log: RichTextLabel = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatLog
+@onready var chat_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/ChatInput
+@onready var send_chat_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/ChatInputRow/SendChatButton
 
 var websocket := WebSocketPeer.new()
 var regions: Array = []
@@ -27,14 +31,18 @@ var session: Dictionary = {}
 var avatar_states := {}
 var avatar_nodes := {}
 var object_nodes := {}
+var inventory: Array = []
 var yaw := 0.0
 var pitch := 0.45
 var orbiting := false
+var model_scene_cache := {}
 
 func _ready() -> void:
 	_setup_ground()
 	refresh_regions_button.pressed.connect(_fetch_regions)
 	join_button.pressed.connect(_join_world)
+	send_chat_button.pressed.connect(_send_chat)
+	chat_input.text_submitted.connect(func(_text: String): _send_chat())
 	regions_request.request_completed.connect(_on_regions_loaded)
 	auth_request.request_completed.connect(_on_auth_completed)
 	scene_request.request_completed.connect(_on_scene_loaded)
@@ -123,6 +131,9 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	avatar_states.clear()
 	avatar_states[payload.avatar.avatarId] = payload.avatar
 	status_label.text = "Connected as %s" % session.displayName
+	inventory = payload.get("inventory", [])
+	_render_inventory()
+	_append_chat("System: joined %s" % session.regionId)
 	await _load_region_scene(session.regionId)
 	await _load_region_objects(session.regionId)
 	_sync_avatars()
@@ -209,6 +220,8 @@ func _handle_socket_message(message: Dictionary) -> void:
 		"avatar:left":
 			avatar_states.erase(message.avatarId)
 			_sync_avatars()
+		"chat":
+			_append_chat("%s: %s" % [message.displayName, message.message])
 		"object:created", "object:updated":
 			_sync_single_object(message.object)
 		"object:deleted":
@@ -289,6 +302,13 @@ func _update_avatar_node(node: Node3D, state: Dictionary) -> void:
 
 
 func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale_value: float) -> Node3D:
+	var imported := _instantiate_imported_asset(asset)
+	if imported:
+		imported.position = position
+		imported.rotation.y = rotation_y
+		imported.scale = Vector3.ONE * scale_value
+		return imported
+
 	var root := Node3D.new()
 	root.position = position
 	root.rotation.y = rotation_y
@@ -361,6 +381,50 @@ func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale
 	mesh_instance.set_surface_override_material(0, material)
 	root.add_child(mesh_instance)
 	return root
+
+
+func _instantiate_imported_asset(asset: String) -> Node3D:
+	var file_name := asset.get_file()
+	var resource_path := "res://assets/models/%s" % file_name
+	if not ResourceLoader.exists(resource_path):
+		return null
+
+	var packed = model_scene_cache.get(resource_path)
+	if packed == null:
+		packed = load(resource_path)
+		model_scene_cache[resource_path] = packed
+
+	if packed is PackedScene:
+		return (packed as PackedScene).instantiate()
+
+	return null
+
+
+func _render_inventory() -> void:
+	inventory_list.clear()
+	for item in inventory:
+		var equipped := ""
+		if item.get("equipped", false):
+			equipped = " [equipped]"
+		inventory_list.add_item("%s%s" % [item.name, equipped])
+
+
+func _append_chat(message: String) -> void:
+	chat_log.append_text(message + "\n")
+
+
+func _send_chat() -> void:
+	var message := chat_input.text.strip_edges()
+	if message.is_empty():
+		return
+	if websocket.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		status_label.text = "Chat unavailable until region WebSocket connects."
+		return
+	websocket.send_text(JSON.stringify({
+		"type": "chat",
+		"message": message
+	}))
+	chat_input.clear()
 
 
 func _update_local_movement(delta: float) -> void:
