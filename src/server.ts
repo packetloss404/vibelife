@@ -18,6 +18,7 @@ import {
   listRegionObjects,
   listRegions,
   moveAvatar,
+  releaseParcel,
   removeAvatar,
   updateAvatarAppearance,
   updateRegionObject
@@ -141,6 +142,29 @@ app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", 
   }
 
   const parcel = await claimParcel(token, parcelId);
+
+  if (!parcel) {
+    return reply.code(409).send({ error: "parcel unavailable" });
+  }
+
+  const session = getSession(token);
+
+  if (session) {
+    broadcastRegion(session.regionId, { type: "parcel:updated", parcel });
+  }
+
+  return reply.send({ parcel });
+});
+
+app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/release", async (request, reply) => {
+  const token = request.body.token;
+  const parcelId = request.body.parcelId;
+
+  if (!token || !parcelId) {
+    return reply.code(400).send({ error: "token and parcelId are required" });
+  }
+
+  const parcel = await releaseParcel(token, parcelId);
 
   if (!parcel) {
     return reply.code(409).send({ error: "parcel unavailable" });

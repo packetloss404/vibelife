@@ -81,6 +81,7 @@ npm run dev:postgres
 - native inventory now supports equip/use actions and native object editing now supports axis-handle dragging
 - native client now saves backend profiles locally and renders parcel overlays with ownership colors in-world
 - native HUD now supports parcel claims plus saved graphics and input settings
+- parcel ownership changes now propagate live over WebSocket to both native and browser debug clients
 
 ## Building tools
 

@@ -170,12 +170,14 @@ const renderParcels = () => {
     .map((parcel) => {
       const owner = parcel.ownerDisplayName ? `owned by ${parcel.ownerDisplayName}` : "unclaimed";
       const canClaim = state.session && !parcel.ownerAccountId;
+      const canRelease = state.session && parcel.ownerAccountId === state.session.accountId;
 
       return `
         <div class="card compact-card">
           <strong>${parcel.name}</strong>
           <div>${parcel.tier} parcel - ${owner}</div>
           ${canClaim ? `<button data-claim-parcel="${parcel.id}" style="margin-top:10px;">Claim parcel</button>` : ""}
+          ${canRelease ? `<button data-release-parcel="${parcel.id}" style="margin-top:10px;">Release parcel</button>` : ""}
         </div>
       `;
     })
@@ -1364,6 +1366,13 @@ const connect = async () => {
       void applyRegionObjects();
     }
 
+    if (message.type === "parcel:updated") {
+      state.parcels = state.parcels.some((item) => item.id === message.parcel.id)
+        ? state.parcels.map((item) => item.id === message.parcel.id ? message.parcel : item)
+        : [...state.parcels, message.parcel];
+      renderParcels();
+    }
+
     void syncAvatarMeshes();
   });
 
@@ -1505,24 +1514,27 @@ elements.parcelList.addEventListener("click", async (event) => {
   }
 
   const parcelId = target.dataset.claimParcel;
-  if (!parcelId || !state.session) {
+  const releaseParcelId = target.dataset.releaseParcel;
+  const selectedParcelId = parcelId || releaseParcelId;
+
+  if (!selectedParcelId || !state.session) {
     return;
   }
 
-  const response = await fetch("/api/parcels/claim", {
+  const response = await fetch(parcelId ? "/api/parcels/claim" : "/api/parcels/release", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: state.session.token, parcelId })
+    body: JSON.stringify({ token: state.session.token, parcelId: selectedParcelId })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    status(error.error ?? "Unable to claim parcel.", true);
+    status(error.error ?? `Unable to ${parcelId ? "claim" : "release"} parcel.`, true);
     return;
   }
 
   await loadParcels(state.session.regionId);
-  status("Parcel claimed.");
+  status(parcelId ? "Parcel claimed." : "Parcel released.");
 });
 
 elements.inventoryList.addEventListener("click", async (event) => {

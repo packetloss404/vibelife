@@ -50,6 +50,7 @@ const WS_SNAPSHOT := "snapshot"
 @onready var selection_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/SelectionLabel
 @onready var parcel_label: Label = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ParcelLabel
 @onready var claim_parcel_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ClaimParcelButton
+@onready var release_parcel_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/ReleaseParcelButton
 @onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
 @onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
 
@@ -103,6 +104,7 @@ func _ready() -> void:
 	duplicate_button.pressed.connect(_duplicate_selected_object)
 	delete_button.pressed.connect(_delete_selected_object)
 	claim_parcel_button.pressed.connect(_claim_active_parcel)
+	release_parcel_button.pressed.connect(_release_active_parcel)
 	inventory_list.item_selected.connect(_on_inventory_item_selected)
 	equip_item_button.pressed.connect(_equip_selected_inventory_item)
 	use_item_button.pressed.connect(_use_selected_inventory_item)
@@ -1116,6 +1118,7 @@ func _update_gizmo_handles() -> void:
 
 func _claim_button_state() -> void:
 	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or active_parcel.get("ownerAccountId", null) != null
+	release_parcel_button.disabled = active_parcel.is_empty() or String(active_parcel.get("ownerAccountId", "")) != String(session.get("accountId", ""))
 
 
 func _claim_active_parcel() -> void:
@@ -1140,6 +1143,31 @@ func _claim_active_parcel() -> void:
 			status_label.text = "Claimed %s" % parcel.get("name", "parcel")
 		else:
 			status_label.text = "Parcel claim failed"
+	request.queue_free()
+
+
+func _release_active_parcel() -> void:
+	if active_parcel.is_empty() or session.is_empty():
+		return
+	var request := HTTPRequest.new()
+	add_child(request)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var body := JSON.stringify({"token": session.token, "parcelId": active_parcel.id})
+	var url := "%s/api/parcels/release" % backend_url_input.text.rstrip("/")
+	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
+		var result := await request.request_completed
+		if int(result[1]) == 200:
+			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+			var parcel = payload.get("parcel", {})
+			for index in range(parcels.size()):
+				if parcels[index].id == parcel.id:
+					parcels[index] = parcel
+			active_parcel = parcel
+			_render_parcels()
+			_claim_button_state()
+			status_label.text = "Released %s" % parcel.get("name", "parcel")
+		else:
+			status_label.text = "Parcel release failed"
 	request.queue_free()
 
 

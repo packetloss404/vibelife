@@ -91,6 +91,7 @@ export type PersistenceLayer = {
   saveAvatarPosition(position: AvatarPositionRecord): Promise<void>;
   listParcels(regionId: string): Promise<ParcelRecord[]>;
   claimParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
+  releaseParcel(parcelId: string, accountId: string): Promise<ParcelRecord | undefined>;
   listRegionObjects(regionId: string): Promise<RegionObjectRecord[]>;
   createRegionObject(object: Omit<RegionObjectRecord, "ownerDisplayName">): Promise<RegionObjectRecord>;
   updateRegionObject(objectId: string, ownerAccountId: string, updates: Pick<RegionObjectRecord, "x" | "y" | "z" | "rotationY" | "scale" | "updatedAt">): Promise<RegionObjectRecord | undefined>;
@@ -311,6 +312,22 @@ function createMemoryPersistence(): PersistenceLayer {
         ...parcel,
         ownerAccountId: accountId,
         ownerDisplayName: account.displayName
+      };
+
+      parcels.set(parcelId, updatedParcel);
+      return updatedParcel;
+    },
+    async releaseParcel(parcelId, accountId) {
+      const parcel = parcels.get(parcelId);
+
+      if (!parcel || parcel.ownerAccountId !== accountId) {
+        return undefined;
+      }
+
+      const updatedParcel: ParcelRecord = {
+        ...parcel,
+        ownerAccountId: null,
+        ownerDisplayName: null
       };
 
       parcels.set(parcelId, updatedParcel);
@@ -786,6 +803,57 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
             name,
             owner_account_id,
             (SELECT display_name FROM accounts WHERE accounts.id = $2) AS owner_display_name,
+            min_x,
+            max_x,
+            min_z,
+            max_z,
+            tier
+        `,
+        [parcelId, accountId]
+      );
+
+      const row = result.rows[0];
+
+      if (!row) {
+        return undefined;
+      }
+
+      return {
+        id: row.id,
+        regionId: row.region_id,
+        name: row.name,
+        ownerAccountId: row.owner_account_id,
+        ownerDisplayName: row.owner_display_name,
+        minX: row.min_x,
+        maxX: row.max_x,
+        minZ: row.min_z,
+        maxZ: row.max_z,
+        tier: row.tier
+      };
+    },
+    async releaseParcel(parcelId, accountId) {
+      const result = await pool.query<{
+        id: string;
+        region_id: string;
+        name: string;
+        owner_account_id: string | null;
+        owner_display_name: string | null;
+        min_x: number;
+        max_x: number;
+        min_z: number;
+        max_z: number;
+        tier: string;
+      }>(
+        `
+          UPDATE parcels
+          SET owner_account_id = NULL
+          WHERE id = $1 AND owner_account_id = $2
+          RETURNING
+            id,
+            region_id,
+            name,
+            owner_account_id,
+            NULL::text AS owner_display_name,
             min_x,
             max_x,
             min_z,

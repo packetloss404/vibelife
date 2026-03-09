@@ -230,6 +230,9 @@ text = "Parcel: none"
 [node name="ClaimParcelButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 text = "Claim active parcel"
 
+[node name="ReleaseParcelButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
+text = "Release active parcel"
+
 [node name="DuplicateButton" type="Button" parent="CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox"]
 text = "Duplicate selected"
 

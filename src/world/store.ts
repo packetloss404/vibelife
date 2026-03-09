@@ -292,6 +292,16 @@ export async function claimParcel(token: string, parcelId: string): Promise<Parc
   return persistence.claimParcel(parcelId, session.accountId);
 }
 
+export async function releaseParcel(token: string, parcelId: string): Promise<Parcel | undefined> {
+  const session = sessions.get(token);
+
+  if (!session) {
+    return undefined;
+  }
+
+  return persistence.releaseParcel(parcelId, session.accountId);
+}
+
 export async function listRegionObjects(regionId: string): Promise<RegionObject[]> {
   return persistence.listRegionObjects(regionId);
 }
