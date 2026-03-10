@@ -36,6 +36,121 @@ export type AuditLogRecord = {
   createdAt: string;
 };
 
+export type TeleportLandingPointRecord = {
+  id: string;
+  accountId: string;
+  regionId: string;
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  createdAt: string;
+};
+
+export type FriendRecord = {
+  id: string;
+  accountId: string;
+  friendAccountId: string;
+  friendDisplayName: string;
+  status: "pending" | "accepted" | "blocked";
+  createdAt: string;
+};
+
+export type GroupRecord = {
+  id: string;
+  name: string;
+  description: string;
+  founderAccountId: string;
+  createdAt: string;
+};
+
+export type GroupMemberRecord = {
+  groupId: string;
+  accountId: string;
+  displayName: string;
+  role: "member" | "officer" | "owner";
+  joinedAt: string;
+};
+
+export type CurrencyTransactionRecord = {
+  id: string;
+  fromAccountId: string | null;
+  toAccountId: string | null;
+  amount: number;
+  type: "gift" | "purchase" | "sale" | "bonus" | "region_tax";
+  description: string;
+  createdAt: string;
+};
+
+export type OfflineMessageRecord = {
+  id: string;
+  fromAccountId: string;
+  fromDisplayName: string;
+  toAccountId: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export type AvatarProfileRecord = {
+  accountId: string;
+  bio: string;
+  imageUrl: string | null;
+  worldVisits: number;
+  totalTime: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BanRecord = {
+  id: string;
+  accountId: string;
+  bannedBy: string;
+  reason: string;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+export type RegionNoticeRecord = {
+  id: string;
+  regionId: string;
+  parcelId: string | null;
+  message: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type RegionObjectPermissionRecord = {
+  objectId: string;
+  allowCopy: boolean;
+  allowModify: boolean;
+  allowTransfer: boolean;
+};
+
+export type ObjectScriptRecord = {
+  id: string;
+  objectId: string;
+  scriptName: string;
+  scriptCode: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssetRecord = {
+  id: string;
+  accountId: string;
+  name: string;
+  description: string;
+  assetType: string;
+  url: string;
+  thumbnailUrl: string | null;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AvatarAppearanceRecord = {
   accountId: string;
   bodyColor: string;
@@ -141,6 +256,43 @@ export type PersistenceLayer = {
   adminDeleteRegionObject(objectId: string): Promise<boolean>;
   appendAuditLog(entry: AuditLogRecord): Promise<void>;
   listAuditLogs(limit: number): Promise<AuditLogRecord[]>;
+  listTeleportPoints(accountId: string): Promise<TeleportLandingPointRecord[]>;
+  createTeleportPoint(point: Omit<TeleportLandingPointRecord, "id" | "createdAt">): Promise<TeleportLandingPointRecord>;
+  deleteTeleportPoint(pointId: string, accountId: string): Promise<boolean>;
+  listFriends(accountId: string): Promise<FriendRecord[]>;
+  addFriend(friend: Omit<FriendRecord, "id" | "createdAt">): Promise<FriendRecord>;
+  removeFriend(accountId: string, friendAccountId: string): Promise<boolean>;
+  blockAccount(accountId: string, blockedAccountId: string): Promise<FriendRecord>;
+  unblockAccount(accountId: string, blockedAccountId: string): Promise<boolean>;
+  listGroups(accountId: string): Promise<GroupRecord[]>;
+  createGroup(group: Omit<GroupRecord, "id" | "createdAt">): Promise<GroupRecord>;
+  getGroupMembers(groupId: string): Promise<GroupMemberRecord[]>;
+  addGroupMember(member: GroupMemberRecord): Promise<void>;
+  removeGroupMember(groupId: string, accountId: string): Promise<boolean>;
+  updateGroupMemberRole(groupId: string, accountId: string, role: "member" | "officer" | "owner"): Promise<void>;
+  getCurrencyBalance(accountId: string): Promise<number>;
+  addCurrency(transaction: Omit<CurrencyTransactionRecord, "id" | "createdAt">): Promise<number>;
+  listCurrencyTransactions(accountId: string, limit: number): Promise<CurrencyTransactionRecord[]>;
+  sendOfflineMessage(message: Omit<OfflineMessageRecord, "id" | "createdAt">): Promise<OfflineMessageRecord>;
+  listOfflineMessages(accountId: string, limit: number): Promise<OfflineMessageRecord[]>;
+  markOfflineMessageRead(messageId: string, accountId: string): Promise<boolean>;
+  getAvatarProfile(accountId: string): Promise<AvatarProfileRecord | undefined>;
+  saveAvatarProfile(profile: AvatarProfileRecord): Promise<AvatarProfileRecord>;
+  banAccount(ban: Omit<BanRecord, "id" | "createdAt">): Promise<BanRecord>;
+  unbanAccount(accountId: string): Promise<boolean>;
+  getActiveBan(accountId: string): Promise<BanRecord | undefined>;
+  listRegionNotices(regionId: string): Promise<RegionNoticeRecord[]>;
+  createRegionNotice(notice: Omit<RegionNoticeRecord, "id" | "createdAt">): Promise<RegionNoticeRecord>;
+  deleteRegionNotice(noticeId: string, regionId: string): Promise<boolean>;
+  getObjectPermissions(objectId: string): Promise<RegionObjectPermissionRecord | undefined>;
+  saveObjectPermissions(perms: RegionObjectPermissionRecord): Promise<void>;
+  listObjectScripts(objectId: string): Promise<ObjectScriptRecord[]>;
+  createObjectScript(script: Omit<ObjectScriptRecord, "id" | "createdAt" | "updatedAt">): Promise<ObjectScriptRecord>;
+  updateObjectScript(scriptId: string, accountId: string, scriptCode: string, enabled: boolean): Promise<ObjectScriptRecord | undefined>;
+  deleteObjectScript(scriptId: string, accountId: string): Promise<boolean>;
+  listAssets(accountId: string): Promise<AssetRecord[]>;
+  createAsset(asset: Omit<AssetRecord, "id" | "createdAt" | "updatedAt">): Promise<AssetRecord>;
+  deleteAsset(assetId: string, accountId: string): Promise<boolean>;
 };
 
 const seededRegions: RegionRecord[] = [
@@ -269,6 +421,19 @@ function createMemoryPersistence(): PersistenceLayer {
   );
   const regionObjects = new Map<string, RegionObjectRecord>();
   const auditLogs: AuditLogRecord[] = [];
+  const teleportPoints = new Map<string, TeleportLandingPointRecord>();
+  const friends = new Map<string, FriendRecord>();
+  const groups = new Map<string, GroupRecord>();
+  const groupMembers = new Map<string, GroupMemberRecord[]>();
+  const currencyBalances = new Map<string, number>();
+  const currencyTransactions: CurrencyTransactionRecord[] = [];
+  const offlineMessages = new Map<string, OfflineMessageRecord[]>();
+  const profiles = new Map<string, AvatarProfileRecord>();
+  const bans = new Map<string, BanRecord>();
+  const regionNotices = new Map<string, RegionNoticeRecord[]>();
+  const objectPermissions = new Map<string, RegionObjectPermissionRecord>();
+  const objectScripts = new Map<string, ObjectScriptRecord>();
+  const assets = new Map<string, AssetRecord>();
 
   return {
     mode: "memory",
@@ -529,6 +694,245 @@ function createMemoryPersistence(): PersistenceLayer {
     },
     async listAuditLogs(limit) {
       return auditLogs.slice(0, limit);
+    },
+    async listTeleportPoints(accountId) {
+      return [...teleportPoints.values()].filter((p) => p.accountId === accountId);
+    },
+    async createTeleportPoint(point) {
+      const record: TeleportLandingPointRecord = {
+        id: randomUUID(),
+        ...point,
+        createdAt: new Date().toISOString()
+      };
+      teleportPoints.set(record.id, record);
+      return record;
+    },
+    async deleteTeleportPoint(pointId, accountId) {
+      const point = teleportPoints.get(pointId);
+      if (!point || point.accountId !== accountId) return false;
+      return teleportPoints.delete(pointId);
+    },
+    async listFriends(accountId) {
+      return [...friends.values()].filter((f) => f.accountId === accountId);
+    },
+    async addFriend(friend) {
+      const record: FriendRecord = {
+        id: randomUUID(),
+        ...friend,
+        createdAt: new Date().toISOString()
+      };
+      friends.set(record.id, record);
+      return record;
+    },
+    async removeFriend(accountId, friendAccountId) {
+      const entry = [...friends.values()].find((f) => f.accountId === accountId && f.friendAccountId === friendAccountId);
+      if (!entry) return false;
+      return friends.delete(entry.id);
+    },
+    async blockAccount(accountId, blockedAccountId) {
+      const blocked = accountsById.get(blockedAccountId);
+      const record: FriendRecord = {
+        id: randomUUID(),
+        accountId,
+        friendAccountId: blockedAccountId,
+        friendDisplayName: blocked?.displayName ?? "Unknown",
+        status: "blocked",
+        createdAt: new Date().toISOString()
+      };
+      friends.set(record.id, record);
+      return record;
+    },
+    async unblockAccount(accountId, blockedAccountId) {
+      const entry = [...friends.values()].find((f) => f.accountId === accountId && f.friendAccountId === blockedAccountId && f.status === "blocked");
+      if (!entry) return false;
+      return friends.delete(entry.id);
+    },
+    async listGroups(accountId) {
+      const memberGroups = [...groupMembers.entries()].filter(([, members]) => members.some((m) => m.accountId === accountId));
+      return memberGroups.map(([groupId]) => groups.get(groupId)).filter(Boolean) as GroupRecord[];
+    },
+    async createGroup(group) {
+      const record: GroupRecord = {
+        id: randomUUID(),
+        ...group,
+        createdAt: new Date().toISOString()
+      };
+      groups.set(record.id, record);
+      groupMembers.set(record.id, [{
+        groupId: record.id,
+        accountId: group.founderAccountId,
+        displayName: accountsById.get(group.founderAccountId)?.displayName ?? "Unknown",
+        role: "owner",
+        joinedAt: new Date().toISOString()
+      }]);
+      return record;
+    },
+    async getGroupMembers(groupId) {
+      return groupMembers.get(groupId) ?? [];
+    },
+    async addGroupMember(member) {
+      const existing = groupMembers.get(member.groupId) ?? [];
+      if (existing.some((m) => m.accountId === member.accountId)) return;
+      existing.push(member);
+      groupMembers.set(member.groupId, existing);
+    },
+    async removeGroupMember(groupId, accountId) {
+      const existing = groupMembers.get(groupId) ?? [];
+      const filtered = existing.filter((m) => m.accountId !== accountId);
+      if (filtered.length === existing.length) return false;
+      groupMembers.set(groupId, filtered);
+      return true;
+    },
+    async updateGroupMemberRole(groupId, accountId, role) {
+      const existing = groupMembers.get(groupId) ?? [];
+      const member = existing.find((m) => m.accountId === accountId);
+      if (member) member.role = role;
+    },
+    async getCurrencyBalance(accountId) {
+      return currencyBalances.get(accountId) ?? 1000;
+    },
+    async addCurrency(transaction) {
+      const record: CurrencyTransactionRecord = {
+        id: randomUUID(),
+        ...transaction,
+        createdAt: new Date().toISOString()
+      };
+      currencyTransactions.unshift(record);
+      const fromBalance = currencyBalances.get(transaction.fromAccountId ?? "") ?? 1000;
+      const toBalance = currencyBalances.get(transaction.toAccountId ?? "") ?? 1000;
+      if (transaction.fromAccountId) currencyBalances.set(transaction.fromAccountId, fromBalance - transaction.amount);
+      if (transaction.toAccountId) currencyBalances.set(transaction.toAccountId, toBalance + transaction.amount);
+      return currencyBalances.get(transaction.toAccountId ?? "") ?? 1000;
+    },
+    async listCurrencyTransactions(accountId, limit) {
+      return currencyTransactions.filter((t) => t.fromAccountId === accountId || t.toAccountId === accountId).slice(0, limit);
+    },
+    async sendOfflineMessage(message) {
+      const record: OfflineMessageRecord = {
+        id: randomUUID(),
+        ...message,
+        createdAt: new Date().toISOString()
+      };
+      const existing = offlineMessages.get(message.toAccountId) ?? [];
+      existing.unshift(record);
+      offlineMessages.set(message.toAccountId, existing);
+      return record;
+    },
+    async listOfflineMessages(accountId, limit) {
+      return (offlineMessages.get(accountId) ?? []).slice(0, limit);
+    },
+    async markOfflineMessageRead(messageId, accountId) {
+      const messages = offlineMessages.get(accountId) ?? [];
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg) return false;
+      msg.read = true;
+      return true;
+    },
+    async getAvatarProfile(accountId) {
+      return profiles.get(accountId);
+    },
+    async saveAvatarProfile(profile) {
+      profiles.set(profile.accountId, profile);
+      return profile;
+    },
+    async banAccount(ban) {
+      const record: BanRecord = {
+        id: randomUUID(),
+        ...ban,
+        createdAt: new Date().toISOString()
+      };
+      bans.set(ban.accountId, record);
+      return record;
+    },
+    async unbanAccount(accountId) {
+      return bans.delete(accountId);
+    },
+    async getActiveBan(accountId) {
+      const ban = bans.get(accountId);
+      if (!ban) return undefined;
+      if (ban.expiresAt && new Date(ban.expiresAt) < new Date()) {
+        bans.delete(accountId);
+        return undefined;
+      }
+      return ban;
+    },
+    async listRegionNotices(regionId) {
+      return regionNotices.get(regionId) ?? [];
+    },
+    async createRegionNotice(notice) {
+      const record: RegionNoticeRecord = {
+        id: randomUUID(),
+        ...notice,
+        createdAt: new Date().toISOString()
+      };
+      const existing = regionNotices.get(notice.regionId) ?? [];
+      existing.unshift(record);
+      regionNotices.set(notice.regionId, existing);
+      return record;
+    },
+    async deleteRegionNotice(noticeId, regionId) {
+      const existing = regionNotices.get(regionId) ?? [];
+      const filtered = existing.filter((n) => n.id !== noticeId);
+      if (filtered.length === existing.length) return false;
+      regionNotices.set(regionId, filtered);
+      return true;
+    },
+    async getObjectPermissions(objectId) {
+      return objectPermissions.get(objectId);
+    },
+    async saveObjectPermissions(perms) {
+      objectPermissions.set(perms.objectId, perms);
+    },
+    async listObjectScripts(objectId) {
+      return [...objectScripts.values()].filter((s) => s.objectId === objectId);
+    },
+    async createObjectScript(script) {
+      const record: ObjectScriptRecord = {
+        id: randomUUID(),
+        ...script,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      objectScripts.set(record.id, record);
+      return record;
+    },
+    async updateObjectScript(scriptId, accountId, scriptCode, enabled) {
+      const script = objectScripts.get(scriptId);
+      if (!script) return undefined;
+      const objects = [...regionObjects.values()];
+      const obj = objects.find((o) => o.id === script.objectId);
+      if (!obj || obj.ownerAccountId !== accountId) return undefined;
+      script.scriptCode = scriptCode;
+      script.enabled = enabled;
+      script.updatedAt = new Date().toISOString();
+      objectScripts.set(scriptId, script);
+      return script;
+    },
+    async deleteObjectScript(scriptId, accountId) {
+      const script = objectScripts.get(scriptId);
+      if (!script) return false;
+      const objects = [...regionObjects.values()];
+      const obj = objects.find((o) => o.id === script.objectId);
+      if (!obj || obj.ownerAccountId !== accountId) return false;
+      return objectScripts.delete(scriptId);
+    },
+    async listAssets(accountId) {
+      return [...assets.values()].filter((a) => a.accountId === accountId);
+    },
+    async createAsset(asset) {
+      const record: AssetRecord = {
+        id: randomUUID(),
+        ...asset,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      assets.set(record.id, record);
+      return record;
+    },
+    async deleteAsset(assetId, accountId) {
+      const asset = assets.get(assetId);
+      if (!asset || asset.accountId !== accountId) return false;
+      return assets.delete(assetId);
     }
   };
 }
@@ -721,6 +1125,154 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       z DOUBLE PRECISION NOT NULL,
       rotation_y DOUBLE PRECISION NOT NULL,
       scale DOUBLE PRECISION NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS teleport_points (
+      id UUID PRIMARY KEY,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      region_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      x DOUBLE PRECISION NOT NULL,
+      y DOUBLE PRECISION NOT NULL,
+      z DOUBLE PRECISION NOT NULL,
+      rotation_y DOUBLE PRECISION NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS friends (
+      id UUID PRIMARY KEY,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      friend_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      friend_display_name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL,
+      UNIQUE(account_id, friend_account_id)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS groups (
+      id UUID PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL,
+      founder_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS group_members (
+      group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      display_name TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member',
+      joined_at TIMESTAMPTZ NOT NULL,
+      PRIMARY KEY (group_id, account_id)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS currency_balances (
+      account_id UUID PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+      balance INTEGER NOT NULL DEFAULT 1000
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS currency_transactions (
+      id UUID PRIMARY KEY,
+      from_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+      to_account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+      amount INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS offline_messages (
+      id UUID PRIMARY KEY,
+      from_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      from_display_name TEXT NOT NULL,
+      to_account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      message TEXT NOT NULL,
+      read BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS avatar_profiles (
+      account_id UUID PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+      bio TEXT NOT NULL DEFAULT '',
+      image_url TEXT,
+      world_visits INTEGER NOT NULL DEFAULT 0,
+      total_time INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bans (
+      id UUID PRIMARY KEY,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      banned_by UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      reason TEXT NOT NULL,
+      expires_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS region_notices (
+      id UUID PRIMARY KEY,
+      region_id TEXT NOT NULL,
+      parcel_id TEXT,
+      message TEXT NOT NULL,
+      created_by UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS object_permissions (
+      object_id UUID PRIMARY KEY REFERENCES region_objects(id) ON DELETE CASCADE,
+      allow_copy BOOLEAN NOT NULL DEFAULT TRUE,
+      allow_modify BOOLEAN NOT NULL DEFAULT TRUE,
+      allow_transfer BOOLEAN NOT NULL DEFAULT TRUE
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS object_scripts (
+      id UUID PRIMARY KEY,
+      object_id UUID NOT NULL REFERENCES region_objects(id) ON DELETE CASCADE,
+      script_name TEXT NOT NULL,
+      script_code TEXT NOT NULL,
+      enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS assets (
+      id UUID PRIMARY KEY,
+      account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      asset_type TEXT NOT NULL,
+      url TEXT NOT NULL,
+      thumbnail_url TEXT,
+      price INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL
     )
@@ -1414,6 +1966,200 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         details: row.details,
         createdAt: row.created_at
       }));
+    },
+    async listTeleportPoints(accountId) {
+      const result = await pool.query("SELECT id, account_id, region_id, name, x, y, z, rotation_y, created_at FROM teleport_points WHERE account_id = $1 ORDER BY created_at DESC", [accountId]);
+      return result.rows.map((row) => ({
+        id: row.id,
+        accountId: row.account_id,
+        regionId: row.region_id,
+        name: row.name,
+        x: row.x,
+        y: row.y,
+        z: row.z,
+        rotationY: row.rotation_y,
+        createdAt: row.created_at
+      }));
+    },
+    async createTeleportPoint(point) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO teleport_points (id, account_id, region_id, name, x, y, z, rotation_y, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", [id, point.accountId, point.regionId, point.name, point.x, point.y, point.z, point.rotationY, new Date().toISOString()]);
+      return { id, ...point, createdAt: new Date().toISOString() };
+    },
+    async deleteTeleportPoint(pointId, accountId) {
+      const result = await pool.query("DELETE FROM teleport_points WHERE id = $1 AND account_id = $2", [pointId, accountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async listFriends(accountId) {
+      const result = await pool.query("SELECT id, account_id, friend_account_id, friend_display_name, status, created_at FROM friends WHERE account_id = $1", [accountId]);
+      return result.rows.map((row) => ({
+        id: row.id,
+        accountId: row.account_id,
+        friendAccountId: row.friend_account_id,
+        friendDisplayName: row.friend_display_name,
+        status: row.status,
+        createdAt: row.created_at
+      }));
+    },
+    async addFriend(friend) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO friends (id, account_id, friend_account_id, friend_display_name, status, created_at) VALUES ($1,$2,$3,$4,$5,$6)", [id, friend.accountId, friend.friendAccountId, friend.friendDisplayName, friend.status, new Date().toISOString()]);
+      return { id, ...friend, createdAt: new Date().toISOString() };
+    },
+    async removeFriend(accountId, friendAccountId) {
+      const result = await pool.query("DELETE FROM friends WHERE account_id = $1 AND friend_account_id = $2", [accountId, friendAccountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async blockAccount(accountId, blockedAccountId) {
+      const blocked = await pool.query<{ display_name: string }>("SELECT display_name FROM accounts WHERE id = $1", [blockedAccountId]);
+      const id = randomUUID();
+      await pool.query("INSERT INTO friends (id, account_id, friend_account_id, friend_display_name, status, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (account_id, friend_account_id) DO UPDATE SET status = 'blocked'", [id, accountId, blockedAccountId, blocked.rows[0]?.display_name ?? "Unknown", "blocked", new Date().toISOString()]);
+      return { id, accountId, friendAccountId: blockedAccountId, friendDisplayName: blocked.rows[0]?.display_name ?? "Unknown", status: "blocked", createdAt: new Date().toISOString() };
+    },
+    async unblockAccount(accountId, blockedAccountId) {
+      const result = await pool.query("DELETE FROM friends WHERE account_id = $1 AND friend_account_id = $2 AND status = 'blocked'", [accountId, blockedAccountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async listGroups(accountId) {
+      const result = await pool.query("SELECT g.id, g.name, g.description, g.founder_account_id, g.created_at FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.account_id = $1", [accountId]);
+      return result.rows.map((row) => ({ id: row.id, name: row.name, description: row.description, founderAccountId: row.founder_account_id, createdAt: row.created_at }));
+    },
+    async createGroup(group) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO groups (id, name, description, founder_account_id, created_at) VALUES ($1,$2,$3,$4,$5)", [id, group.name, group.description, group.founderAccountId, new Date().toISOString()]);
+      const founderName = (await pool.query<{ display_name: string }>("SELECT display_name FROM accounts WHERE id = $1", [group.founderAccountId])).rows[0]?.display_name ?? "Unknown";
+      await pool.query("INSERT INTO group_members (group_id, account_id, display_name, role, joined_at) VALUES ($1,$2,$3,$4,$5)", [id, group.founderAccountId, founderName, "owner", new Date().toISOString()]);
+      return { id, ...group, createdAt: new Date().toISOString() };
+    },
+    async getGroupMembers(groupId) {
+      const result = await pool.query("SELECT group_id, account_id, display_name, role, joined_at FROM group_members WHERE group_id = $1", [groupId]);
+      return result.rows.map((row) => ({ groupId: row.group_id, accountId: row.account_id, displayName: row.display_name, role: row.role, joinedAt: row.joined_at }));
+    },
+    async addGroupMember(member) {
+      await pool.query("INSERT INTO group_members (group_id, account_id, display_name, role, joined_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING", [member.groupId, member.accountId, member.displayName, member.role, member.joinedAt]);
+    },
+    async removeGroupMember(groupId, accountId) {
+      const result = await pool.query("DELETE FROM group_members WHERE group_id = $1 AND account_id = $2", [groupId, accountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async updateGroupMemberRole(groupId, accountId, role) {
+      await pool.query("UPDATE group_members SET role = $3 WHERE group_id = $1 AND account_id = $2", [groupId, accountId, role]);
+    },
+    async getCurrencyBalance(accountId) {
+      const result = await pool.query<{ balance: number }>("SELECT balance FROM currency_balances WHERE account_id = $1", [accountId]);
+      return result.rows[0]?.balance ?? 1000;
+    },
+    async addCurrency(transaction) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO currency_transactions (id, from_account_id, to_account_id, amount, type, description, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [id, transaction.fromAccountId, transaction.toAccountId, transaction.amount, transaction.type, transaction.description, new Date().toISOString()]);
+      if (transaction.fromAccountId) await pool.query("UPDATE currency_balances SET balance = balance - $2 WHERE account_id = $1", [transaction.fromAccountId, transaction.amount]);
+      if (transaction.toAccountId) await pool.query("INSERT INTO currency_balances (account_id, balance) VALUES ($1, $2) ON CONFLICT (account_id) DO UPDATE SET balance = balance + $2", [transaction.toAccountId, transaction.amount]);
+      const result = await pool.query<{ balance: number }>("SELECT balance FROM currency_balances WHERE account_id = $1", [transaction.toAccountId]);
+      return result.rows[0]?.balance ?? 1000;
+    },
+    async listCurrencyTransactions(accountId, limit) {
+      const result = await pool.query("SELECT id, from_account_id, to_account_id, amount, type, description, created_at FROM currency_transactions WHERE from_account_id = $1 OR to_account_id = $1 ORDER BY created_at DESC LIMIT $2", [accountId, limit]);
+      return result.rows.map((row) => ({ id: row.id, fromAccountId: row.from_account_id, toAccountId: row.to_account_id, amount: row.amount, type: row.type, description: row.description, createdAt: row.created_at }));
+    },
+    async sendOfflineMessage(message) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO offline_messages (id, from_account_id, from_display_name, to_account_id, message, read, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [id, message.fromAccountId, message.fromDisplayName, message.toAccountId, message.message, false, new Date().toISOString()]);
+      return { id, ...message, read: false, createdAt: new Date().toISOString() };
+    },
+    async listOfflineMessages(accountId, limit) {
+      const result = await pool.query("SELECT id, from_account_id, from_display_name, to_account_id, message, read, created_at FROM offline_messages WHERE to_account_id = $1 ORDER BY created_at DESC LIMIT $2", [accountId, limit]);
+      return result.rows.map((row) => ({ id: row.id, fromAccountId: row.from_account_id, fromDisplayName: row.from_display_name, toAccountId: row.to_account_id, message: row.message, read: row.read, createdAt: row.created_at }));
+    },
+    async markOfflineMessageRead(messageId, accountId) {
+      const result = await pool.query("UPDATE offline_messages SET read = TRUE WHERE id = $1 AND to_account_id = $2", [messageId, accountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async getAvatarProfile(accountId) {
+      const result = await pool.query("SELECT account_id, bio, image_url, world_visits, total_time, created_at, updated_at FROM avatar_profiles WHERE account_id = $1", [accountId]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return { accountId: row.account_id, bio: row.bio, imageUrl: row.image_url, worldVisits: row.world_visits, totalTime: row.total_time, createdAt: row.created_at, updatedAt: row.updated_at };
+    },
+    async saveAvatarProfile(profile) {
+      await pool.query("INSERT INTO avatar_profiles (account_id, bio, image_url, world_visits, total_time, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (account_id) DO UPDATE SET bio = $2, image_url = $3, world_visits = $4, total_time = $5, updated_at = $7", [profile.accountId, profile.bio, profile.imageUrl, profile.worldVisits, profile.totalTime, profile.createdAt, new Date().toISOString()]);
+      return profile;
+    },
+    async banAccount(ban) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO bans (id, account_id, banned_by, reason, expires_at, created_at) VALUES ($1,$2,$3,$4,$5,$6)", [id, ban.accountId, ban.bannedBy, ban.reason, ban.expiresAt, new Date().toISOString()]);
+      return { id, ...ban, createdAt: new Date().toISOString() };
+    },
+    async unbanAccount(accountId) {
+      const result = await pool.query("DELETE FROM bans WHERE account_id = $1", [accountId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async getActiveBan(accountId) {
+      const result = await pool.query("SELECT id, account_id, banned_by, reason, expires_at, created_at FROM bans WHERE account_id = $1 AND (expires_at IS NULL OR expires_at > NOW())", [accountId]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return { id: row.id, accountId: row.account_id, bannedBy: row.banned_by, reason: row.reason, expiresAt: row.expires_at, createdAt: row.created_at };
+    },
+    async listRegionNotices(regionId) {
+      const result = await pool.query("SELECT id, region_id, parcel_id, message, created_by, created_at FROM region_notices WHERE region_id = $1 ORDER BY created_at DESC", [regionId]);
+      return result.rows.map((row) => ({ id: row.id, regionId: row.region_id, parcelId: row.parcel_id, message: row.message, createdBy: row.created_by, createdAt: row.created_at }));
+    },
+    async createRegionNotice(notice) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO region_notices (id, region_id, parcel_id, message, created_by, created_at) VALUES ($1,$2,$3,$4,$5,$6)", [id, notice.regionId, notice.parcelId, notice.message, notice.createdBy, new Date().toISOString()]);
+      return { id, ...notice, createdAt: new Date().toISOString() };
+    },
+    async deleteRegionNotice(noticeId, regionId) {
+      const result = await pool.query("DELETE FROM region_notices WHERE id = $1 AND region_id = $2", [noticeId, regionId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async getObjectPermissions(objectId) {
+      const result = await pool.query("SELECT object_id, allow_copy, allow_modify, allow_transfer FROM object_permissions WHERE object_id = $1", [objectId]);
+      const row = result.rows[0];
+      if (!row) return undefined;
+      return { objectId: row.object_id, allowCopy: row.allow_copy, allowModify: row.allow_modify, allowTransfer: row.allow_transfer };
+    },
+    async saveObjectPermissions(perms) {
+      await pool.query("INSERT INTO object_permissions (object_id, allow_copy, allow_modify, allow_transfer) VALUES ($1,$2,$3,$4) ON CONFLICT (object_id) DO UPDATE SET allow_copy = $2, allow_modify = $3, allow_transfer = $4", [perms.objectId, perms.allowCopy, perms.allowModify, perms.allowTransfer]);
+    },
+    async listObjectScripts(objectId) {
+      const result = await pool.query("SELECT id, object_id, script_name, script_code, enabled, created_at, updated_at FROM object_scripts WHERE object_id = $1", [objectId]);
+      return result.rows.map((row) => ({ id: row.id, objectId: row.object_id, scriptName: row.script_name, scriptCode: row.script_code, enabled: row.enabled, createdAt: row.created_at, updatedAt: row.updated_at }));
+    },
+    async createObjectScript(script) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO object_scripts (id, object_id, script_name, script_code, enabled, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [id, script.objectId, script.scriptName, script.scriptCode, script.enabled, new Date().toISOString(), new Date().toISOString()]);
+      return { id, ...script, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    },
+    async updateObjectScript(scriptId, accountId, scriptCode, enabled) {
+      const scriptResult = await pool.query<{ object_id: string }>("SELECT object_id FROM object_scripts WHERE id = $1", [scriptId]);
+      if (!scriptResult.rows[0]) return undefined;
+      const objResult = await pool.query<{ owner_account_id: string }>("SELECT owner_account_id FROM region_objects WHERE id = $1", [scriptResult.rows[0].object_id]);
+      if (!objResult.rows[0] || objResult.rows[0].owner_account_id !== accountId) return undefined;
+      await pool.query("UPDATE object_scripts SET script_code = $2, enabled = $3, updated_at = $4 WHERE id = $1", [scriptId, scriptCode, enabled, new Date().toISOString()]);
+      const result = await pool.query("SELECT id, object_id, script_name, script_code, enabled, created_at, updated_at FROM object_scripts WHERE id = $1", [scriptId]);
+      const row = result.rows[0];
+      return { id: row.id, objectId: row.object_id, scriptName: row.script_name, scriptCode: row.script_code, enabled: row.enabled, createdAt: row.created_at, updatedAt: row.updated_at };
+    },
+    async deleteObjectScript(scriptId, accountId) {
+      const scriptResult = await pool.query<{ object_id: string }>("SELECT object_id FROM object_scripts WHERE id = $1", [scriptId]);
+      if (!scriptResult.rows[0]) return false;
+      const objResult = await pool.query<{ owner_account_id: string }>("SELECT owner_account_id FROM region_objects WHERE id = $1", [scriptResult.rows[0].object_id]);
+      if (!objResult.rows[0] || objResult.rows[0].owner_account_id !== accountId) return false;
+      const result = await pool.query("DELETE FROM object_scripts WHERE id = $1", [scriptId]);
+      return (result.rowCount ?? 0) > 0;
+    },
+    async listAssets(accountId) {
+      const result = await pool.query("SELECT id, account_id, name, description, asset_type, url, thumbnail_url, price, created_at, updated_at FROM assets WHERE account_id = $1 ORDER BY created_at DESC", [accountId]);
+      return result.rows.map((row) => ({ id: row.id, accountId: row.account_id, name: row.name, description: row.description, assetType: row.asset_type, url: row.url, thumbnailUrl: row.thumbnail_url, price: row.price, createdAt: row.created_at, updatedAt: row.updated_at }));
+    },
+    async createAsset(asset) {
+      const id = randomUUID();
+      await pool.query("INSERT INTO assets (id, account_id, name, description, asset_type, url, thumbnail_url, price, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", [id, asset.accountId, asset.name, asset.description, asset.assetType, asset.url, asset.thumbnailUrl, asset.price, new Date().toISOString(), new Date().toISOString()]);
+      return { id, ...asset, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    },
+    async deleteAsset(assetId, accountId) {
+      const result = await pool.query("DELETE FROM assets WHERE id = $1 AND account_id = $2", [assetId, accountId]);
+      return (result.rowCount ?? 0) > 0;
     }
   };
 }

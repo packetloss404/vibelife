@@ -8,32 +8,69 @@ import { isRegionCommand } from "./contracts.js";
 import {
   adminAssignParcel,
   adminDeleteRegionObject,
+  banAccount,
+  unbanAccount,
+  getActiveBan
 } from "./world/store.js";
 import {
   addParcelCollaborator,
+  addFriend,
+  addGroupMember,
   appendAuditLog,
+  blockAccount,
   claimParcel,
+  createGroup,
+  createRegionNotice,
   createRegionObject,
+  createTeleportPoint,
   createGuestSession,
   deleteRegionObject,
+  deleteTeleportPoint,
+  deleteRegionNotice,
   equipInventoryItem,
+  getAvatarProfile,
+  getCurrencyBalance,
+  getGroupMembers,
+  getObjectPermissions,
   getPersistenceMode,
   getRegionPopulation,
   getSession,
   initializeWorldStore,
+  listCurrencyTransactions,
+  listFriends,
+  listGroups,
+  listOfflineMessages,
   listParcels,
+  listRegionNotices,
   listRegionObjects,
   listRegions,
   listAuditLogs,
+  listTeleportPoints,
   loginSession,
+  markMessageRead,
   moveAvatar,
   registerSession,
+  removeFriend,
+  removeGroupMember,
   removeParcelCollaborator,
   releaseParcel,
   removeAvatar,
+  saveAvatarProfile,
+  saveObjectPermissions,
+  sendCurrency,
+  sendOfflineMessage,
+  teleportToRegion,
   transferParcel,
   updateAvatarAppearance,
-  updateRegionObject
+  updateRegionObject,
+  unblockAccount,
+  createObjectScript,
+  listObjectScripts,
+  updateObjectScript,
+  deleteObjectScript,
+  listAssets,
+  createAsset,
+  deleteAsset
 } from "./world/store.js";
 import { broadcastRegion, getRegionSequence, joinRegion, leaveRegion, nextRegionSequence } from "./world/region.js";
 
@@ -431,6 +468,506 @@ app.delete<{
 
   if (session) {
     broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId: request.params.objectId });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.post<{ Body: { token?: string; targetRegionId?: string; x?: number; y?: number; z?: number } }>("/api/avatar/teleport", async (request, reply) => {
+  const { token, targetRegionId, x = 0, y = 0, z = 0 } = request.body;
+
+  if (!token || !targetRegionId) {
+    return reply.code(400).send({ error: "token and targetRegionId are required" });
+  }
+
+  const result = await teleportToRegion(token, targetRegionId, x, y, z);
+
+  if (!result.ok) {
+    return reply.code(403).send({ error: result.reason });
+  }
+
+  await appendAuditLog(token, "avatar.teleport", "account", result.session?.accountId ?? "", `teleported to ${targetRegionId}`, targetRegionId);
+
+  return reply.send({
+    session: result.session,
+    avatar: result.avatar,
+    regionId: targetRegionId
+  });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/avatar/teleport-points", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const points = await listTeleportPoints(token);
+  return reply.send({ points });
+});
+
+app.post<{ Body: { token?: string; name?: string; regionId?: string; x?: number; y?: number; z?: number; rotationY?: number } }>("/api/avatar/teleport-points", async (request, reply) => {
+  const { token, name, regionId, x, y, z, rotationY = 0 } = request.body;
+
+  if (!token || !name || !regionId || x === undefined || y === undefined || z === undefined) {
+    return reply.code(400).send({ error: "token, name, regionId, x, y, z are required" });
+  }
+
+  const point = await createTeleportPoint(token, name, regionId, x, y, z, rotationY);
+
+  if (!point) {
+    return reply.code(403).send({ error: "failed to create teleport point" });
+  }
+
+  return reply.send({ point });
+});
+
+app.delete<{ Body: { token?: string; pointId?: string } }>("/api/avatar/teleport-points", async (request, reply) => {
+  const { token, pointId } = request.body;
+
+  if (!token || !pointId) {
+    return reply.code(400).send({ error: "token and pointId are required" });
+  }
+
+  const deleted = await deleteTeleportPoint(token, pointId);
+
+  if (!deleted) {
+    return reply.code(404).send({ error: "teleport point not found" });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/friends", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const friends = await listFriends(token);
+  return reply.send({ friends });
+});
+
+app.post<{ Body: { token?: string; friendAccountId?: string } }>("/api/friends", async (request, reply) => {
+  const { token, friendAccountId } = request.body;
+
+  if (!token || !friendAccountId) {
+    return reply.code(400).send({ error: "token and friendAccountId are required" });
+  }
+
+  const friend = await addFriend(token, friendAccountId);
+
+  if (!friend) {
+    return reply.code(409).send({ error: "unable to add friend" });
+  }
+
+  return reply.send({ friend });
+});
+
+app.delete<{ Body: { token?: string; friendAccountId?: string } }>("/api/friends", async (request, reply) => {
+  const { token, friendAccountId } = request.body;
+
+  if (!token || !friendAccountId) {
+    return reply.code(400).send({ error: "token and friendAccountId are required" });
+  }
+
+  const removed = await removeFriend(token, friendAccountId);
+
+  if (!removed) {
+    return reply.code(404).send({ error: "friend not found" });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.post<{ Body: { token?: string; blockedAccountId?: string } }>("/api/friends/block", async (request, reply) => {
+  const { token, blockedAccountId } = request.body;
+
+  if (!token || !blockedAccountId) {
+    return reply.code(400).send({ error: "token and blockedAccountId are required" });
+  }
+
+  const blocked = await blockAccount(token, blockedAccountId);
+  return reply.send({ blocked });
+});
+
+app.delete<{ Body: { token?: string; blockedAccountId?: string } }>("/api/friends/block", async (request, reply) => {
+  const { token, blockedAccountId } = request.body;
+
+  if (!token || !blockedAccountId) {
+    return reply.code(400).send({ error: "token and blockedAccountId are required" });
+  }
+
+  const unblocked = await unblockAccount(token, blockedAccountId);
+  return reply.send({ ok: unblocked });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/groups", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const groups = await listGroups(token);
+  return reply.send({ groups });
+});
+
+app.post<{ Body: { token?: string; name?: string; description?: string } }>("/api/groups", async (request, reply) => {
+  const { token, name, description = "" } = request.body;
+
+  if (!token || !name) {
+    return reply.code(400).send({ error: "token and name are required" });
+  }
+
+  const group = await createGroup(token, name, description);
+
+  if (!group) {
+    return reply.code(403).send({ error: "failed to create group" });
+  }
+
+  return reply.send({ group });
+});
+
+app.get<{ Params: { groupId: string }; Querystring: { token?: string } }>("/api/groups/:groupId/members", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const members = await getGroupMembers(token, request.params.groupId);
+  return reply.send({ members });
+});
+
+app.post<{ Body: { token?: string; groupId?: string; memberAccountId?: string; role?: string } }>("/api/groups/members", async (request, reply) => {
+  const { token, groupId, memberAccountId, role = "member" } = request.body;
+
+  if (!token || !groupId || !memberAccountId) {
+    return reply.code(400).send({ error: "token, groupId, and memberAccountId are required" });
+  }
+
+  await addGroupMember(token, groupId, memberAccountId, role as "member" | "officer" | "owner");
+  return reply.send({ ok: true });
+});
+
+app.delete<{ Body: { token?: string; groupId?: string; memberAccountId?: string } }>("/api/groups/members", async (request, reply) => {
+  const { token, groupId, memberAccountId } = request.body;
+
+  if (!token || !groupId || !memberAccountId) {
+    return reply.code(400).send({ error: "token, groupId, and memberAccountId are required" });
+  }
+
+  const removed = await removeGroupMember(token, groupId, memberAccountId);
+  return reply.send({ ok: removed });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/currency/balance", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const balance = await getCurrencyBalance(token);
+  return reply.send({ balance });
+});
+
+app.post<{ Body: { token?: string; toAccountId?: string; amount?: number; description?: string } }>("/api/currency/send", async (request, reply) => {
+  const { token, toAccountId, amount, description = "gift" } = request.body;
+
+  if (!token || !toAccountId || !amount || amount <= 0) {
+    return reply.code(400).send({ error: "token, toAccountId, and positive amount are required" });
+  }
+
+  const newBalance = await sendCurrency(token, toAccountId, amount, description);
+
+  if (newBalance === undefined) {
+    return reply.code(403).send({ error: "insufficient funds" });
+  }
+
+  return reply.send({ balance: newBalance });
+});
+
+app.get<{ Querystring: { token?: string; limit?: string } }>("/api/currency/transactions", async (request, reply) => {
+  const token = request.query.token;
+  const limit = Number(request.query.limit ?? 20);
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const transactions = await listCurrencyTransactions(token, Math.max(1, Math.min(100, limit)));
+  return reply.send({ transactions });
+});
+
+app.get<{ Querystring: { token?: string; limit?: string } }>("/api/messages/offline", async (request, reply) => {
+  const token = request.query.token;
+  const limit = Number(request.query.limit ?? 50);
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const messages = await listOfflineMessages(token, Math.max(1, Math.min(100, limit)));
+  return reply.send({ messages });
+});
+
+app.post<{ Body: { token?: string; toAccountId?: string; message?: string } }>("/api/messages/offline", async (request, reply) => {
+  const { token, toAccountId, message } = request.body;
+
+  if (!token || !toAccountId || !message) {
+    return reply.code(400).send({ error: "token, toAccountId, and message are required" });
+  }
+
+  const sent = await sendOfflineMessage(token, toAccountId, message.slice(0, 1000));
+
+  if (!sent) {
+    return reply.code(403).send({ error: "failed to send message" });
+  }
+
+  return reply.send({ message: sent });
+});
+
+app.patch<{ Body: { token?: string; messageId?: string } }>("/api/messages/offline/read", async (request, reply) => {
+  const { token, messageId } = request.body;
+
+  if (!token || !messageId) {
+    return reply.code(400).send({ error: "token and messageId are required" });
+  }
+
+  const marked = await markMessageRead(token, messageId);
+  return reply.send({ ok: marked });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/avatar/profile", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const profile = await getAvatarProfile(token);
+  return reply.send({ profile });
+});
+
+app.patch<{ Body: { token?: string; bio?: string; imageUrl?: string } }>("/api/avatar/profile", async (request, reply) => {
+  const { token, bio = "", imageUrl = null } = request.body;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const profile = await saveAvatarProfile(token, bio, imageUrl);
+
+  if (!profile) {
+    return reply.code(403).send({ error: "failed to save profile" });
+  }
+
+  return reply.send({ profile });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/avatar/ban/status", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const ban = await getActiveBan(token);
+  return reply.send({ banned: !!ban, ban });
+});
+
+app.post<{ Body: { token?: string; accountId?: string; reason?: string; expiresAt?: string } }>("/api/admin/ban", async (request, reply) => {
+  const { token, accountId, reason, expiresAt = null } = request.body;
+
+  if (!token || !accountId || !reason) {
+    return reply.code(400).send({ error: "token, accountId, and reason are required" });
+  }
+
+  const ban = await banAccount(token, accountId, reason, expiresAt ?? null);
+
+  if (!ban) {
+    return reply.code(403).send({ error: "ban failed" });
+  }
+
+  await appendAuditLog(token, "admin.ban", "account", accountId, reason, null);
+  return reply.send({ ban });
+});
+
+app.delete<{ Body: { token?: string; accountId?: string } }>("/api/admin/ban", async (request, reply) => {
+  const { token, accountId } = request.body;
+
+  if (!token || !accountId) {
+    return reply.code(400).send({ error: "token and accountId are required" });
+  }
+
+  const unbanned = await unbanAccount(token, accountId);
+
+  if (!unbanned) {
+    return reply.code(404).send({ error: "ban not found" });
+  }
+
+  await appendAuditLog(token, "admin.unban", "account", accountId, "unbanned", null);
+  return reply.send({ ok: true });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/regions/notices", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const notices = await listRegionNotices(token);
+  return reply.send({ notices });
+});
+
+app.post<{ Body: { token?: string; message?: string; parcelId?: string } }>("/api/regions/notices", async (request, reply) => {
+  const { token, message, parcelId = null } = request.body;
+
+  if (!token || !message) {
+    return reply.code(400).send({ error: "token and message are required" });
+  }
+
+  const notice = await createRegionNotice(token, message, parcelId);
+
+  if (!notice) {
+    return reply.code(403).send({ error: "failed to create notice" });
+  }
+
+  return reply.send({ notice });
+});
+
+app.delete<{ Body: { token?: string; noticeId?: string } }>("/api/regions/notices", async (request, reply) => {
+  const { token, noticeId } = request.body;
+
+  if (!token || !noticeId) {
+    return reply.code(400).send({ error: "token and noticeId are required" });
+  }
+
+  const deleted = await deleteRegionNotice(token, noticeId);
+
+  if (!deleted) {
+    return reply.code(404).send({ error: "notice not found" });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.get<{ Params: { objectId: string } }>("/api/objects/:objectId/permissions", async (request, reply) => {
+  const perms = await getObjectPermissions(request.params.objectId);
+  return reply.send({ permissions: perms ?? { objectId: request.params.objectId, allowCopy: true, allowModify: true, allowTransfer: true } });
+});
+
+app.patch<{ Params: { objectId: string }; Body: { token?: string; allowCopy?: boolean; allowModify?: boolean; allowTransfer?: boolean } }>("/api/objects/:objectId/permissions", async (request, reply) => {
+  const { token, allowCopy = true, allowModify = true, allowTransfer = true } = request.body;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const saved = await saveObjectPermissions(token, request.params.objectId, allowCopy, allowModify, allowTransfer);
+
+  if (!saved) {
+    return reply.code(403).send({ error: "failed to save permissions" });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.get<{ Params: { objectId: string }; Querystring: { token?: string } }>("/api/objects/:objectId/scripts", async (request, reply) => {
+  const scripts = await listObjectScripts(request.params.objectId);
+  return reply.send({ scripts });
+});
+
+app.post<{ Body: { token?: string; objectId?: string; scriptName?: string; scriptCode?: string } }>("/api/objects/scripts", async (request, reply) => {
+  const { token, objectId, scriptName, scriptCode = "" } = request.body;
+
+  if (!token || !objectId || !scriptName) {
+    return reply.code(400).send({ error: "token, objectId, and scriptName are required" });
+  }
+
+  const script = await createObjectScript(token, objectId, scriptName, scriptCode);
+
+  if (!script) {
+    return reply.code(403).send({ error: "failed to create script" });
+  }
+
+  return reply.send({ script });
+});
+
+app.patch<{ Body: { token?: string; scriptId?: string; scriptCode?: string; enabled?: boolean } }>("/api/objects/scripts", async (request, reply) => {
+  const { token, scriptId, scriptCode, enabled = true } = request.body;
+
+  if (!token || !scriptId) {
+    return reply.code(400).send({ error: "token and scriptId are required" });
+  }
+
+  const script = await updateObjectScript(token, scriptId, scriptCode ?? "", enabled);
+
+  if (!script) {
+    return reply.code(403).send({ error: "failed to update script" });
+  }
+
+  return reply.send({ script });
+});
+
+app.delete<{ Body: { token?: string; scriptId?: string } }>("/api/objects/scripts", async (request, reply) => {
+  const { token, scriptId } = request.body;
+
+  if (!token || !scriptId) {
+    return reply.code(400).send({ error: "token and scriptId are required" });
+  }
+
+  const deleted = await deleteObjectScript(token, scriptId);
+
+  if (!deleted) {
+    return reply.code(404).send({ error: "script not found" });
+  }
+
+  return reply.send({ ok: true });
+});
+
+app.get<{ Querystring: { token?: string } }>("/api/assets", async (request, reply) => {
+  const token = request.query.token;
+
+  if (!token) {
+    return reply.code(400).send({ error: "token is required" });
+  }
+
+  const assets = await listAssets(token);
+  return reply.send({ assets });
+});
+
+app.post<{ Body: { token?: string; name?: string; description?: string; assetType?: string; url?: string; thumbnailUrl?: string; price?: number } }>("/api/assets", async (request, reply) => {
+  const { token, name, description = "", assetType, url, thumbnailUrl = null, price = 0 } = request.body;
+
+  if (!token || !name || !assetType || !url) {
+    return reply.code(400).send({ error: "token, name, assetType, and url are required" });
+  }
+
+  const asset = await createAsset(token, name, description, assetType, url, thumbnailUrl, price);
+
+  if (!asset) {
+    return reply.code(403).send({ error: "failed to create asset" });
+  }
+
+  return reply.send({ asset });
+});
+
+app.delete<{ Body: { token?: string; assetId?: string } }>("/api/assets", async (request, reply) => {
+  const { token, assetId } = request.body;
+
+  if (!token || !assetId) {
+    return reply.code(400).send({ error: "token and assetId are required" });
+  }
+
+  const deleted = await deleteAsset(token, assetId);
+
+  if (!deleted) {
+    return reply.code(404).send({ error: "asset not found" });
   }
 
   return reply.send({ ok: true });

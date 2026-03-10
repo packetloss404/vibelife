@@ -8,7 +8,19 @@ import {
   type InventoryItemRecord,
   type ParcelRecord,
   type RegionObjectRecord,
-  type RegionRecord
+  type RegionRecord,
+  type TeleportLandingPointRecord,
+  type FriendRecord,
+  type GroupRecord,
+  type GroupMemberRecord,
+  type CurrencyTransactionRecord,
+  type OfflineMessageRecord,
+  type AvatarProfileRecord,
+  type BanRecord,
+  type RegionNoticeRecord,
+  type RegionObjectPermissionRecord,
+  type ObjectScriptRecord,
+  type AssetRecord
 } from "../data/persistence.js";
 
 export type RegionSummary = RegionRecord;
@@ -21,6 +33,63 @@ export type AvatarAppearance = AvatarAppearanceRecord;
 export type Parcel = ParcelRecord;
 
 export type RegionObject = RegionObjectRecord;
+
+export type TeleportPoint = TeleportLandingPointRecord;
+export type Friend = FriendRecord;
+export type Group = GroupRecord;
+export type GroupMember = GroupMemberRecord;
+export type CurrencyTransaction = CurrencyTransactionRecord;
+export type OfflineMessage = OfflineMessageRecord;
+export type AvatarProfile = AvatarProfileRecord;
+export type Ban = BanRecord;
+export type RegionNotice = RegionNoticeRecord;
+export type ObjectPermissions = RegionObjectPermissionRecord;
+export type ObjectScript = ObjectScriptRecord;
+
+export async function listObjectScripts(objectId: string): Promise<ObjectScript[]> {
+  return persistence.listObjectScripts(objectId);
+}
+
+export async function createObjectScript(token: string, objectId: string, scriptName: string, scriptCode: string): Promise<ObjectScript | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  const objects = await persistence.listRegionObjects(session.regionId);
+  const obj = objects.find((o) => o.id === objectId);
+  if (!obj || obj.ownerAccountId !== session.accountId) return undefined;
+  return persistence.createObjectScript({ objectId, scriptName, scriptCode, enabled: true });
+}
+
+export async function updateObjectScript(token: string, scriptId: string, scriptCode: string, enabled: boolean): Promise<ObjectScript | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.updateObjectScript(scriptId, session.accountId, scriptCode, enabled);
+}
+
+export async function deleteObjectScript(token: string, scriptId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.deleteObjectScript(scriptId, session.accountId);
+}
+
+export type Asset = AssetRecord;
+
+export async function listAssets(token: string): Promise<Asset[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listAssets(session.accountId);
+}
+
+export async function createAsset(token: string, name: string, description: string, assetType: string, url: string, thumbnailUrl: string | null, price: number): Promise<Asset | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.createAsset({ accountId: session.accountId, name, description, assetType, url, thumbnailUrl, price });
+}
+
+export async function deleteAsset(token: string, assetId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.deleteAsset(assetId, session.accountId);
+}
 
 export type BuildPermission = {
   allowed: boolean;
@@ -614,4 +683,268 @@ export function removeAvatar(token: string): { regionId: string; avatarId: strin
     regionId: session.regionId,
     avatarId: session.avatarId
   };
+}
+
+export async function teleportToRegion(token: string, targetRegionId: string, x: number, y: number, z: number): Promise<{ ok: boolean; session?: Session; avatar?: AvatarState; reason?: string }> {
+  const session = getSession(token);
+  if (!session) return { ok: false, reason: "invalid session" };
+
+  const targetRegion = regions.find((r) => r.id === targetRegionId);
+  if (!targetRegion) return { ok: false, reason: "region not found" };
+
+  const ban = await persistence.getActiveBan(session.accountId);
+  if (ban) return { ok: false, reason: `banned: ${ban.reason}` };
+
+  const oldRegionId = session.regionId;
+  avatarsByRegion.get(oldRegionId)?.delete(session.avatarId);
+
+  const newRegionId = targetRegionId;
+  if (!avatarsByRegion.has(newRegionId)) {
+    avatarsByRegion.set(newRegionId, new Map());
+  }
+
+  const savedPosition = await persistence.getAvatarPosition(session.accountId, newRegionId);
+  const spawnX = savedPosition?.x ?? x;
+  const spawnY = savedPosition?.y ?? y;
+  const spawnZ = savedPosition?.z ?? z;
+
+  const avatar: AvatarState = {
+    avatarId: session.avatarId,
+    accountId: session.accountId,
+    displayName: session.displayName,
+    appearance: (await persistence.getAvatarAppearance(session.accountId)),
+    x: spawnX,
+    y: spawnY,
+    z: spawnZ,
+    updatedAt: new Date().toISOString()
+  };
+
+  avatarsByRegion.get(newRegionId)?.set(session.avatarId, avatar);
+
+  const updatedSession: Session = {
+    ...session,
+    regionId: newRegionId,
+    expiresAt: Date.now() + SESSION_TTL_MS
+  };
+  sessions.set(token, updatedSession);
+
+  await persistence.saveAvatarPosition({
+    accountId: session.accountId,
+    regionId: newRegionId,
+    x: spawnX,
+    y: spawnY,
+    z: spawnZ,
+    updatedAt: new Date().toISOString()
+  });
+
+  const profile = await persistence.getAvatarProfile(session.accountId);
+  if (profile) {
+    await persistence.saveAvatarProfile({
+      ...profile,
+      worldVisits: profile.worldVisits + 1,
+      updatedAt: new Date().toISOString()
+    });
+  } else {
+    await persistence.saveAvatarProfile({
+      accountId: session.accountId,
+      bio: "",
+      imageUrl: null,
+      worldVisits: 1,
+      totalTime: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  await appendAuditLog(token, "avatar.teleport", "account", session.accountId, `teleported from ${oldRegionId} to ${newRegionId}`, newRegionId);
+
+  return { ok: true, session: updatedSession, avatar };
+}
+
+export async function listTeleportPoints(token: string): Promise<TeleportPoint[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listTeleportPoints(session.accountId);
+}
+
+export async function createTeleportPoint(token: string, name: string, regionId: string, x: number, y: number, z: number, rotationY: number): Promise<TeleportPoint | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.createTeleportPoint({ accountId: session.accountId, regionId, name, x, y, z, rotationY });
+}
+
+export async function deleteTeleportPoint(token: string, pointId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.deleteTeleportPoint(pointId, session.accountId);
+}
+
+export async function listFriends(token: string): Promise<Friend[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listFriends(session.accountId);
+}
+
+export async function addFriend(token: string, friendAccountId: string): Promise<Friend | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  if (session.accountId === friendAccountId) return undefined;
+  const friendAccount = await persistence.authenticateAccount("");
+  const accountResult = await persistence.getOrCreateGuestAccount("");
+  const friendRecord = [...(await persistence.listFriends(session.accountId))].find((f) => f.friendAccountId === friendAccountId);
+  if (friendRecord) return undefined;
+  return persistence.addFriend({ accountId: session.accountId, friendAccountId, friendDisplayName: "Friend", status: "pending" });
+}
+
+export async function removeFriend(token: string, friendAccountId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.removeFriend(session.accountId, friendAccountId);
+}
+
+export async function blockAccount(token: string, blockedAccountId: string): Promise<Friend | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.blockAccount(session.accountId, blockedAccountId);
+}
+
+export async function unblockAccount(token: string, blockedAccountId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.unblockAccount(session.accountId, blockedAccountId);
+}
+
+export async function listGroups(token: string): Promise<Group[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listGroups(session.accountId);
+}
+
+export async function createGroup(token: string, name: string, description: string): Promise<Group | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.createGroup({ name, description, founderAccountId: session.accountId });
+}
+
+export async function getGroupMembers(token: string, groupId: string): Promise<GroupMember[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.getGroupMembers(groupId);
+}
+
+export async function addGroupMember(token: string, groupId: string, memberAccountId: string, role: "member" | "officer" | "owner"): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  await persistence.addGroupMember({ groupId, accountId: memberAccountId, displayName: "Member", role, joinedAt: new Date().toISOString() });
+  return true;
+}
+
+export async function removeGroupMember(token: string, groupId: string, memberAccountId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.removeGroupMember(groupId, memberAccountId);
+}
+
+export async function getCurrencyBalance(token: string): Promise<number> {
+  const session = getSession(token);
+  if (!session) return 0;
+  return persistence.getCurrencyBalance(session.accountId);
+}
+
+export async function sendCurrency(token: string, toAccountId: string, amount: number, description: string): Promise<number | undefined> {
+  const session = getSession(token);
+  if (!session || amount <= 0) return undefined;
+  const balance = await persistence.getCurrencyBalance(session.accountId);
+  if (balance < amount) return undefined;
+  return persistence.addCurrency({ fromAccountId: session.accountId, toAccountId, amount, type: "gift", description });
+}
+
+export async function listCurrencyTransactions(token: string, limit: number = 20): Promise<CurrencyTransaction[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listCurrencyTransactions(session.accountId, limit);
+}
+
+export async function sendOfflineMessage(token: string, toAccountId: string, message: string): Promise<OfflineMessage | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.sendOfflineMessage({ fromAccountId: session.accountId, fromDisplayName: session.displayName, toAccountId, message, read: false });
+}
+
+export async function listOfflineMessages(token: string, limit: number = 50): Promise<OfflineMessage[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listOfflineMessages(session.accountId, limit);
+}
+
+export async function markMessageRead(token: string, messageId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.markOfflineMessageRead(messageId, session.accountId);
+}
+
+export async function getAvatarProfile(token: string): Promise<AvatarProfile | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.getAvatarProfile(session.accountId);
+}
+
+export async function saveAvatarProfile(token: string, bio: string, imageUrl: string | null): Promise<AvatarProfile | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  const existing = await persistence.getAvatarProfile(session.accountId);
+  if (existing) {
+    return persistence.saveAvatarProfile({ ...existing, bio, imageUrl, updatedAt: new Date().toISOString() });
+  }
+  return persistence.saveAvatarProfile({ accountId: session.accountId, bio, imageUrl, worldVisits: 0, totalTime: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+}
+
+export async function banAccount(token: string, accountId: string, reason: string, expiresAt: string | null): Promise<Ban | undefined> {
+  const session = getSession(token);
+  if (!session || session.role !== "admin") return undefined;
+  return persistence.banAccount({ accountId, bannedBy: session.accountId, reason, expiresAt });
+}
+
+export async function unbanAccount(token: string, accountId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session || session.role !== "admin") return false;
+  return persistence.unbanAccount(accountId);
+}
+
+export async function getActiveBan(token: string): Promise<Ban | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.getActiveBan(session.accountId);
+}
+
+export async function listRegionNotices(token: string): Promise<RegionNotice[]> {
+  const session = getSession(token);
+  if (!session) return [];
+  return persistence.listRegionNotices(session.regionId);
+}
+
+export async function createRegionNotice(token: string, message: string, parcelId: string | null = null): Promise<RegionNotice | undefined> {
+  const session = getSession(token);
+  if (!session) return undefined;
+  return persistence.createRegionNotice({ regionId: session.regionId, parcelId, message, createdBy: session.accountId });
+}
+
+export async function deleteRegionNotice(token: string, noticeId: string): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  return persistence.deleteRegionNotice(noticeId, session.regionId);
+}
+
+export async function getObjectPermissions(objectId: string): Promise<ObjectPermissions | undefined> {
+  return persistence.getObjectPermissions(objectId);
+}
+
+export async function saveObjectPermissions(token: string, objectId: string, allowCopy: boolean, allowModify: boolean, allowTransfer: boolean): Promise<boolean> {
+  const session = getSession(token);
+  if (!session) return false;
+  const objects = await persistence.listRegionObjects("");
+  const obj = objects.find((o) => o.id === objectId);
+  if (!obj || obj.ownerAccountId !== session.accountId) return false;
+  await persistence.saveObjectPermissions({ objectId, allowCopy, allowModify, allowTransfer });
+  return true;
 }

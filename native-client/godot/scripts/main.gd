@@ -1233,9 +1233,27 @@ func _update_avatar_animation(node: Node3D, movement_delta: float) -> void:
 	var animation_player := _find_animation_player(node)
 	if animation_player == null:
 		return
-	var desired := "Walk" if movement_delta > 0.02 else "Idle"
+	var desired := "Idle"
+	if movement_delta > 0.15:
+		desired = "Run"
+	elif movement_delta > 0.02:
+		desired = "Walk"
 	if animation_player.has_animation(desired) and animation_player.current_animation != desired:
 		animation_player.play(desired)
+
+
+func _play_emote(emote_name: String) -> void:
+	if not avatar_nodes.has(session.avatarId):
+		return
+	var node := avatar_nodes[session.avatarId]
+	var animation_player := _find_animation_player(node)
+	if animation_player == null:
+		return
+	var emote_animations := ["Wave", "Dance", "Point", "Cheer", "Sit", "Jump"]
+	if emote_name in emote_animations and animation_player.has_animation(emote_name):
+		animation_player.play(emote_name)
+		await animation_player.animation_finished
+		animation_player.play("Idle")
 
 
 func _update_local_movement(delta: float) -> void:

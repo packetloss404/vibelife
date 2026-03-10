@@ -99,3 +99,102 @@ export function isRegionCommand(value: unknown): value is RegionCommand {
 
   return false;
 }
+
+export type TeleportLandingPointContract = {
+  id: string;
+  accountId: string;
+  regionId: string;
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  createdAt: string;
+};
+
+export type FriendContract = {
+  id: string;
+  accountId: string;
+  friendAccountId: string;
+  friendDisplayName: string;
+  status: "pending" | "accepted" | "blocked";
+  createdAt: string;
+};
+
+export type GroupContract = {
+  id: string;
+  name: string;
+  description: string;
+  founderAccountId: string;
+  createdAt: string;
+};
+
+export type GroupMemberContract = {
+  groupId: string;
+  accountId: string;
+  displayName: string;
+  role: "member" | "officer" | "owner";
+  joinedAt: string;
+};
+
+export type CurrencyTransactionContract = {
+  id: string;
+  fromAccountId: string | null;
+  toAccountId: string | null;
+  amount: number;
+  type: "gift" | "purchase" | "sale" | "bonus" | "region_tax";
+  description: string;
+  createdAt: string;
+};
+
+export type OfflineMessageContract = {
+  id: string;
+  fromAccountId: string;
+  fromDisplayName: string;
+  toAccountId: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export type AvatarProfileContract = {
+  accountId: string;
+  bio: string;
+  imageUrl: string | null;
+  worldVisits: number;
+  totalTime: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BanContract = {
+  id: string;
+  accountId: string;
+  bannedBy: string;
+  reason: string;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+export type RegionNoticeContract = {
+  id: string;
+  regionId: string;
+  parcelId: string | null;
+  message: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type ObjectPermissionsContract = {
+  objectId: string;
+  allowCopy: boolean;
+  allowModify: boolean;
+  allowTransfer: boolean;
+};
+
+export type TeleportRequest = {
+  targetRegionId: string;
+  x: number;
+  y: number;
+  z: number;
+};
