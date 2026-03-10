@@ -1,6 +1,6 @@
-# ThirdLife 2026 Prototype
+# VibeLife
 
-This is a Second Life-inspired prototype with a modern TypeScript backend and a Godot-based native client direction.
+This is a Second Life-inspired virtual world with a modern TypeScript backend and a Godot-based native client direction.
 
 ## What is included
 
@@ -51,11 +51,11 @@ The browser client under `public/` is still available as a debug/admin prototype
 Set `DATABASE_URL` before starting the server. If the connection succeeds, the app creates `regions`, `accounts`, and `inventory_items` automatically and seeds starter regions. If not set, it falls back to in-memory mode.
 
 ```bash
-set DATABASE_URL=postgres://postgres:postgres@localhost:5432/thirdlife
+set DATABASE_URL=postgres://postgres:postgres@localhost:5432/vibelife
 npm run dev
 ```
 
-For this machine, I wired a local Postgres target to the running container on `127.0.0.1:5432` and created the `thirdlife` database, so this shortcut should work:
+For this machine, I wired a local Postgres target to the running container on `127.0.0.1:5432` and created the `vibelife` database, so this shortcut should work:
 
 ```bash
 npm run dev:postgres

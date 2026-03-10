@@ -1,6 +1,6 @@
-# ThirdLife Native Client
+# VibeLife Native Client
 
-This Godot 4 project is now the primary client direction for ThirdLife.
+This Godot 4 project is now the primary client direction for VibeLife.
 
 ## What it does today
 
@@ -37,9 +37,9 @@ This Godot 4 project is now the primary client direction for ThirdLife.
 
 - export presets now live in `native-client/godot/export_presets.cfg`
 - default outputs target:
-  - `build/windows/ThirdLifeNative.exe`
-  - `build/linux/thirdlife-native.x86_64`
-  - `build/macos/ThirdLifeNative.zip`
+  - `build/windows/VibeLife.exe`
+  - `build/linux/vibelife.x86_64`
+  - `build/macos/VibeLife.zip`
 - in Godot, install the matching export templates, then use `Project -> Export`
 - update icons, signing, and bundle identifiers before shipping
 

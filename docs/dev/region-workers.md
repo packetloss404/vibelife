@@ -263,12 +263,12 @@ CREATE TABLE region_assignments (
 # docker-compose.yml
 services:
   gateway:
-    image: thirdlife/gateway
+    image: vibelife/gateway
     ports:
       - "3000:3000"
       
   region-worker:
-    image: thirdlife/region-worker
+    image: vibelife/region-worker
     deploy:
       replicas: 2-10
     environment:
