@@ -23,11 +23,11 @@ func show_speaking(avatar_id: String, is_speaking: bool) -> void:
 		speaking_avatars[avatar_id] = true
 		muted_avatars.erase(avatar_id)
 		_ensure_indicator(avatar_id)
-		var label = indicator_nodes.get(avatar_id)
-		if label != null:
-			label.text = "🔊"
-			label.modulate = Color(0.2, 1.0, 0.4, 1.0)
-			label.visible = true
+		var ind = indicator_nodes.get(avatar_id)
+		if ind != null:
+			ind.text = "🔊"
+			ind.modulate = Color(0.2, 1.0, 0.4, 1.0)
+			ind.visible = true
 	else:
 		speaking_avatars.erase(avatar_id)
 		if not muted_avatars.has(avatar_id):
@@ -37,11 +37,11 @@ func show_muted(avatar_id: String) -> void:
 	muted_avatars[avatar_id] = true
 	speaking_avatars.erase(avatar_id)
 	_ensure_indicator(avatar_id)
-	var label = indicator_nodes.get(avatar_id)
-	if label != null:
-		label.text = "🔇"
-		label.modulate = Color(1.0, 0.3, 0.3, 1.0)
-		label.visible = true
+	var ind = indicator_nodes.get(avatar_id)
+	if ind != null:
+		ind.text = "🔇"
+		ind.modulate = Color(1.0, 0.3, 0.3, 1.0)
+		ind.visible = true
 
 func remove_avatar(avatar_id: String) -> void:
 	speaking_avatars.erase(avatar_id)
@@ -53,8 +53,8 @@ func _update_indicators(delta: float) -> void:
 	var pulse_scale = lerp(PULSE_MIN_SCALE, PULSE_MAX_SCALE, (sin(pulse_time * PULSE_SPEED) + 1.0) / 2.0)
 
 	for avatar_id in indicator_nodes:
-		var label = indicator_nodes[avatar_id]
-		if label == null or not is_instance_valid(label):
+		var ind = indicator_nodes[avatar_id]
+		if ind == null or not is_instance_valid(ind):
 			continue
 
 		# Position above avatar head
@@ -63,13 +63,13 @@ func _update_indicators(delta: float) -> void:
 			_remove_indicator(avatar_id)
 			continue
 
-		label.global_position = avatar_node.global_position + Vector3(0, INDICATOR_HEIGHT, 0)
+		ind.global_position = avatar_node.global_position + Vector3(0, INDICATOR_HEIGHT, 0)
 
 		# Pulse effect for speaking avatars
 		if speaking_avatars.has(avatar_id):
-			label.scale = Vector3(pulse_scale, pulse_scale, pulse_scale)
+			ind.scale = Vector3(pulse_scale, pulse_scale, pulse_scale)
 		else:
-			label.scale = Vector3.ONE
+			ind.scale = Vector3.ONE
 
 func _ensure_indicator(avatar_id: String) -> void:
 	if indicator_nodes.has(avatar_id):
@@ -81,28 +81,28 @@ func _ensure_indicator(avatar_id: String) -> void:
 	if avatar_node == null:
 		return
 
-	var label = Label3D.new()
-	label.text = ""
-	label.font_size = 48
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.fixed_size = false
-	label.pixel_size = 0.01
-	label.outline_size = 8
-	label.modulate = Color.WHITE
+	var new_indicator = Label3D.new()
+	new_indicator.text = ""
+	new_indicator.font_size = 48
+	new_indicator.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	new_indicator.no_depth_test = true
+	new_indicator.fixed_size = false
+	new_indicator.pixel_size = 0.01
+	new_indicator.outline_size = 8
+	new_indicator.modulate = Color.WHITE
 
-	main.add_child(label)
-	indicator_nodes[avatar_id] = label
+	main.add_child(new_indicator)
+	indicator_nodes[avatar_id] = new_indicator
 
 func _hide_indicator(avatar_id: String) -> void:
-	var label = indicator_nodes.get(avatar_id)
-	if label != null and is_instance_valid(label):
-		label.visible = false
+	var ind = indicator_nodes.get(avatar_id)
+	if ind != null and is_instance_valid(ind):
+		ind.visible = false
 
 func _remove_indicator(avatar_id: String) -> void:
-	var label = indicator_nodes.get(avatar_id)
-	if label != null and is_instance_valid(label):
-		label.queue_free()
+	var ind = indicator_nodes.get(avatar_id)
+	if ind != null and is_instance_valid(ind):
+		ind.queue_free()
 	indicator_nodes.erase(avatar_id)
 
 func _get_avatar_node(avatar_id: String):
