@@ -1,156 +1,208 @@
 # VibeLife
 
-This is a Second Life-inspired virtual world with a modern TypeScript backend, a Godot-based native client direction, and a browser admin/debug surface.
+An open-source virtual world MMORPG built with a TypeScript/Fastify backend and a Godot 4.x native client. Think Second Life meets Minecraft meets an RPG — build, fight, socialize, and create in a persistent shared world.
 
-## What is included
+**[Game Manual](docs/manual/index.html)** | **[Developer Manual](docs/devmanual/index.html)** | **[Website](docs/index.html)**
 
-- guest account creation endpoint
-- region directory endpoint
-- Postgres-ready region, account, and inventory persistence
-- WebSocket region presence and chat
-- Godot native client scaffold connected to the live backend
-- region scene manifests and generated glTF assets
-- in-world object placement, selection, transform, and deletion tools
-- imported avatar models with idle and walk clips
-- live WebSocket sync for object creation, updates, and deletion
-- parcel-aware build permissions for public and owned land
-- avatar appearance controls with outfits, accessories, and synced style updates
-- mouse transform gizmos for move, rotate, and scale editing
-- wearable outfits and accessories now equip from inventory items
-- build snapping and parcel highlight feedback while placing or editing
-- multi-select, duplicate, and prefab saving tools for faster building
+## Features
 
-## Why this is a good 2026-style starting point
+### World & Building
+- Persistent shared regions with real-time multiplayer via WebSocket
+- Parcel-based land ownership with build permissions and collaborators
+- Object placement, transform gizmos (move/rotate/scale), snapping, and undo
+- Blueprint system — save, load, and share prefab builds
+- Region scene manifests and generated glTF assets
 
-- one deployable service for fast iteration
-- clean split between auth, region state, and transport layers
-- optional Postgres bootstrap gives you a real persistence path without breaking local development
-- the backend is already usable from a native viewer instead of being locked to the browser
+### Voxel Engine
+- 16x64x16 chunk-based voxel world with terrain generation
+- 13 block types with RLE compression for network efficiency
+- Place and break blocks in real-time (synced to all players)
+- Voxel blueprints and a custom block shop
+- LRU chunk cache with distance-based streaming
 
-## Run it
+### RPG Combat
+- Player stats (HP, Mana, Strength, Defense), XP, and leveling
+- 5 enemy types (Slime, Skeleton, Golem, Shadow, Drake) with AI state machines
+- Melee and magic attack styles with damage formulas and critical hits
+- Loot tables with currency and item drops
+- Death penalties, respawn system, and HP/Mana regeneration
+
+### Social
+- Friends list, friend requests, blocking, and presence status
+- Real-time region chat, whispers, and group chat
+- Guilds with roles, treasury, emblems, alliances, and parcel assignment
+- Avatar profiles with bios, titles, and play-time stats
+- Offline messages and activity feeds
+- Emote system with combo detection
+
+### Economy
+- Currency system with balance tracking and transaction history
+- Marketplace with fixed-price and auction listings
+- Peer-to-peer trading with offer/accept/decline flow
+- Storefronts, commissions, and trending items
+- Creator tools with asset submission, analytics, and revenue tracking
+
+### Progression
+- 5 achievement categories (Explorer, Builder, Social, Collector, Warrior)
+- Daily and weekly challenges with XP rewards
+- Leaderboards by category
+- Unlockable titles
+
+### Pets
+- 8 species (Cat, Dog, Bird, Bunny, Fox, Dragon, Slime, Owl)
+- Adopt, summon, feed, play, pet, and teach tricks
+- Pet customization (colors, accessories), leveling, and happiness/energy
+
+### Media & Photography
+- In-game camera mode with 8 filters (vintage, noir, warm, cool, dreamy, pixel, posterize)
+- Photo gallery with likes, comments, and visibility controls
+- In-world media objects (photo frames, billboards, slideshows)
+
+### Homes
+- Set home parcel with teleport-home support
+- Privacy controls (public, friends-only, private)
+- Home ratings, favorites, featured homes, and visitor counts
+- Doorbell notifications when visitors arrive
+
+### Events & Seasonal
+- Player-created events with types, RSVP, and scheduling
+- 4 seasons with themed world visuals (fog, sky, particles)
+- 7 holidays with collectible seasonal items
+- Seasonal achievements and leaderboards
+
+### Radio & Voice
+- Multi-station radio with genre labels and track skipping
+- Voice chat channels with join/leave, mute, deafen
+- Spatial audio with distance-based volume falloff
+- Speaking indicators on avatars
+
+### Platform
+- Mobile companion service (REST API for mobile clients)
+- Federation/multi-server architecture
+- AI NPCs with dialogue trees and behavior states
+- VR support service
+- Creator tools platform with plugins, webhooks, and API keys
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Server | TypeScript, Fastify, Node.js |
+| Client | Godot 4.x, GDScript |
+| Transport | WebSocket (real-time), REST (CRUD) |
+| Persistence | In-memory Maps + PostgreSQL (dual-mode) |
+| Auth | Guest, Register, Login with per-account salted hashes |
+
+## Architecture
+
+```
+src/
+  server.ts          — Route registration, WS handlers, tick loops
+  contracts.ts       — Shared types (RegionEvent, RegionCommand unions)
+  routes/            — 37 Fastify route plugins
+  world/             — 30+ service modules
+    store.ts         — Barrel re-exports from all services
+    _shared-state.ts — Sessions, regions, shared helpers
+  data/
+    persistence.ts   — Dual-mode persistence layer
+
+native-client/godot/
+  scripts/
+    main.gd          — Entry point, module init, WS handling
+    network/         — Session coordinator, WS event router
+    ui/              — 15 GUI panels, panel manager, toast system
+    world/           — Object, avatar, voxel, pet, enemy managers
+    build/           — Build controller, blueprints, grid, undo
+    visual/          — Sky, weather, day/night, particles, materials
+    audio/           — Radio controller
+    camera/          — Camera controller
+  scenes/
+    main.tscn        — Scene tree with responsive UI anchoring
+```
+
+## Run It
 
 ```bash
 npm install
 npm run dev
 ```
 
-That starts the backend on `http://localhost:3000`.
+Backend starts on `http://localhost:3000`. Open the Godot project at `native-client/godot/project.godot` in Godot 4.2+ and connect.
 
-## Local Dev
-
-- Backend only: `npm run dev`
-- Guided local startup: `npm run dev:local`
-- Backend with local Postgres shortcut: `npm run dev:postgres`
-- Full verification: `npm run check`
-- Godot client: open `native-client/godot/project.godot` in Godot 4.2+ and connect to `http://localhost:3000`
-- Browser admin/debug surface: run the backend, then open `http://localhost:3000` and use an admin account
-
-Verification:
+## Development
 
 ```bash
-npm run check
+npm run dev          # Backend only
+npm run dev:local    # Guided local startup
+npm run dev:postgres # Backend with local Postgres
+npm run check        # Full verification (TypeScript + Godot + asset drift)
 ```
 
-Open the native client from `native-client/godot/project.godot` in Godot 4.2+.
+### Optional PostgreSQL
 
-The browser client under `public/` is now treated as an admin/debug prototype only, and it is no longer the primary client direction.
-
-## Optional Postgres mode
-
-Set `DATABASE_URL` before starting the server. If the connection succeeds, the app creates `regions`, `accounts`, and `inventory_items` automatically and seeds starter regions. If not set, it falls back to in-memory mode.
+Set `DATABASE_URL` to use persistent storage. Falls back to in-memory mode if not set.
 
 ```bash
-set DATABASE_URL=postgres://postgres:postgres@localhost:5432/vibelife
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/vibelife
 npm run dev
 ```
 
-For this machine, I wired a local Postgres target to the running container on `127.0.0.1:5432` and created the `vibelife` database, so this shortcut should work:
+### Scene Pipeline
 
-```bash
-npm run dev:postgres
-```
+- Region layouts: `public/scenes/*.json`
+- World assets: `public/assets/models/*.gltf`
+- Regenerate: `npm run generate:assets`
 
-## New persistence features
+## Client GUI
 
-- reuses guest accounts by display name
-- saves avatar positions per account and region
-- seeds claimable parcels in each region
-- lets a connected user claim an unowned parcel
+The Godot client features a tabbed panel system with 15 feature panels:
 
-## Scene pipeline
+| Tab | Features |
+|-----|----------|
+| Chat | Region chat, whispers, group chat channel selector |
+| Inventory | Item list, equip, use |
+| Social | Friends, requests, blocking, presence, offline messages |
+| Economy | Balance, send currency, transaction history |
+| Market | Browse, buy, sell, auction, bid, trade offers |
+| Guild | Create/join, members, treasury, settings, alliances |
+| Achievements | Progress, challenges, leaderboards, titles |
+| Events | Upcoming, create, RSVP |
+| Pets | Adopt, summon, interact, customize |
+| Photos | Camera mode, gallery, likes, comments |
+| Radio | Stations, now playing, skip, volume |
+| Seasonal | Items, collection progress, achievements |
+| Voice | Join/leave, mute/deafen, participants |
+| Creator | Asset submission, analytics, revenue |
+| Admin | Bans, parcel/object management, audit log |
 
-- region layouts live in `public/scenes/*.json`
-- reusable world assets live in `public/assets/models/*.gltf`
-- regenerate assets with `npm run generate:assets`
+Plus: currency HUD, toast notifications, right-click context menus, and responsive viewport scaling.
 
-## Native client
+## WebSocket Protocol
 
-- primary client scaffold lives in `native-client/godot`
-- experimental or not-yet-wired Godot modules now live under `native-client/godot/scripts/experimental`
-- uses the existing `/api/regions`, `/api/auth/guest`, `/api/regions/:id/objects`, and `/ws/regions/:regionId` backend flow
-- imports local glTF assets from `native-client/godot/assets/models` when available and falls back to placeholder geometry when needed
-- already includes native login, region, chat, and inventory panels
-- includes `native-client/godot/export_presets.cfg` as a starting point for desktop exports
-- now includes native build-mode object placement and imported avatar scene usage in Godot
-- native client now has parcel-aware build checks and move/rotate/scale editing modes
-- native client HUD is now split into a docked layout with status, build controls, inventory, and chat
-- native inventory now supports equip/use actions and native object editing now supports axis-handle dragging
-- native client now saves backend profiles locally and renders parcel overlays with ownership colors in-world
-- native HUD now supports parcel claims plus saved graphics and input settings
-- parcel ownership changes now propagate live over WebSocket to both native and browser debug clients
-- register/login auth endpoints now exist alongside guest access, with admin moderation controls for parcel reassignment and object cleanup
-- browser debug surface is now admin-login only, while the Godot native client remains the primary general-purpose client
-- admin audit logs now surface in both clients and register/login flows support account-mode switching
+**13 commands** (client -> server): move, chat, whisper, radio:tune, radio:skip, emote, typing, sit, stand, group_chat, voxel:place_block, voxel:break_block, combat:attack
 
-## Shared contracts
+**43 events** (server -> client): snapshot, avatar:joined/moved/updated/left/typing/emote/sit/stand, chat, whisper, chat:history, object:created/updated/deleted, parcel:updated, media:created/updated/removed, pet:summoned/dismissed/trick/state_updated, voice:participant_joined/left/speaking_changed, radio:changed, emote:combo, group:chat, home:doorbell, event:started/ended, voxel:chunk_data/block_placed/block_broken, combat:damage/death/respawn/loot/level_up, enemy:spawned/moved/despawned
 
-- shared runtime contract types now live in `src/contracts.ts`
-- `scripts/check.mjs` verifies TypeScript build health, Godot duplicate-function regressions, and browser/native asset copy drift
+## Auth
 
-## Auth notes
+- Guest, register, and login flows
+- Admin registration requires `ADMIN_BOOTSTRAP_TOKEN`
+- Per-account salted password hashes
+- Server-side session expiry with TTL management
+- Rate limiting: 60 req/min global, 5-10 req/min on auth endpoints
+- CORS whitelist with configurable `CORS_ORIGINS`
 
-- guest, register, and login flows now exist side by side
-- admin registration now requires `ADMIN_BOOTSTRAP_TOKEN`; display name alone no longer grants admin access
-- registered password hashes now use per-account salts instead of a single shared salt
-- session expiry is now enforced server-side
+## Documentation
 
-## Building tools
+- **[Game Manual](docs/manual/index.html)** — Player-facing guide covering all features
+- **[Developer Manual](docs/devmanual/index.html)** — Architecture, services, API reference, and how-to guides
+- **[Website](docs/index.html)** — Interactive project website
+- **[Sprint Plans](dev/rev3/)** — Rev3 GUI sprint documentation
 
-- enable build mode in the sidebar after joining a region
-- click terrain to place the selected asset
-- click one of your placed objects to select it
-- use move, rotate, and scale gizmo buttons for mouse-driven editing
-- use build snap to place and move objects on a clean grid
-- shift-select multiple owned objects and press `Ctrl+D` to duplicate the current selection
-- save a selected group as a preset and place that prefab anywhere you have build access
-- use arrow keys to move, `Q` and `E` to rotate, `R` and `F` to scale, and `Delete` to remove it
-- public parcels allow open building, while owned parcels only allow the owner to place or move objects there
-- active parcel boundaries highlight while hovering, placing, or transforming an object
+## Contributing
 
-## Avatar styling
+VibeLife is open source. The developer manual covers how to add new services, routes, WebSocket commands, and client modules with step-by-step guides.
 
-- change body, accent, and hair colors from the sidebar
-- equip voyager, pilot, or formal wearables from inventory
-- equip visor, cape, or utility pack accessories from inventory
-- style updates sync live to everyone in the same region
+## License
 
-## Suggested next milestones
-
-1. Split region simulation into dedicated workers with interest management.
-2. Expand the Godot client into a production viewer with imported assets, animation controllers, and native UI.
-3. Add parcel ownership, scripts, and permission graphs.
-4. Introduce asset storage and CDN delivery.
-5. Add federation or shard-to-shard travel.
-
-## Current roadmap
-
-1. Add instant parcel permission refresh for every open client view.
-2. Add stronger moderation tools for parcel reassignment and object cleanup.
-3. Add native login persistence with account switching instead of guest-only flow.
-4. Replace placeholder/native fallback props with fully imported Godot scene assets.
-5. Add animated avatar state machines, emotes, and equipable wearables in Godot.
-6. Add native build gizmos with proper axis dragging, snapping, and rotation handles.
-7. Add in-world scriptable objects and permissions tied to parcel ownership.
-8. Add voice/chat channels, chat history, and social presence systems.
-9. Add desktop export automation and per-platform packaging/signing workflow.
-10. Add region-worker scaling, persistence hardening, and production deployment setup.
+Open source. See repository for details.
