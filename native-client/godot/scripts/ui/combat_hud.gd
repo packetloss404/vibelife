@@ -358,13 +358,13 @@ func _process_hud(delta: float) -> void:
 	var expired: Array = []
 	for i in range(floating_numbers.size()):
 		var num: Dictionary = floating_numbers[i]
-		var label: Label = num.label
+		var num_label: Label = num.label
 		num.elapsed += delta
 		num.lifetime -= delta
 
-		if num.lifetime <= 0.0 or not is_instance_valid(label):
-			if is_instance_valid(label):
-				label.queue_free()
+		if num.lifetime <= 0.0 or not is_instance_valid(num_label):
+			if is_instance_valid(num_label):
+				num_label.queue_free()
 			expired.append(i)
 			continue
 
@@ -375,13 +375,13 @@ func _process_hud(delta: float) -> void:
 		var vel: Vector2 = num.velocity
 		screen_pos += vel * num.elapsed
 
-		label.position = screen_pos - label.size * 0.5
+		num_label.position = screen_pos - num_label.size * 0.5
 
 		# Fade out in the last 0.3s
 		if num.lifetime < 0.3:
-			label.modulate.a = num.lifetime / 0.3
+			num_label.modulate.a = num.lifetime / 0.3
 		else:
-			label.modulate.a = 1.0
+			num_label.modulate.a = 1.0
 
 		floating_numbers[i] = num
 
