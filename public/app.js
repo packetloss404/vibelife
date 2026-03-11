@@ -1354,8 +1354,7 @@ const connect = async () => {
   state.reconnectTimer = null;
   state.reconnectAttempts = 0;
 
-  const authMode = elements.authModeSelect.value;
-  const endpoint = authMode === "guest" ? "/api/auth/guest" : authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+  const endpoint = "/api/auth/login";
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -1373,6 +1372,13 @@ const connect = async () => {
   }
   state.session = data.session;
   state.account = data.account;
+
+  if (state.account?.role !== "admin") {
+    state.session = null;
+    state.account = null;
+    throw new Error("Browser surface is admin-only. Use an admin account or switch to the Godot client.");
+  }
+
   state.appearance = data.appearance;
   state.persistence = data.persistence;
   state.inventory = data.inventory;

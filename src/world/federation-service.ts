@@ -275,14 +275,10 @@ export function completeHandshake(challenge: string, response: string): { ok: bo
   }
 
   // The remote server should sign the challenge with the shared secret.
-  // For simplicity we verify the challenge string echoed back matches.
   const expectedResponse = signPayload(challenge);
   if (response !== expectedResponse) {
-    // Accept the raw challenge echo as a fallback for initial bootstrapping
-    if (response !== challenge) {
-      pendingHandshakes.delete(challenge);
-      return { ok: false, reason: "invalid challenge response" };
-    }
+    pendingHandshakes.delete(challenge);
+    return { ok: false, reason: "invalid challenge response" };
   }
 
   pendingHandshakes.delete(challenge);
@@ -303,13 +299,16 @@ export function issueIdentityToken(token: string): FederatedIdentityToken | unde
   const session = getSession(token);
   if (!session) return undefined;
 
+  const issuedAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + IDENTITY_TOKEN_TTL_MS).toISOString();
+
   const payload = JSON.stringify({
     accountId: session.accountId,
     displayName: session.displayName,
     homeServerId: localServerId,
     homeServerUrl: localServerUrl,
-    issuedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + IDENTITY_TOKEN_TTL_MS).toISOString(),
+    issuedAt,
+    expiresAt,
   });
 
   const signature = signPayload(payload);
@@ -320,8 +319,8 @@ export function issueIdentityToken(token: string): FederatedIdentityToken | unde
     displayName: session.displayName,
     homeServerId: localServerId,
     homeServerUrl: localServerUrl,
-    issuedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + IDENTITY_TOKEN_TTL_MS).toISOString(),
+    issuedAt,
+    expiresAt,
     signature,
   };
 

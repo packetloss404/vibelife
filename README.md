@@ -1,6 +1,6 @@
 # VibeLife
 
-This is a Second Life-inspired virtual world with a modern TypeScript backend and a Godot-based native client direction.
+This is a Second Life-inspired virtual world with a modern TypeScript backend, a Godot-based native client direction, and a browser admin/debug surface.
 
 ## What is included
 
@@ -36,6 +36,15 @@ npm run dev
 
 That starts the backend on `http://localhost:3000`.
 
+## Local Dev
+
+- Backend only: `npm run dev`
+- Guided local startup: `npm run dev:local`
+- Backend with local Postgres shortcut: `npm run dev:postgres`
+- Full verification: `npm run check`
+- Godot client: open `native-client/godot/project.godot` in Godot 4.2+ and connect to `http://localhost:3000`
+- Browser admin/debug surface: run the backend, then open `http://localhost:3000` and use an admin account
+
 Verification:
 
 ```bash
@@ -44,7 +53,7 @@ npm run check
 
 Open the native client from `native-client/godot/project.godot` in Godot 4.2+.
 
-The browser client under `public/` is still available as a debug/admin prototype, but it is no longer the primary client direction.
+The browser client under `public/` is now treated as an admin/debug prototype only, and it is no longer the primary client direction.
 
 ## Optional Postgres mode
 
@@ -89,7 +98,7 @@ npm run dev:postgres
 - native HUD now supports parcel claims plus saved graphics and input settings
 - parcel ownership changes now propagate live over WebSocket to both native and browser debug clients
 - register/login auth endpoints now exist alongside guest access, with admin moderation controls for parcel reassignment and object cleanup
-- browser debug and Godot native clients now both support auth modes and admin parcel/object moderation flows
+- browser debug surface is now admin-login only, while the Godot native client remains the primary general-purpose client
 - admin audit logs now surface in both clients and register/login flows support account-mode switching
 
 ## Shared contracts

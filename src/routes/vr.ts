@@ -1,10 +1,5 @@
-// VR Routes — Feature 20: VR Support
-//
-// Integration notes for server.ts:
-//   import vrRoutes from "./routes/vr.js";
-//   await app.register(vrRoutes);
-
 import type { FastifyInstance, FastifyPluginOptions } from "fastify";
+import { getRequestToken } from "../middleware/auth.js";
 import { getSession } from "../world/store.js";
 import {
   createVRSession,
@@ -38,9 +33,8 @@ import {
 // Helper: extract and validate auth token from request body or query
 // ---------------------------------------------------------------------------
 
-function extractToken(body: Record<string, unknown> | null, query: Record<string, unknown> | null): string | undefined {
-  const token = (body as { token?: string })?.token ?? (query as { token?: string })?.token;
-  return typeof token === "string" && token.length > 0 ? token : undefined;
+function extractToken(request: { body?: unknown; query?: unknown; headers: Record<string, unknown> }): string | undefined {
+  return getRequestToken(request as never);
 }
 
 // ---------------------------------------------------------------------------
@@ -63,7 +57,8 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
       guardianDepth?: number;
     };
   }>("/api/vr/session", async (request, reply) => {
-    const { token, deviceType, deviceName, ipd, refreshRate, guardianWidth, guardianDepth } = request.body;
+    const token = extractToken(request);
+    const { deviceType, deviceName, ipd, refreshRate, guardianWidth, guardianDepth } = request.body;
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -102,7 +97,7 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
   app.get<{
     Querystring: { token?: string };
   }>("/api/vr/session", async (request, reply) => {
-    const token = request.query.token;
+    const token = extractToken(request);
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
     }
@@ -121,7 +116,7 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
   app.delete<{
     Body: { token?: string };
   }>("/api/vr/session", async (request, reply) => {
-    const token = request.body.token;
+    const token = extractToken(request);
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
     }
@@ -140,7 +135,7 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
   app.get<{
     Querystring: { token?: string };
   }>("/api/vr/preferences", async (request, reply) => {
-    const token = request.query.token;
+    const token = extractToken(request);
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
     }
@@ -175,7 +170,8 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
       showFloorMarker?: boolean;
     };
   }>("/api/vr/preferences", async (request, reply) => {
-    const { token, ...updates } = request.body;
+    const token = extractToken(request);
+    const { token: _token, ...updates } = request.body;
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
     }
@@ -199,7 +195,8 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
       rightHand?: Partial<VRHandState>;
     };
   }>("/api/vr/hand-tracking", async (request, reply) => {
-    const { token, headState, leftHand, rightHand } = request.body;
+    const token = extractToken(request);
+    const { headState, leftHand, rightHand } = request.body;
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -229,7 +226,7 @@ export default async function vrRoutes(app: FastifyInstance, _opts: FastifyPlugi
   app.get<{
     Querystring: { token?: string };
   }>("/api/vr/hand-tracking/states", async (request, reply) => {
-    const token = request.query.token;
+    const token = extractToken(request);
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
     }

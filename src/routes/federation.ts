@@ -1,9 +1,3 @@
-// Federation Routes — Feature 18: Federation / Multi-Server
-//
-// Integration notes for server.ts:
-//   import { federationRoutes } from "./routes/federation.js";
-//   await app.register(federationRoutes);
-
 import type { FastifyInstance } from "fastify";
 import { getSession } from "../world/store.js";
 import {
@@ -60,17 +54,13 @@ export async function federationRoutes(app: FastifyInstance) {
   }>("/api/federation/servers/register", async (request, reply) => {
     const { token, name, url, description, ownerDisplayName, publicKey, tags } = request.body;
 
-    if (!name || !url) {
-      return reply.code(400).send({ error: "name and url are required" });
+    if (!token || !name || !url) {
+      return reply.code(400).send({ error: "token, name, and url are required" });
     }
 
-    // Allow unauthenticated registration for server-to-server calls,
-    // but if a token is provided it must be valid.
-    if (token) {
-      const session = getSession(token);
-      if (!session) {
-        return reply.code(401).send({ error: "invalid session" });
-      }
+    const session = getSession(token);
+    if (!session || session.role !== "admin") {
+      return reply.code(403).send({ error: "admin access required" });
     }
 
     const server = registerFederatedServer({

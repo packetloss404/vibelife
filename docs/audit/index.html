@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VibeLife Audit - March 2026</title>
+    <style>
+      :root {
+        --bg: #f2efe8;
+        --panel: rgba(255, 252, 246, 0.88);
+        --ink: #1c2430;
+        --muted: #5f6b77;
+        --line: rgba(28, 36, 48, 0.12);
+        --accent: #0f766e;
+        --accent-2: #c7682c;
+        --good: #1f7a48;
+        --warn: #9a5d00;
+        --bad: #9f2f2f;
+        --shadow: 0 18px 48px rgba(23, 33, 45, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.15), transparent 32%),
+          radial-gradient(circle at top right, rgba(199, 104, 44, 0.15), transparent 28%),
+          linear-gradient(180deg, #f7f4ed 0%, var(--bg) 100%);
+      }
+
+      header {
+        padding: 56px 20px 28px;
+      }
+
+      .wrap {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto 40px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, rgba(255, 251, 245, 0.94), rgba(244, 249, 248, 0.92));
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hero-inner {
+        display: grid;
+        gap: 18px;
+        padding: 36px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.1;
+        font-weight: 700;
+      }
+
+      h1 {
+        font-size: clamp(2.4rem, 4vw, 4.4rem);
+        letter-spacing: -0.04em;
+      }
+
+      h2 {
+        font-size: clamp(1.35rem, 2vw, 2rem);
+        margin-bottom: 14px;
+      }
+
+      p,
+      li,
+      td,
+      th {
+        line-height: 1.6;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        width: fit-content;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 118, 110, 0.2);
+        background: rgba(15, 118, 110, 0.08);
+        color: var(--accent);
+        font: 600 0.78rem/1.2 system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .lede {
+        max-width: 78ch;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .stat,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+      }
+
+      .stat {
+        padding: 16px 18px;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.7rem;
+      }
+
+      main {
+        display: grid;
+        gap: 18px;
+        padding: 0 20px 40px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 18px;
+      }
+
+      .span-12 { grid-column: span 12; }
+      .span-8 { grid-column: span 8; }
+      .span-7 { grid-column: span 7; }
+      .span-6 { grid-column: span 6; }
+      .span-5 { grid-column: span 5; }
+      .span-4 { grid-column: span 4; }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .chip {
+        padding: 7px 10px;
+        border-radius: 999px;
+        font: 600 0.8rem/1.2 system-ui, sans-serif;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.6);
+      }
+
+      .good { color: var(--good); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--bad); }
+
+      ul {
+        margin: 12px 0 0;
+        padding-left: 18px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        font-family: system-ui, sans-serif;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      code {
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.35rem;
+        background: rgba(28, 36, 48, 0.07);
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.92em;
+      }
+
+      .callout {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-left: 4px solid var(--accent-2);
+        background: rgba(199, 104, 44, 0.08);
+        border-radius: 12px;
+      }
+
+      .footer {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 900px) {
+        .span-8,
+        .span-7,
+        .span-6,
+        .span-5,
+        .span-4 {
+          grid-column: span 12;
+        }
+
+        .hero-inner,
+        .panel {
+          padding: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap hero">
+        <div class="hero-inner">
+          <span class="eyebrow">Authoritative Audit</span>
+          <h1>VibeLife Codebase Audit</h1>
+          <p class="lede">
+            This report replaces the earlier review set as the current source of truth for the repository state on March 11, 2026.
+            It combines an 8-lane audit across backend, Godot client, browser client, docs, tests, duplication, security, and process health,
+            and records both fixes shipped in this pass and discussion items that should be settled before larger structural changes.
+          </p>
+          <div class="stats">
+            <div class="stat"><strong>37</strong>Route modules under <code>src/routes</code></div>
+            <div class="stat"><strong>40</strong>Service/state modules under <code>src/world</code></div>
+            <div class="stat"><strong>29</strong>Passing tests after this audit pass</div>
+            <div class="stat"><strong>8</strong>Parallel audit lanes used for triage</div>
+          </div>
+          <div class="chips">
+            <span class="chip good">Build passes</span>
+            <span class="chip good">Tests pass</span>
+            <span class="chip good">Repository check passes</span>
+            <span class="chip warn">Legacy review archived</span>
+            <span class="chip warn">Large refactors still pending</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="grid">
+        <article class="panel span-7">
+          <h2>What Changed In This Audit</h2>
+          <ul>
+            <li>Fixed the combat attack route to pass the real session token into <code>attackEnemy</code> instead of an account id, closing a backend correctness bug in <code>src/routes/combat.ts</code>.</li>
+            <li>Fixed federated identity issuance so the signed payload and returned token use the same <code>issuedAt</code>/<code>expiresAt</code> values in <code>src/world/federation-service.ts</code>.</li>
+            <li>Removed the handshake fallback that accepted a raw challenge echo, tightening federation trust validation in <code>src/world/federation-service.ts</code>.</li>
+            <li>Locked federation server registration behind an authenticated admin session in <code>src/routes/federation.ts</code>.</li>
+            <li>Fixed Godot voxel contract drift in <code>native-client/godot/scripts/world/voxel_manager.gd</code> by supporting <code>chunkX</code>/<code>chunkZ</code>, decoding JSON RLE chunk payloads, syncing palette data, and sending <code>blockTypeId</code>.</li>
+            <li>Fixed Godot initialization bugs by reusing scene-owned voxel/enemy roots, configuring the voxel manager on login, routing initial object loads through <code>ObjectManager.sync_objects()</code>, and correcting WebSocket reconnect cleanup in <code>native-client/godot/scripts/main.gd</code> and <code>native-client/godot/scripts/world/enemy_renderer.gd</code>.</li>
+            <li>Removed obvious AI-slop integration banners from active route files such as <code>src/routes/mobile.ts</code>, <code>src/routes/vr.ts</code>, and <code>src/routes/federation.ts</code>.</li>
+            <li>Converted verification into a non-mutating flow by changing <code>npm run check</code> to run build, tests, and repository checks rather than silently syncing assets first in <code>package.json</code>.</li>
+            <li>Added regression tests for the federation token fix and combat-token bug in <code>src/__tests__/audit-fixes.test.ts</code>.</li>
+            <li>Archived stale review positioning, cleaned the dev-doc index, and made this report the canonical audit entry point.</li>
+            <li>Applied the follow-up product decision that the browser surface is admin/debug only by converting <code>public/index.html</code> and <code>public/app.js</code> to admin-login-only messaging and behavior.</li>
+            <li>Started a partial auth transport cleanup by adding <code>Authorization: Bearer</code> support in <code>src/middleware/auth.ts</code> and using shared token extraction helpers in key route groups.</li>
+          </ul>
+        </article>
+
+        <aside class="panel span-5">
+          <h2>Verification Snapshot</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Result</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>npm run build</code></td>
+                <td class="good">Pass</td>
+                <td>TypeScript compile succeeds after fixes.</td>
+              </tr>
+              <tr>
+                <td><code>npm run test</code></td>
+                <td class="good">Pass</td>
+                <td>5 files / 29 tests passing after adding targeted regression coverage.</td>
+              </tr>
+              <tr>
+                <td><code>node scripts/check.mjs</code></td>
+                <td class="good">Pass</td>
+                <td>Godot duplicate-function guard and asset parity check still pass.</td>
+              </tr>
+              <tr>
+                <td><code>npm run check</code></td>
+                <td class="good">Pass expected</td>
+                <td>Now acts as a pure verification command instead of mutating assets.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout">
+            Unrelated local changes were present before the audit, including <code>.claude/settings.local.json</code> and untracked Godot <code>.uid</code> files.
+            Those were preserved and accounted for, not reverted.
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid">
+        <article class="panel span-6">
+          <h2>Highest-Impact Findings</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Finding</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bad">Critical</td>
+                <td>Combat route passed <code>session.accountId</code> into a function that expected a session token.</td>
+                <td class="good">Fixed</td>
+              </tr>
+              <tr>
+                <td class="bad">Critical</td>
+                <td>Federated identity signing used mismatched timestamps between the signed payload and returned token.</td>
+                <td class="good">Fixed</td>
+              </tr>
+              <tr>
+                <td class="bad">Critical</td>
+                <td>Handshake completion accepted a raw challenge echo fallback, weakening server trust establishment.</td>
+                <td class="good">Fixed</td>
+              </tr>
+              <tr>
+                <td class="warn">High</td>
+                <td>Auth/session validation remains heavily duplicated across route modules despite shared middleware support.</td>
+                <td class="warn">Partially improved</td>
+              </tr>
+              <tr>
+                <td class="warn">High</td>
+                <td><code>src/server.ts</code> and <code>src/world/store.ts</code> still act as oversized orchestration hubs.</td>
+                <td class="warn">Open</td>
+              </tr>
+              <tr>
+                <td class="warn">High</td>
+                <td>The Godot client still carries many speculative or partially wired modules beside one dominant orchestrator in <code>main.gd</code>.</td>
+                <td class="warn">Open</td>
+              </tr>
+              <tr>
+                <td class="warn">High</td>
+                <td>Legacy docs and review artifacts were materially out of sync with the codebase and included stale claims.</td>
+                <td class="good">Reframed and documented</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel span-6">
+          <h2>Duplication Hotspots</h2>
+          <ul>
+            <li><strong>Server auth guards:</strong> token extraction plus <code>getSession()</code> checks repeat across <code>src/routes/mobile.ts</code>, <code>src/routes/vr.ts</code>, <code>src/routes/npcs.ts</code>, <code>src/routes/scripts.ts</code>, and many others.</li>
+            <li><strong>Route result mapping:</strong> many handlers hand-translate <code>ok/reason</code> or null returns into HTTP 400/401/403/404 responses instead of using a shared adapter.</li>
+            <li><strong>Godot HTTP plumbing:</strong> request-node creation, JSON parsing, base URL handling, and token/header setup repeat across multiple UI and world managers.</li>
+            <li><strong>Domain literal drift:</strong> role, account-kind, season, and other union-like values are still spread across contracts, persistence, and runtime state.</li>
+            <li><strong>Client overlap:</strong> browser and Godot clients still duplicate auth, build/edit, parcel, chat, inventory, and moderation concepts with different maintenance costs.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel span-8">
+          <h2>Legacy Review Reconciliation</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Legacy Claim</th>
+                <th>Current Evidence</th>
+                <th>Disposition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/server.ts</code> still contains all routes in one file.</td>
+                <td>Current code registers many route plugins from <code>src/routes/*.ts</code>; <code>server.ts</code> is still heavy, but not route-monolithic anymore.</td>
+                <td class="warn">Partially stale</td>
+              </tr>
+              <tr>
+                <td>No rate limiting or CORS origin restriction.</td>
+                <td><code>src/server.ts</code> already registers <code>@fastify/rate-limit</code> and a restricted origin callback.</td>
+                <td class="bad">Stale</td>
+              </tr>
+              <tr>
+                <td>There is zero automated test coverage.</td>
+                <td>The repository contains Vitest suites in <code>src/__tests__</code>, now expanded to 29 passing tests.</td>
+                <td class="bad">Stale</td>
+              </tr>
+              <tr>
+                <td>The browser UI still references the old <code>ThirdLife</code> name.</td>
+                <td>That specific claim is no longer true; the bigger issue is stale doc drift, not the old string itself.</td>
+                <td class="bad">Stale</td>
+              </tr>
+              <tr>
+                <td>The old review set should be read as current guidance.</td>
+                <td><code>docs/review/README.md</code> now explicitly marks that folder as archive material.</td>
+                <td class="good">Addressed</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel span-4">
+          <h2>Files Touched</h2>
+          <ul>
+            <li><code>src/middleware/auth.ts</code></li>
+            <li><code>src/routes/combat.ts</code></li>
+            <li><code>src/routes/federation.ts</code></li>
+            <li><code>src/routes/mobile.ts</code></li>
+            <li><code>src/routes/vr.ts</code></li>
+            <li><code>src/world/federation-service.ts</code></li>
+            <li><code>src/__tests__/audit-fixes.test.ts</code></li>
+            <li><code>native-client/godot/scripts/main.gd</code></li>
+            <li><code>native-client/godot/scripts/world/voxel_manager.gd</code></li>
+            <li><code>native-client/godot/scripts/world/enemy_renderer.gd</code></li>
+            <li><code>docs/dev/README.md</code></li>
+            <li><code>docs/review/README.md</code></li>
+            <li><code>package.json</code></li>
+            <li><code>.gitignore</code></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel span-6">
+          <h2>Discussion Items Before Bigger Refactors</h2>
+          <ul>
+            <li>Decide whether <code>public/app.js</code> remains a real parallel client or is intentionally reduced to a slim debug/admin companion.</li>
+            <li>Decide whether <code>src/world/store.ts</code> is a temporary facade or the long-term application boundary.</li>
+            <li>Standardize auth transport: query/body token support remains widespread and should eventually give way to a single request-auth pattern.</li>
+            <li>Choose one event and payload naming style; contracts currently mix mostly camelCase structures with pockets like <code>duration_ms</code>.</li>
+            <li>Decide which Godot feature modules are production features, which are experiments, and which should be removed or moved to a sandbox path.</li>
+          </ul>
+        </article>
+
+        <article class="panel span-6">
+          <h2>Recommended Next Refactor Wave</h2>
+          <ol>
+            <li>Adopt shared auth middleware across the highest-traffic route groups.</li>
+            <li>Extract a route-response helper for common service result patterns.</li>
+            <li>Break websocket/event handling out of <code>src/server.ts</code> into dedicated command handlers.</li>
+            <li>Create a shared Godot API helper to remove repeated <code>HTTPRequest</code> setup and JSON parsing logic.</li>
+            <li>Split <code>native-client/godot/scripts/main.gd</code> into smaller session, networking, world, and UI coordinators.</li>
+            <li>Add route-level and persistence-mode tests before larger auth/persistence refactors.</li>
+          </ol>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel span-7">
+          <h2>Client Direction Decision</h2>
+          <ul>
+            <li><strong>Browser:</strong> treat it as admin-only and internal debug tooling, not a parallel end-user world client.</li>
+            <li><strong>Godot:</strong> still viable if the goal is an immersive native viewer with stronger world presence, better input control, and long-term desktop packaging.</li>
+            <li><strong>Godot caveat:</strong> the current Godot codebase is carrying prototype debt, speculative modules, and orchestration overload in <code>native-client/godot/scripts/main.gd</code>.</li>
+            <li><strong>If Godot stops fitting:</strong> the likely reason would not be rendering quality, but team velocity. If iteration speed on gameplay/admin UX matters more than a native-client feel, a web-first product stack would move faster.</li>
+            <li><strong>Current recommendation:</strong> keep Godot as the primary world client for now, but prune or sandbox speculative modules instead of pretending every generated subsystem is production-ready.</li>
+          </ul>
+        </article>
+
+        <article class="panel span-5">
+          <h2>Speculative Godot Modules</h2>
+          <ul>
+            <li><code>native-client/godot/scripts/ui/mobile_companion.gd</code></li>
+            <li><code>native-client/godot/scripts/ui/creator_dashboard.gd</code></li>
+            <li><code>native-client/godot/scripts/ui/server_browser.gd</code></li>
+            <li><code>native-client/godot/scripts/ui/voice_manager.gd</code></li>
+            <li><code>native-client/godot/scripts/ui/vr_manager.gd</code></li>
+            <li><code>native-client/godot/scripts/ui/vr_hands.gd</code></li>
+            <li><code>native-client/godot/scripts/world/npc_manager.gd</code></li>
+          </ul>
+          <div class="callout">
+            These files should be reviewed as candidates for sandboxing, fuller integration, or removal. They currently read more like generated feature drops than part of a coherent runtime surface.
+          </div>
+        </article>
+      </section>
+
+      <section class="panel span-12">
+        <h2>Audit Scope</h2>
+        <p>
+          This pass reviewed repository code, tests, browser assets, Godot client scripts, and documentation. It used parallel analysis across backend,
+          duplication, test coverage, docs, browser client, Godot client, and cross-cutting repository health. The goal was not just to produce findings,
+          but to land high-confidence fixes where the evidence was strong and the blast radius was manageable.
+        </p>
+        <p class="footer">
+          Audit baseline date: March 11, 2026. Current authoritative report path: <code>docs/audit/index.html</code>.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

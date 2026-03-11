@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:local": "node scripts/dev-local.mjs",
     "dev:postgres": "set DATABASE_URL=postgres://simtrade:simtrade@127.0.0.1:5432/vibelife&& tsx watch src/server.ts",
     "generate:assets": "node scripts/generate-assets.mjs",
     "sync:assets": "node scripts/sync-assets.mjs",
     "start": "node --enable-source-maps dist/server.js",
     "build": "tsc -p tsconfig.json",
-    "check": "npm run build && npm run sync:assets && node scripts/check.mjs",
+    "check": "npm run build && npm run test && node scripts/check.mjs",
+    "verify": "npm run check",
     "test": "vitest run"
   },
   "dependencies": {

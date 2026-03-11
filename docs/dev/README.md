@@ -1,44 +1,35 @@
 # Development Documentation
 
-This directory contains technical documentation for features not yet implemented in the ThirdLife backend.
+This directory now serves as the live technical planning and implementation-spec index for `VibeLife`.
 
-## Implemented Features
+It contains a mix of:
+- active implementation notes for features that are still evolving
+- design docs for planned work that is not fully shipped yet
+- references that should be verified against code before being treated as current behavior
 
-The following features have been implemented and are ready to use:
+For the current audit baseline, see `docs/audit/index.html`.
 
-- [Inter-region Teleportation](../README.md)
-- [Avatar Animations (Godot)](../native-client/godot)
-- [In-world Scripting](./in-world-scripting.md)
-- [Asset Library System](./asset-library.md)
-- [Friend/Block Lists](./friends.md)
-- [Group/Guild System](./groups.md)
-- [Instant Messaging](./messaging.md)
-- [Linden-like Currency](./currency.md)
-- [Object Permissions](./object-permissions.md)
-- [Region Events/Notices](./region-notices.md)
-- [Avatar Profiles](./profiles.md)
-- [Teleport Landing Points](./teleport-points.md)
-- [Multi-region Persistence](./persistence.md)
-- [Texture/Skin Upload](./texture-upload.md)
-- [Moderation Tools](./moderation.md)
+## Verified Planning Docs
 
-## Pending Features
+These documents still match the current repo direction closely enough to keep as active planning references:
 
-Documentation for features still in the planning phase:
+| Doc | Area | Status |
+|-----|------|--------|
+| [voice-chat.md](voice-chat.md) | Spatial voice | Planning / partial implementation |
+| [parcel-tier-upgrades.md](parcel-tier-upgrades.md) | Parcel monetization and analytics | Planning |
+| [region-workers.md](region-workers.md) | Region scaling | Planning |
+| [mobile-client.md](mobile-client.md) | Mobile companion direction | Needs re-baseline |
+| [traffic-analytics.md](traffic-analytics.md) | Parcel analytics | Planning |
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| [Voice Chat (VoIP)](voice-chat.md) | Real-time spatial audio | Medium |
-| [Parcel Tier Upgrades](parcel-tier-upgrades.md) | Premium land tiers with expanded features | Medium |
-| [Parcel Traffic Analytics](parcel-tier-upgrades.md) | Visitor tracking and analytics | Low |
-| [Region Simulation Workers](region-workers.md) | Horizontal scaling for world simulation | High |
-| [Mobile Client](mobile-client.md) | React Native iOS/Android app | Low |
+## Known Gaps
 
-## Contributing
+- Older links in this directory previously pointed to missing files and to the old `ThirdLife` name.
+- Several live systems already exist in code without dedicated source-of-truth docs yet, including federation, VR, NPCs, media, pets, voxel/combat systems, and the events API.
+- `mobile-client.md` should be treated as exploratory design, not an exact reflection of the current transport stack.
 
-To add documentation for a new feature:
+## When Adding Docs
 
-1. Create a markdown file in this directory
-2. Follow the existing document structure
-3. Include API contracts, database schemas, and implementation details
-4. Update this index to reference the new document
+1. Prefer one feature per file.
+2. Mark the document as `planning`, `partial`, or `verified` near the top.
+3. Reference real code entry points such as `src/routes/*.ts`, `src/world/*.ts`, or `native-client/godot/scripts/*.gd`.
+4. Update this index and the audit report when a doc becomes stale.

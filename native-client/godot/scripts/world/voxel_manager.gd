@@ -28,9 +28,12 @@ func init(main: Node3D) -> void:
 	palette = BlockPalette.new()
 	renderer = VoxelChunkRenderer.new(palette)
 
-	voxels_root = Node3D.new()
-	voxels_root.name = "VoxelsRoot"
-	main_node.add_child(voxels_root)
+	if "voxels_root" in main_node and is_instance_valid(main_node.voxels_root):
+		voxels_root = main_node.voxels_root
+	else:
+		voxels_root = Node3D.new()
+		voxels_root.name = "VoxelsRoot"
+		main_node.add_child(voxels_root)
 
 	# Create block cursor - wireframe cube
 	block_cursor = MeshInstance3D.new()
@@ -60,6 +63,41 @@ func configure(region_id: String, token: String, url: String) -> void:
 	current_region_id = region_id
 	auth_token = token
 	server_url = url
+	last_chunk_x = -999
+	last_chunk_z = -999
+
+
+func _decode_chunk_blocks(chunk_data: Dictionary) -> PackedByteArray:
+	var block_data_encoded: String = str(chunk_data.get("blocks", ""))
+	if block_data_encoded.is_empty():
+		return PackedByteArray()
+
+	if block_data_encoded.begins_with("["):
+		var parsed = JSON.parse_string(block_data_encoded)
+		if parsed is Array:
+			return _decode_rle(parsed)
+		return PackedByteArray()
+
+	return Marshalls.base64_to_raw(block_data_encoded)
+
+
+func _decode_rle(rle: Array) -> PackedByteArray:
+	var blocks := PackedByteArray()
+	blocks.resize(16 * 64 * 16)
+
+	var offset := 0
+	for i in range(0, rle.size(), 2):
+		if i + 1 >= rle.size():
+			break
+		var block_id := int(rle[i])
+		var count := int(rle[i + 1])
+		for _j in range(count):
+			if offset >= blocks.size():
+				return blocks
+			blocks[offset] = block_id
+			offset += 1
+
+	return blocks
 
 
 func update_chunks(player_pos: Vector3) -> void:
@@ -100,24 +138,18 @@ func on_chunks_loaded(result: int, response_code: int, headers: PackedStringArra
 		if not chunk_data is Dictionary:
 			continue
 
-		var cx: int = int(chunk_data.get("cx", 0))
-		var cz: int = int(chunk_data.get("cz", 0))
+		var cx: int = int(chunk_data.get("chunkX", chunk_data.get("cx", 0)))
+		var cz: int = int(chunk_data.get("chunkZ", chunk_data.get("cz", 0)))
 		var key := "%d:%d" % [cx, cz]
 
-		# Decode block data
-		var block_data_encoded: String = chunk_data.get("blocks", "")
 		var chunk_palette_data: Array = chunk_data.get("palette", [])
-		var blocks := PackedByteArray()
-
-		if not block_data_encoded.is_empty():
-			blocks = Marshalls.base64_to_raw(block_data_encoded)
+		var blocks := _decode_chunk_blocks(chunk_data)
 
 		if blocks.size() < 16 * 64 * 16:
 			continue
 
-		# Sync palette if server provided block types
-		if chunk_data.has("blockTypes"):
-			palette.sync_from_server(chunk_data.blockTypes)
+		if not chunk_palette_data.is_empty():
+			palette.sync_from_server(chunk_palette_data)
 
 		# Remove old chunk if exists
 		_remove_chunk(key)
@@ -207,7 +239,7 @@ func place_block(position: Vector3, block_type_id: int) -> void:
 		"x": int(position.x),
 		"y": int(position.y),
 		"z": int(position.z),
-		"blockType": block_type_id,
+		"blockTypeId": block_type_id,
 		"regionId": current_region_id,
 		"token": auth_token,
 	})

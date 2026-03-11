@@ -1,14 +1,5 @@
-// =============================================================================
-// Mobile Companion Routes — Feature 16
-// =============================================================================
-// Integration notes (DO NOT modify server.ts directly):
-//
-// server.ts — add these lines after existing route registrations:
-//   import mobileRoutes from "./routes/mobile.js";
-//   await app.register(mobileRoutes);
-// =============================================================================
-
 import type { FastifyInstance, FastifyPluginCallback } from "fastify";
+import { getRequestToken } from "../middleware/auth.js";
 import {
   createMobileSession,
   destroyMobileSession,
@@ -35,6 +26,10 @@ import {
   type MobileDevicePlatform
 } from "../world/mobile-service.js";
 
+function resolveToken(request: { body?: unknown; query?: unknown; headers: Record<string, unknown> }): string | undefined {
+  return getRequestToken(request as never);
+}
+
 const mobileRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) => {
 
   // ---------------------------------------------------------------------------
@@ -45,7 +40,8 @@ const mobileRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) 
   app.post<{
     Body: { token?: string; platform?: MobileDevicePlatform };
   }>("/api/mobile/session", async (request, reply) => {
-    const { token, platform = "unknown" } = request.body;
+    const token = resolveToken(request);
+    const { platform = "unknown" } = request.body;
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -64,7 +60,7 @@ const mobileRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) 
   app.get<{
     Querystring: { token?: string };
   }>("/api/mobile/session", async (request, reply) => {
-    const token = request.query.token;
+    const token = resolveToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -83,7 +79,7 @@ const mobileRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) 
   app.delete<{
     Body: { token?: string };
   }>("/api/mobile/session", async (request, reply) => {
-    const { token } = request.body;
+    const token = resolveToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -138,7 +134,7 @@ const mobileRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) 
   app.get<{
     Querystring: { token?: string };
   }>("/api/mobile/notifications/preferences", async (request, reply) => {
-    const token = request.query.token;
+    const token = resolveToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });

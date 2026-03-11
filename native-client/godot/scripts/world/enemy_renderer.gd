@@ -11,9 +11,12 @@ var idle_time: float = 0.0
 
 func init(main: Node3D) -> void:
 	main_node = main
-	enemies_root = Node3D.new()
-	enemies_root.name = "EnemiesRoot"
-	main_node.add_child(enemies_root)
+	if "enemies_root" in main_node and is_instance_valid(main_node.enemies_root):
+		enemies_root = main_node.enemies_root
+	else:
+		enemies_root = Node3D.new()
+		enemies_root.name = "EnemiesRoot"
+		main_node.add_child(enemies_root)
 
 
 func create_enemy_mesh(variant: String, level: int) -> Node3D:

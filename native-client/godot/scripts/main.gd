@@ -372,6 +372,7 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	await parcels_mgr.load_admin_audit_logs()
 	_apply_region_biome(session.regionId)
 	_append_chat("System: joined %s" % session.regionId)
+	voxel_mgr.configure(session.regionId, session.token, backend_url)
 	await _load_region_scene(session.regionId)
 	await _load_region_objects(session.regionId)
 	avatars.sync_avatars()
@@ -425,20 +426,14 @@ func _on_objects_loaded(_result: int, response_code: int, _headers: PackedString
 		status_label.text = "Objects request returned %s" % response_code
 		return
 	var payload = JSON.parse_string(body.get_string_from_utf8())
-	for child in dynamic_world.get_children():
-		child.queue_free()
-	objects.object_nodes.clear()
-	for item in payload.get("objects", []):
-		var node := objects.make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
-		dynamic_world.add_child(node)
-		objects.object_nodes[item.id] = node
+	objects.sync_objects(payload.get("objects", []))
 	build.update_selection_state()
 
 
 func _connect_websocket() -> void:
-	websocket = WebSocketPeer.new()
 	if websocket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
 		websocket.close()
+	websocket = WebSocketPeer.new()
 	var base := backend_url_input.text.rstrip("/")
 	var ws_url := base.replace("http://", "ws://").replace("https://", "wss://")
 	ws_url += "/ws/regions/%s?token=%s&lastSequence=%s" % [session.regionId, session.token, str(last_sequence)]

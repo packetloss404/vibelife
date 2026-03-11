@@ -1,20 +1,14 @@
 import type { FastifyInstance } from "fastify";
-import { getSession } from "../world/store.js";
+import { requireAuth } from "../middleware/auth.js";
 import { getCombatStats, getLeaderboard } from "../world/combat-service.js";
 import { getEnemiesInRegion, attackEnemy } from "../world/enemy-service.js";
 
 export default async function combatRoutes(app: FastifyInstance) {
-  app.get<{ Querystring: { token?: string } }>("/api/combat/stats", async (request, reply) => {
-    const token = request.query.token;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
+  app.get<{ Querystring: { token?: string } }>("/api/combat/stats", { preHandler: requireAuth }, async (request, reply) => {
+    const session = request.session;
 
     if (!session) {
-      return reply.code(403).send({ error: "invalid session" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const stats = getCombatStats(session.accountId);
@@ -24,20 +18,19 @@ export default async function combatRoutes(app: FastifyInstance) {
 
   app.post<{
     Body: { token?: string; targetId?: string; attackStyle?: string };
-  }>("/api/combat/attack", async (request, reply) => {
-    const { token, targetId, attackStyle } = request.body;
+  }>("/api/combat/attack", { preHandler: requireAuth }, async (request, reply) => {
+    const { targetId, attackStyle } = request.body;
+    const token = request.authToken;
 
-    if (!token || !targetId) {
-      return reply.code(400).send({ error: "token and targetId are required" });
+    if (!targetId) {
+      return reply.code(400).send({ error: "targetId is required" });
     }
 
-    const session = getSession(token);
-
-    if (!session) {
-      return reply.code(403).send({ error: "invalid session" });
+    if (!token) {
+      return reply.code(401).send({ error: "invalid session" });
     }
 
-    const result = await attackEnemy(session.accountId, targetId, attackStyle ?? "melee");
+    const result = await attackEnemy(token, targetId, attackStyle ?? "melee");
 
     return reply.send(result);
   });

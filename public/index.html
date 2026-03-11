@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VibeLife</title>
+    <title>VibeLife Admin Surface</title>
     <style>
       :root {
         --bg: #081018;
@@ -187,6 +187,14 @@
         color: var(--danger);
       }
 
+      .admin-banner {
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 179, 106, 0.35);
+        background: rgba(255, 179, 106, 0.1);
+        color: #ffd6b5;
+      }
+
       @media (max-width: 900px) {
         .shell {
           grid-template-columns: 1fr;
@@ -202,18 +210,20 @@
     <main class="shell">
       <section class="panel sidebar stack">
         <div class="hero">
-          <p class="muted">VibeLife / 2026 stack</p>
-          <h1>Second Life-inspired world prototype</h1>
-          <p>Guest login, region presence, lightweight spatial sync, and live chat in one modern service.</p>
+          <p class="muted">VibeLife / admin + debug surface</p>
+          <h1>Browser admin prototype</h1>
+          <p>This browser surface is now reserved for admin moderation, verification, and internal debugging. The primary user-facing client direction remains Godot.</p>
+        </div>
+
+        <div class="admin-banner">
+          Admin login only. Non-admin accounts should use the native client instead of this browser tool.
         </div>
 
         <div class="card stack">
           <label>
             Account mode
             <select id="authModeSelect">
-              <option value="guest">Guest</option>
-              <option value="register">Register</option>
-              <option value="login">Login</option>
+              <option value="login">Admin Login</option>
             </select>
           </label>
 
