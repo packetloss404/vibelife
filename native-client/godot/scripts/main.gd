@@ -1,9 +1,8 @@
 extends Node3D
 
-const MOVE_SPEED := 7.5
-const CAMERA_DISTANCE := 12.0
 const WS_SNAPSHOT := "snapshot"
 
+# Scene node references
 @onready var camera_rig: Node3D = $CameraRig
 @onready var camera: Camera3D = $CameraRig/Camera3D
 @onready var ground: MeshInstance3D = $Ground
@@ -12,6 +11,8 @@ const WS_SNAPSHOT := "snapshot"
 @onready var avatars_root: Node3D = $Avatars
 @onready var gizmos_root: Node3D = $Gizmos
 @onready var parcels_root: Node3D = $Parcels
+
+# HTTP request nodes
 @onready var regions_request: HTTPRequest = $Network/RegionsRequest
 @onready var auth_request: HTTPRequest = $Network/AuthRequest
 @onready var scene_request: HTTPRequest = $Network/SceneRequest
@@ -19,24 +20,30 @@ const WS_SNAPSHOT := "snapshot"
 @onready var create_object_request: HTTPRequest = $Network/CreateObjectRequest
 @onready var update_object_request: HTTPRequest = $Network/UpdateObjectRequest
 @onready var delete_object_request: HTTPRequest = $Network/DeleteObjectRequest
-@onready var backend_url_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/BackendUrlInput
-@onready var profile_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/ProfileSelect
-@onready var save_profile_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/SaveProfileButton
-@onready var display_name_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/DisplayNameInput
-@onready var auth_mode_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/AuthModeSelect
-@onready var password_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/VBox/PasswordInput
-@onready var region_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/VBox/RegionSelect
-@onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/RefreshRegionsButton
-@onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/JoinButton
-@onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/VBox/StatusLabel
-@onready var fullscreen_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/FullscreenCheck
-@onready var mouse_sensitivity_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/MouseSensitivitySlider
-@onready var invert_look_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/InvertLookCheck
-@onready var camera_distance_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/CameraDistanceSlider
-@onready var fov_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/VBox/FovSlider
-@onready var shadows_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/VBox/ShadowsCheck
-@onready var save_settings_button: Button = $CanvasLayer/UI/Sidebar/Margin/VBox/SaveSettingsButton
+
+# Sidebar UI
+@onready var backend_url_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/BackendUrlInput
+@onready var profile_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/ProfileSelect
+@onready var save_profile_button: Button = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/SaveProfileButton
+@onready var display_name_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/DisplayNameInput
+@onready var auth_mode_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/AuthModeSelect
+@onready var password_input: LineEdit = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/PasswordInput
+@onready var region_select: OptionButton = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/RegionSelect
+@onready var refresh_regions_button: Button = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/RefreshRegionsButton
+@onready var join_button: Button = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/JoinButton
+@onready var status_label: Label = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/StatusLabel
+@onready var fullscreen_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/FullscreenCheck
+@onready var mouse_sensitivity_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/MouseSensitivitySlider
+@onready var invert_look_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/InvertLookCheck
+@onready var camera_distance_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/CameraDistanceSlider
+@onready var fov_slider: HSlider = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/FovSlider
+@onready var shadows_check: CheckBox = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/ShadowsCheck
+@onready var save_settings_button: Button = $CanvasLayer/UI/Sidebar/Margin/Scroll/VBox/SaveSettingsButton
+
+# Top bar
 @onready var status_pill: Label = $CanvasLayer/UI/TopBar/TopMargin/TopRow/StatusPill
+
+# Right dock UI
 @onready var inventory_list: ItemList = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryList
 @onready var inventory_selection_label: Label = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventorySelectionLabel
 @onready var equip_item_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow/EquipItemButton
@@ -44,6 +51,8 @@ const WS_SNAPSHOT := "snapshot"
 @onready var chat_log: RichTextLabel = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatLog
 @onready var chat_input: LineEdit = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/ChatInput
 @onready var send_chat_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/SendChatButton
+
+# Build panel UI
 @onready var build_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildModeButton
 @onready var build_asset_select: OptionButton = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildAssetSelect
 @onready var move_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/GizmoModeRow/MoveModeButton
@@ -56,31 +65,21 @@ const WS_SNAPSHOT := "snapshot"
 @onready var duplicate_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DuplicateButton
 @onready var delete_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/DeleteButton
 @onready var admin_audit_log: RichTextLabel = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/AdminAuditLog
+@onready var build_asset_search: LineEdit = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildAssetSearch
+@onready var save_blueprint_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/SaveBlueprintButton
 
+# Shared state
 var websocket := WebSocketPeer.new()
 var regions: Array = []
 var session: Dictionary = {}
-var parcels: Array = []
-var avatar_states := {}
-var avatar_nodes := {}
-var avatar_previous_positions := {}
-var object_nodes := {}
 var inventory: Array = []
-var yaw := 0.0
-var pitch := 0.45
-var orbiting := false
-var model_scene_cache := {}
-var build_mode := false
-var selected_object_id := ""
-var gizmo_mode := "move"
-var drag_selected := false
-var active_parcel: Dictionary = {}
-var gizmo_handles := {}
-var active_drag_axis := ""
 var selected_inventory_index := -1
 var backend_profiles: Array = []
-var parcel_nodes := {}
 var last_sequence := 0
+
+var backend_url: String:
+	get: return backend_url_input.text.rstrip("/")
+
 const PROFILE_SAVE_PATH := "user://backend_profiles.json"
 const SETTINGS_SAVE_PATH := "user://client_settings.json"
 var build_assets := [
@@ -92,8 +91,91 @@ var build_assets := [
 	"/assets/models/dock-crate.gltf"
 ]
 
+# Modules
+var cam: CameraController
+var avatars: AvatarManager
+var objects: ObjectManager
+var parcels_mgr: ParcelManager
+var build: BuildController
+var radio: RadioController
+var emote_panel: EmotePanel
+var post_processing: PostProcessing
+var day_night: DayNightCycle
+var terrain: TerrainManager
+var sky_mgr: SkyManager
+var particles: AmbientParticles
+var mat_lib: MaterialLibrary
+var chat_bubbles = ChatBubble.new()
+var biome_mgr: BiomeManager
+var weather: WeatherSystem
+var blueprint_mgr: BlueprintManager
+var build_assets_full: Array = []
+var clipboard: Array = []
+
+
 func _ready() -> void:
-	_setup_ground()
+	# Initialize modules
+	cam = CameraController.new()
+	cam.init(camera_rig, camera)
+
+	objects = ObjectManager.new()
+	objects.init(self)
+
+	avatars = AvatarManager.new()
+	avatars.init(self)
+
+	parcels_mgr = ParcelManager.new()
+	parcels_mgr.init(self)
+
+	build = BuildController.new()
+	build.init(self)
+
+	radio = RadioController.new()
+	radio.init(self)
+
+	emote_panel = EmotePanel.new()
+	emote_panel.init(self)
+
+	# Material library (must init before objects use it)
+	mat_lib = MaterialLibrary.new()
+	mat_lib.init(self)
+
+	# Terrain (replaces flat ground)
+	terrain = TerrainManager.new()
+	terrain.init(self)
+	terrain.setup_terrain()
+
+	# Sky atmosphere
+	sky_mgr = SkyManager.new()
+	sky_mgr.init(self)
+	sky_mgr.setup_sky()
+
+	# Ambient particles
+	particles = AmbientParticles.new()
+	particles.init(self)
+	particles.setup_particles()
+
+	# Visual modules
+	post_processing = PostProcessing.new()
+	post_processing.init($WorldEnvironment)
+
+	day_night = DayNightCycle.new()
+	day_night.init($Sun, $WorldEnvironment.environment)
+
+	# Biome & weather
+	biome_mgr = BiomeManager.new()
+	biome_mgr.init(self)
+	weather = WeatherSystem.new()
+	weather.init(self)
+
+	# Chat bubbles
+	chat_bubbles.init(self)
+
+	# Blueprints
+	blueprint_mgr = BlueprintManager.new()
+	blueprint_mgr.init(self)
+
+	# Wire signals
 	refresh_regions_button.pressed.connect(_fetch_regions)
 	profile_select.item_selected.connect(_on_profile_selected)
 	save_profile_button.pressed.connect(_save_current_profile)
@@ -101,14 +183,15 @@ func _ready() -> void:
 	save_settings_button.pressed.connect(_save_client_settings)
 	send_chat_button.pressed.connect(_send_chat)
 	chat_input.text_submitted.connect(func(_text: String): _send_chat())
-	build_mode_button.pressed.connect(_toggle_build_mode)
-	move_mode_button.pressed.connect(func(): _set_gizmo_mode("move"))
-	rotate_mode_button.pressed.connect(func(): _set_gizmo_mode("rotate"))
-	scale_mode_button.pressed.connect(func(): _set_gizmo_mode("scale"))
-	duplicate_button.pressed.connect(_duplicate_selected_object)
-	delete_button.pressed.connect(_delete_selected_object)
-	claim_parcel_button.pressed.connect(_claim_active_parcel)
-	release_parcel_button.pressed.connect(_release_active_parcel)
+	chat_input.text_changed.connect(func(new_text: String): chat_bubbles.on_chat_input_changed(new_text))
+	build_mode_button.pressed.connect(build.toggle_build_mode)
+	move_mode_button.pressed.connect(func(): build.set_gizmo_mode("move"))
+	rotate_mode_button.pressed.connect(func(): build.set_gizmo_mode("rotate"))
+	scale_mode_button.pressed.connect(func(): build.set_gizmo_mode("scale"))
+	duplicate_button.pressed.connect(build.duplicate_selected_object)
+	delete_button.pressed.connect(build._delete_selected_object)
+	claim_parcel_button.pressed.connect(parcels_mgr.claim_active_parcel)
+	release_parcel_button.pressed.connect(parcels_mgr.release_active_parcel)
 	inventory_list.item_selected.connect(_on_inventory_item_selected)
 	equip_item_button.pressed.connect(_equip_selected_inventory_item)
 	use_item_button.pressed.connect(_use_selected_inventory_item)
@@ -116,81 +199,81 @@ func _ready() -> void:
 	auth_request.request_completed.connect(_on_auth_completed)
 	scene_request.request_completed.connect(_on_scene_loaded)
 	objects_request.request_completed.connect(_on_objects_loaded)
+
+	build_assets_full = build_assets.duplicate()
+	build_asset_search.text_changed.connect(_on_build_asset_search_changed)
+	save_blueprint_button.pressed.connect(_save_blueprint_from_selection)
 	for asset in build_assets:
 		build_asset_select.add_item(asset.get_file().trim_suffix(".gltf").replace("-", " "))
 	for auth_mode in ["Guest", "Register", "Login"]:
 		auth_mode_select.add_item(auth_mode)
+
 	_load_profiles()
 	_load_client_settings()
 	_fetch_regions()
-	_set_gizmo_mode("move")
+	build.set_gizmo_mode("move")
 
 
 func _process(delta: float) -> void:
 	_poll_websocket()
-	_update_local_movement(delta)
-	_update_camera(delta)
-	_update_gizmo_handles()
+	if not avatars.is_local_player_sitting():
+		avatars.update_local_movement(delta)
+	if avatars.has_local_avatar():
+		cam.update(delta, avatars.get_local_avatar_position())
+	build.update_gizmo_handles()
+	day_night.update(delta)
+	# Sync sky shader and particles with the day/night cycle time.
+	# DayNightCycle handles sun transform/energy and ambient light;
+	# sky_mgr only updates the sky shader uniform here.
+	if day_night and sky_mgr:
+		sky_mgr.set_shader_time(day_night.time_of_day)
+	if day_night and particles:
+		particles.update_time(day_night.time_of_day)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-		if build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and drag_selected:
-			drag_selected = false
-			active_drag_axis = ""
-			if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-				await _update_selected_object(object_nodes[selected_object_id])
+		if build.build_mode and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and build.drag_selected:
+			build.drag_selected = false
+			build.active_drag_axis = ""
+			if not build.selected_object_id.is_empty() and objects.object_nodes.has(build.selected_object_id):
+				await build._update_selected_object(objects.object_nodes[build.selected_object_id])
+		if button.button_index == MOUSE_BUTTON_RIGHT and button.pressed and not build.build_mode and not session.is_empty():
+			if avatars.try_sit_on_object(button.position):
+				return
 		if button.button_index == MOUSE_BUTTON_RIGHT:
-			orbiting = button.pressed
+			cam.orbiting = button.pressed
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
-			if build_mode and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-				_apply_gizmo_wheel(1.0)
+			if build.build_mode and not build.selected_object_id.is_empty() and objects.object_nodes.has(build.selected_object_id):
+				build.apply_gizmo_wheel(1.0)
 			else:
 				camera.position.z = max(6.0, camera.position.z - 1.0)
 				camera_distance_slider.value = camera.position.z
 		if button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
-			if build_mode and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-				_apply_gizmo_wheel(-1.0)
+			if build.build_mode and not build.selected_object_id.is_empty() and objects.object_nodes.has(build.selected_object_id):
+				build.apply_gizmo_wheel(-1.0)
 			else:
 				camera.position.z = min(24.0, camera.position.z + 1.0)
 				camera_distance_slider.value = camera.position.z
-	elif event is InputEventMouseMotion and orbiting:
+	elif event is InputEventMouseMotion and cam.orbiting:
 		var motion := event as InputEventMouseMotion
-		var invert := -1.0 if invert_look_check.button_pressed else 1.0
-		yaw -= motion.relative.x * 0.005 * mouse_sensitivity_slider.value
-		pitch = clamp(pitch - motion.relative.y * 0.004 * mouse_sensitivity_slider.value * invert, 0.15, 1.1)
-	elif event is InputEventMouseMotion and build_mode and drag_selected and not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-		_drag_selected_object(event)
-	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build_mode:
-		await _handle_build_click(event.position)
-	elif event is InputEventKey and event.pressed and build_mode:
-		await _handle_build_key(event)
+		cam.handle_orbit(motion.relative, mouse_sensitivity_slider.value, invert_look_check.button_pressed)
+	elif event is InputEventMouseMotion and build.build_mode and build.drag_selected and not build.selected_object_id.is_empty() and objects.object_nodes.has(build.selected_object_id):
+		build.drag_selected_object(event)
+	elif event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.pressed and build.build_mode:
+		await build.handle_build_click(event.position)
+	elif event is InputEventKey and event.pressed and build.build_mode:
+		await build.handle_build_key(event)
 
 
-func _setup_ground() -> void:
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(60, 60)
-	ground.mesh = plane
-	ground.rotation_degrees.x = -90
-	var body := StaticBody3D.new()
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(60, 0.2, 60)
-	shape.shape = box
-	body.add_child(shape)
-	ground.add_child(body)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("24586a")
-	material.roughness = 0.95
-	ground.material_override = material
-
+# ── Network ─────────────────────────────────────────────────────────────────
 
 func _fetch_regions() -> void:
 	status_label.text = "Fetching regions..."
 	status_pill.text = "Loading regions"
 	region_select.clear()
-	var url := "%s/api/regions" % backend_url_input.text.rstrip("/")
+	var url := "%s/api/regions" % backend_url
 	var error := regions_request.request(url)
 	if error != OK:
 		status_label.text = "Region request failed: %s" % error
@@ -200,8 +283,7 @@ func _on_regions_loaded(_result: int, response_code: int, _headers: PackedString
 	if response_code != 200:
 		status_label.text = "Region request returned %s" % response_code
 		return
-
-	var payload := JSON.parse_string(body.get_string_from_utf8())
+	var payload = JSON.parse_string(body.get_string_from_utf8())
 	regions = payload.get("regions", [])
 	region_select.clear()
 	for region in regions:
@@ -216,17 +298,16 @@ func _join_world() -> void:
 	if regions.is_empty():
 		status_label.text = "No regions available yet."
 		return
-
 	var chosen_region: Dictionary = regions[region_select.selected]
 	var auth_modes := ["guest", "register", "login"]
-	var auth_mode := auth_modes[auth_mode_select.selected]
+	var auth_mode = auth_modes[auth_mode_select.selected]
 	var body := JSON.stringify({
 		"displayName": display_name_input.text,
 		"regionId": chosen_region.id,
 		"password": password_input.text
 	})
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var url := "%s/api/auth/%s" % [backend_url_input.text.rstrip("/"), auth_mode]
+	var url := "%s/api/auth/%s" % [backend_url, auth_mode]
 	var error := auth_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	if error != OK:
 		status_label.text = "Auth request failed: %s" % error
@@ -236,31 +317,45 @@ func _on_auth_completed(_result: int, response_code: int, _headers: PackedString
 	if response_code != 200:
 		status_label.text = "Join request returned %s" % response_code
 		return
-
-	var payload := JSON.parse_string(body.get_string_from_utf8())
+	var payload = JSON.parse_string(body.get_string_from_utf8())
 	session = payload.get("session", {})
-	avatar_states.clear()
-	avatar_states[payload.avatar.avatarId] = payload.avatar
+	avatars.avatar_states.clear()
+	avatars.avatar_states[payload.avatar.avatarId] = payload.avatar
 	status_label.text = "Connected as %s" % session.displayName
 	status_pill.text = "Connected"
 	_save_login_state()
 	_apply_client_settings()
 	inventory = payload.get("inventory", [])
-	parcels = payload.get("parcels", [])
+	parcels_mgr.parcels = payload.get("parcels", [])
 	_render_inventory()
-	_render_parcels()
-	await _load_admin_audit_logs()
+	parcels_mgr.render_parcels()
+	await parcels_mgr.load_admin_audit_logs()
+	_apply_region_biome(session.regionId)
 	_append_chat("System: joined %s" % session.regionId)
 	await _load_region_scene(session.regionId)
 	await _load_region_objects(session.regionId)
-	_sync_avatars()
+	avatars.sync_avatars()
 	_connect_websocket()
+
+
+func _apply_region_biome(region_id: String) -> void:
+	var biome_data = {}
+	for region in regions:
+		if region.get("id", "") == region_id:
+			biome_data = region.get("biome", {})
+			break
+	if not biome_data.is_empty():
+		biome_mgr.apply_biome(biome_data)
+		var fog_density = biome_data.get("fogDensity", 0.01)
+		weather.set_base_fog_density(float(fog_density))
+		var weather_type = biome_data.get("weatherType", "clear")
+		weather.set_weather(str(weather_type))
 
 
 func _load_region_scene(region_id: String) -> void:
 	for child in static_world.get_children():
 		child.queue_free()
-	var url := "%s/scenes/%s.json" % [backend_url_input.text.rstrip("/"), region_id]
+	var url := "%s/scenes/%s.json" % [backend_url, region_id]
 	var error := scene_request.request(url)
 	if error != OK:
 		status_label.text = "Scene request failed: %s" % error
@@ -272,14 +367,12 @@ func _on_scene_loaded(_result: int, response_code: int, _headers: PackedStringAr
 	if response_code != 200:
 		status_label.text = "Scene request returned %s" % response_code
 		return
-
-	var payload := JSON.parse_string(body.get_string_from_utf8())
-	for item in payload.get("assets", []):
-		static_world.add_child(_make_world_prop(item.asset, Vector3(item.position[0], item.position[1], item.position[2]), item.rotation[1] if item.has("rotation") else 0.0, item.scale[0] if item.has("scale") else 1.0))
+	var payload = JSON.parse_string(body.get_string_from_utf8())
+	objects.load_scene_assets(payload)
 
 
 func _load_region_objects(region_id: String) -> void:
-	var url := "%s/api/regions/%s/objects" % [backend_url_input.text.rstrip("/"), region_id]
+	var url := "%s/api/regions/%s/objects" % [backend_url, region_id]
 	var error := objects_request.request(url)
 	if error != OK:
 		status_label.text = "Objects request failed: %s" % error
@@ -291,16 +384,15 @@ func _on_objects_loaded(_result: int, response_code: int, _headers: PackedString
 	if response_code != 200:
 		status_label.text = "Objects request returned %s" % response_code
 		return
-
-	var payload := JSON.parse_string(body.get_string_from_utf8())
+	var payload = JSON.parse_string(body.get_string_from_utf8())
 	for child in dynamic_world.get_children():
 		child.queue_free()
-	object_nodes.clear()
+	objects.object_nodes.clear()
 	for item in payload.get("objects", []):
-		var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
+		var node := objects.make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
 		dynamic_world.add_child(node)
-		object_nodes[item.id] = node
-	_update_selection_state()
+		objects.object_nodes[item.id] = node
+	build.update_selection_state()
 
 
 func _connect_websocket() -> void:
@@ -321,10 +413,9 @@ func _poll_websocket() -> void:
 		if not session.is_empty():
 			status_pill.text = "Disconnected"
 		return
-
 	websocket.poll()
 	while websocket.get_available_packet_count() > 0:
-		var payload := JSON.parse_string(websocket.get_packet().get_string_from_utf8())
+		var payload = JSON.parse_string(websocket.get_packet().get_string_from_utf8())
 		_handle_socket_message(payload)
 
 
@@ -332,278 +423,89 @@ func _handle_socket_message(message: Dictionary) -> void:
 	match message.get("type", ""):
 		WS_SNAPSHOT:
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			avatar_states.clear()
+			avatars.avatar_states.clear()
 			for avatar in message.get("avatars", []):
-				avatar_states[avatar.avatarId] = avatar
-			parcels = message.get("parcels", parcels)
-			_sync_avatars()
-			_sync_objects(message.get("objects", []))
+				avatars.avatar_states[avatar.avatarId] = avatar
+			parcels_mgr.parcels = message.get("parcels", parcels_mgr.parcels)
+			avatars.sync_avatars()
+			objects.sync_objects(message.get("objects", []))
+			# Load chat history from snapshot
+			for chat_entry in message.get("chatHistory", []):
+				var ts := _format_chat_timestamp(chat_entry.get("createdAt", ""))
+				if chat_entry.get("avatarId", "") == "system":
+					_append_chat("[%s] [System] %s" % [ts, chat_entry.get("message", "")])
+				else:
+					_append_chat("[%s] %s: %s" % [ts, chat_entry.get("displayName", ""), chat_entry.get("message", "")])
 		"avatar:joined", "avatar:moved", "avatar:updated":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			var avatar := message.avatar
-			avatar_states[avatar.avatarId] = avatar
-			_sync_avatars()
+			var avatar = message.avatar
+			avatars.avatar_states[avatar.avatarId] = avatar
+			avatars.sync_avatars()
 		"parcel:updated":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			var next_parcel := message.parcel
-			var replaced := false
-			for index in range(parcels.size()):
-				if parcels[index].id == next_parcel.id:
-					parcels[index] = next_parcel
-					replaced = true
-					break
-			if not replaced:
-				parcels.append(next_parcel)
-			if not active_parcel.is_empty() and active_parcel.get("id", "") == next_parcel.id:
-				active_parcel = next_parcel
-			_render_parcels()
-			_claim_button_state()
+			parcels_mgr.update_parcel_from_event(message.parcel)
+			parcels_mgr.render_parcels()
+			parcels_mgr.claim_button_state()
 		"avatar:left":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			avatar_states.erase(message.avatarId)
-			_sync_avatars()
+			chat_bubbles.cleanup_avatar(message.avatarId)
+			avatars.avatar_states.erase(message.avatarId)
+			avatars.sync_avatars()
 		"chat":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			_append_chat("%s: %s" % [message.displayName, message.message])
+			var ts := _format_chat_timestamp(message.get("createdAt", ""))
+			if message.get("avatarId", "") == "system":
+				_append_chat("[%s] [System] %s" % [ts, message.message])
+			else:
+				_append_chat("[%s] %s: %s" % [ts, message.displayName, message.message])
+			chat_bubbles.show_bubble(message.get("avatarId", ""), message.get("message", ""))
+		"avatar:typing":
+			chat_bubbles.show_typing(message.get("avatarId", ""), message.get("typing", false))
+		"chat:history":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			for entry in message.get("messages", []):
+				var hist_ts := _format_chat_timestamp(entry.get("createdAt", ""))
+				_append_chat("[%s] %s: %s" % [hist_ts, entry.get("displayName", ""), entry.get("message", "")])
+		"whisper":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			var whisper_ts := _format_chat_timestamp(message.get("createdAt", ""))
+			var from_id: String = message.get("fromAvatarId", "")
+			var my_avatar_id: String = session.get("avatarId", "")
+			if from_id == my_avatar_id:
+				_append_chat("[%s] [whisper to %s] %s" % [whisper_ts, message.get("toDisplayName", ""), message.message])
+			else:
+				_append_chat("[%s] [whisper from %s] %s" % [whisper_ts, message.get("fromDisplayName", ""), message.message])
 		"object:created", "object:updated":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			_sync_single_object(message.object)
+			objects.sync_single_object(message.object)
 		"object:deleted":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
-			if object_nodes.has(message.objectId):
-				object_nodes[message.objectId].queue_free()
-				object_nodes.erase(message.objectId)
+			if objects.object_nodes.has(message.objectId):
+				objects.object_nodes[message.objectId].queue_free()
+				objects.object_nodes.erase(message.objectId)
+		"radio:changed":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			radio.handle_radio_changed(message)
+			_append_chat("Radio: Now playing %s on %s" % [message.get("trackName", ""), message.get("stationName", "")])
+		"avatar:emote":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			var emote_avatar_id: String = message.get("avatarId", "")
+			var emote_name: String = message.get("emoteName", "")
+			var emote_display: String = message.get("displayName", "")
+			avatars.handle_emote_event(emote_avatar_id, emote_name)
+			_append_chat("%s performs %s" % [emote_display, emote_name])
+		"emote:combo":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			emote_panel.handle_emote_combo(message)
+		"avatar:sit":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			avatars.handle_sit(str(message.avatarId), str(message.objectId), message.position)
+		"avatar:stand":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			avatars.handle_stand(str(message.avatarId))
 
 
-func _sync_avatars() -> void:
-	for avatar_id in avatar_nodes.keys():
-		if not avatar_states.has(avatar_id):
-			avatar_nodes[avatar_id].queue_free()
-			avatar_nodes.erase(avatar_id)
-			avatar_previous_positions.erase(avatar_id)
-
-	for avatar_id in avatar_states.keys():
-		var state: Dictionary = avatar_states[avatar_id]
-		if not avatar_nodes.has(avatar_id):
-			var avatar_node := _make_avatar_node(state)
-			avatars_root.add_child(avatar_node)
-			avatar_nodes[avatar_id] = avatar_node
-			avatar_previous_positions[avatar_id] = avatar_node.position
-		_update_avatar_node(avatar_nodes[avatar_id], state)
-
-
-func _sync_objects(items: Array) -> void:
-	for child in dynamic_world.get_children():
-		child.queue_free()
-	object_nodes.clear()
-	for item in items:
-		_sync_single_object(item)
-	_render_parcels()
-
-
-func _sync_single_object(item: Dictionary) -> void:
-	if object_nodes.has(item.id):
-		object_nodes[item.id].queue_free()
-	var node := _make_world_prop(item.asset, Vector3(item.x, item.y, item.z), item.rotationY, item.scale)
-	node.set_meta("object_id", item.id)
-	_tag_pickable_nodes(node, item.id)
-	node.set_meta("parcel", _get_parcel_at(node.position))
-	_apply_selection_visual(node, item.id == selected_object_id)
-	dynamic_world.add_child(node)
-	object_nodes[item.id] = node
-
-
-func _make_avatar_node(state: Dictionary) -> Node3D:
-	var imported := _instantiate_imported_asset("/assets/models/avatar-runner.gltf")
-	if imported:
-		var label := Label3D.new()
-		label.text = state.displayName
-		label.position.y = 3.4
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		imported.add_child(label)
-		var animation_player := _find_animation_player(imported)
-		if animation_player and animation_player.has_animation("Idle"):
-			animation_player.play("Idle")
-		return imported
-
-	var root := Node3D.new()
-	var body := MeshInstance3D.new()
-	var body_mesh := CapsuleMesh.new()
-	body_mesh.radius = 0.45
-	body_mesh.height = 1.4
-	body.mesh = body_mesh
-	body.position.y = 1.6
-	root.add_child(body)
-
-	var head := MeshInstance3D.new()
-	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.32
-	head.mesh = head_mesh
-	head.position.y = 2.75
-	root.add_child(head)
-
-	var label := Label3D.new()
-	label.text = state.displayName
-	label.position.y = 3.4
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	root.add_child(label)
-	return root
-
-
-func _update_avatar_node(node: Node3D, state: Dictionary) -> void:
-	var previous := avatar_previous_positions.get(state.avatarId, node.position)
-	node.position = Vector3(state.x, state.y, state.z)
-	avatar_previous_positions[state.avatarId] = node.position
-	var appearance: Dictionary = state.get("appearance", {})
-	var label: Label3D = null
-	for child in node.get_children():
-		if child is Label3D:
-			label = child
-		if child is MeshInstance3D:
-			var mesh_child := child as MeshInstance3D
-			var material := StandardMaterial3D.new()
-			if mesh_child.name.to_lower().contains("head"):
-				material.albedo_color = Color(appearance.get("headColor", "#f2c7a8"))
-			else:
-				material.albedo_color = Color(appearance.get("bodyColor", "#8cd8ff"))
-			mesh_child.set_surface_override_material(0, material)
-	if label:
-		label.text = state.displayName
-	_update_avatar_animation(node, previous.distance_to(node.position))
-
-
-func _make_world_prop(asset: String, position: Vector3, rotation_y: float, scale_value: float) -> Node3D:
-	var imported := _instantiate_imported_asset(asset)
-	if imported:
-		imported.position = position
-		imported.rotation.y = rotation_y
-		imported.scale = Vector3.ONE * scale_value
-		_attach_selection_body(imported)
-		return imported
-
-	var root := Node3D.new()
-	root.position = position
-	root.rotation.y = rotation_y
-	root.scale = Vector3.ONE * scale_value
-
-	var mesh_instance := MeshInstance3D.new()
-	var material := StandardMaterial3D.new()
-	material.roughness = 0.85
-
-	if asset.contains("tower"):
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(3.5, 8.0, 3.5)
-		mesh_instance.mesh = mesh
-		material.albedo_color = Color("c7d3d9")
-		mesh_instance.position.y = 4.0
-	elif asset.contains("hall"):
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(7.0, 4.0, 5.0)
-		mesh_instance.mesh = mesh
-		material.albedo_color = Color("d6d2c8")
-		mesh_instance.position.y = 2.0
-	elif asset.contains("tree"):
-		var trunk := MeshInstance3D.new()
-		var trunk_mesh := CylinderMesh.new()
-		trunk_mesh.top_radius = 0.18
-		trunk_mesh.bottom_radius = 0.24
-		trunk_mesh.height = 2.8
-		trunk.mesh = trunk_mesh
-		trunk.position.y = 1.4
-		var trunk_material := StandardMaterial3D.new()
-		trunk_material.albedo_color = Color("5b4634")
-		trunk.set_surface_override_material(0, trunk_material)
-		root.add_child(trunk)
-		var canopy := MeshInstance3D.new()
-		var canopy_mesh := SphereMesh.new()
-		canopy_mesh.radius = 1.1
-		canopy.mesh = canopy_mesh
-		canopy.position.y = 3.2
-		var canopy_material := StandardMaterial3D.new()
-		canopy_material.albedo_color = Color("79ca92")
-		canopy.set_surface_override_material(0, canopy_material)
-		root.add_child(canopy)
-		return root
-	elif asset.contains("bench"):
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(1.8, 0.5, 0.6)
-		mesh_instance.mesh = mesh
-		material.albedo_color = Color("a7724f")
-		mesh_instance.position.y = 0.4
-	elif asset.contains("lantern"):
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.12
-		mesh.bottom_radius = 0.12
-		mesh.height = 2.2
-		mesh_instance.mesh = mesh
-		material.albedo_color = Color("7ea4b3")
-		mesh_instance.position.y = 1.1
-		var omni := OmniLight3D.new()
-		omni.position.y = 2.3
-		omni.light_color = Color("8cecff")
-		omni.light_energy = 1.5
-		root.add_child(omni)
-	else:
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3.ONE
-		mesh_instance.mesh = mesh
-		material.albedo_color = Color("7f6147")
-		mesh_instance.position.y = 0.5
-
-	mesh_instance.set_surface_override_material(0, material)
-	root.add_child(mesh_instance)
-	_attach_selection_body(root)
-	return root
-
-
-func _instantiate_imported_asset(asset: String) -> Node3D:
-	var file_name := asset.get_file()
-	var resource_path := "res://assets/models/%s" % file_name
-	if not ResourceLoader.exists(resource_path):
-		return null
-
-	var packed = model_scene_cache.get(resource_path)
-	if packed == null:
-		packed = load(resource_path)
-		model_scene_cache[resource_path] = packed
-
-	if packed is PackedScene:
-		return (packed as PackedScene).instantiate()
-
-	return null
-
-
-func _attach_selection_body(node: Node3D) -> void:
-	var bounds := AABB(Vector3(-0.5, 0.0, -0.5), Vector3(1.0, 1.0, 1.0))
-	var found := false
-	for child in node.get_children():
-		if child is MeshInstance3D and (child as MeshInstance3D).mesh:
-			var mesh_bounds := (child as MeshInstance3D).get_aabb()
-			bounds = mesh_bounds if not found else bounds.merge(mesh_bounds)
-			found = true
-	if not found:
-		for descendant in node.find_children("*", "MeshInstance3D"):
-			var mesh_node := descendant as MeshInstance3D
-			if mesh_node and mesh_node.mesh:
-				var desc_bounds := mesh_node.get_aabb()
-				bounds = desc_bounds if not found else bounds.merge(desc_bounds)
-				found = true
-	var body := StaticBody3D.new()
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(maxf(bounds.size.x, 0.6), maxf(bounds.size.y, 0.6), maxf(bounds.size.z, 0.6))
-	shape.shape = box
-	body.position = bounds.get_center()
-	body.add_child(shape)
-	node.add_child(body)
-
-
-func _tag_pickable_nodes(node: Node, object_id: String) -> void:
-	for child in node.get_children():
-		if child is StaticBody3D:
-			(child as StaticBody3D).set_meta("object_id", object_id)
-		_tag_pickable_nodes(child, object_id)
-
+# ── Inventory & Chat ────────────────────────────────────────────────────────
 
 func _render_inventory() -> void:
 	inventory_list.clear()
@@ -620,12 +522,41 @@ func _append_chat(message: String) -> void:
 	chat_log.append_text(message + "\n")
 
 
+func _format_chat_timestamp(iso_string: String) -> String:
+	if iso_string.is_empty():
+		return ""
+	var t_pos := iso_string.find("T")
+	if t_pos < 0:
+		return ""
+	var time_part := iso_string.substr(t_pos + 1)
+	if time_part.length() >= 5:
+		return time_part.substr(0, 5)
+	return time_part
+
+
 func _send_chat() -> void:
 	var message := chat_input.text.strip_edges()
 	if message.is_empty():
 		return
 	if websocket.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		status_label.text = "Chat unavailable until region WebSocket connects."
+		return
+	# Whisper command: /w username message
+	if message.begins_with("/w "):
+		var parts := message.substr(3).strip_edges()
+		var space_idx := parts.find(" ")
+		if space_idx > 0:
+			var target_name := parts.substr(0, space_idx)
+			var whisper_msg := parts.substr(space_idx + 1).strip_edges()
+			if not whisper_msg.is_empty():
+				websocket.send_text(JSON.stringify({
+					"type": "whisper",
+					"targetDisplayName": target_name,
+					"message": whisper_msg
+				}))
+				chat_input.clear()
+				return
+		status_label.text = "Usage: /w <username> <message>"
 		return
 	websocket.send_text(JSON.stringify({
 		"type": "chat",
@@ -651,18 +582,35 @@ func _equip_selected_inventory_item() -> void:
 	add_child(request)
 	var headers := PackedStringArray(["Content-Type: application/json"])
 	var body := JSON.stringify({"token": session.token, "itemId": item.id})
-	var url := "%s/api/inventory/equip" % backend_url_input.text.rstrip("/")
+	var url := "%s/api/inventory/equip" % backend_url
 	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-		var result := await request.request_completed
-		var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
+		var result = await request.request_completed
+		var payload = JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
 		inventory = payload.get("inventory", inventory)
 		_render_inventory()
 		if payload.has("avatar"):
-			avatar_states[payload.avatar.avatarId] = payload.avatar
-			_sync_avatars()
+			avatars.avatar_states[payload.avatar.avatarId] = payload.avatar
+			avatars.sync_avatars()
 		status_label.text = "Equipped %s" % item.name
 	request.queue_free()
 
+
+func _use_selected_inventory_item() -> void:
+	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size():
+		return
+	var item: Dictionary = inventory[selected_inventory_index]
+	if item.get("slot", null) != null:
+		await _equip_selected_inventory_item()
+		return
+	if item.kind == "tool":
+		status_label.text = "%s ready for parcel editing" % item.name
+	elif item.kind == "pet":
+		_append_chat("System: %s companion activated" % item.name)
+	else:
+		status_label.text = "%s used" % item.name
+
+
+# ── Client Settings ─────────────────────────────────────────────────────────
 
 func _load_client_settings() -> void:
 	if FileAccess.file_exists(SETTINGS_SAVE_PATH):
@@ -704,263 +652,7 @@ func _apply_client_settings() -> void:
 		sun.shadow_enabled = shadows_check.button_pressed
 
 
-func _use_selected_inventory_item() -> void:
-	if selected_inventory_index < 0 or selected_inventory_index >= inventory.size():
-		return
-	var item: Dictionary = inventory[selected_inventory_index]
-	if item.get("slot", null) != null:
-		await _equip_selected_inventory_item()
-		return
-	if item.kind == "tool":
-		status_label.text = "%s ready for parcel editing" % item.name
-	elif item.kind == "pet":
-		_append_chat("System: %s companion activated" % item.name)
-	else:
-		status_label.text = "%s used" % item.name
-
-
-func _toggle_build_mode() -> void:
-	build_mode = not build_mode
-	build_mode_button.text = "Disable build mode" if build_mode else "Enable build mode"
-	status_label.text = "Build mode enabled" if build_mode else "Build mode disabled"
-	if not build_mode:
-		drag_selected = false
-		active_drag_axis = ""
-	_claim_button_state()
-
-
-func _set_gizmo_mode(mode: String) -> void:
-	gizmo_mode = mode
-	status_label.text = "Gizmo mode: %s" % mode
-
-
-func _handle_build_click(mouse_position: Vector2) -> void:
-	if session.is_empty():
-		return
-
-	var from := camera.project_ray_origin(mouse_position)
-	var to := from + camera.project_ray_normal(mouse_position) * 500.0
-	var space_state := get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(from, to)
-	var hit := space_state.intersect_ray(query)
-
-	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("gizmo_axis"):
-		active_drag_axis = str((hit.collider as Node).get_meta("gizmo_axis"))
-		drag_selected = true
-		status_label.text = "Dragging %s axis" % active_drag_axis.to_upper()
-		return
-
-	if not hit.is_empty() and hit.collider is Node and (hit.collider as Node).has_meta("object_id"):
-		selected_object_id = str((hit.collider as Node).get_meta("object_id"))
-		_update_selection_state()
-		drag_selected = true
-		return
-
-	var ground_plane := Plane(Vector3.UP, 0.0)
-	var world_point := ground_plane.intersects_ray(from, camera.project_ray_normal(mouse_position))
-	if world_point == null:
-		return
-	var parcel := _get_parcel_at(world_point)
-	if not _can_build_in_parcel(parcel):
-		status_label.text = _parcel_denied_reason(parcel)
-		return
-
-	await _create_object(Vector3(world_point.x, 0.0, world_point.z))
-
-
-func _handle_build_key(event: InputEventKey) -> void:
-	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
-		return
-
-	var node := object_nodes[selected_object_id]
-	var moved := false
-	if event.physical_keycode == KEY_UP:
-		node.position.z -= 1.0
-		moved = true
-	if event.physical_keycode == KEY_DOWN:
-		node.position.z += 1.0
-		moved = true
-	if event.physical_keycode == KEY_LEFT:
-		node.position.x -= 1.0
-		moved = true
-	if event.physical_keycode == KEY_RIGHT:
-		node.position.x += 1.0
-		moved = true
-	if event.physical_keycode == KEY_Q:
-		node.rotation.y -= 0.2
-		moved = true
-	if event.physical_keycode == KEY_E:
-		node.rotation.y += 0.2
-		moved = true
-	if event.physical_keycode == KEY_R:
-		node.scale *= 1.1
-		moved = true
-	if event.physical_keycode == KEY_F:
-		node.scale *= 0.9
-		moved = true
-	if event.physical_keycode == KEY_DELETE:
-		await _delete_selected_object()
-		return
-
-	if moved:
-		var parcel := _get_parcel_at(node.position)
-		if not _can_build_in_parcel(parcel):
-			status_label.text = _parcel_denied_reason(parcel)
-			return
-		await _update_selected_object(node)
-
-
-func _create_object(position: Vector3) -> void:
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({
-		"token": session.token,
-		"asset": build_assets[build_asset_select.selected],
-		"x": position.x,
-		"y": position.y,
-		"z": position.z,
-		"rotationY": 0.0,
-		"scale": 1.0
-	})
-	var url := "%s/api/regions/%s/objects" % [backend_url_input.text.rstrip("/"), session.regionId]
-	if create_object_request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-		await create_object_request.request_completed
-	active_parcel = _get_parcel_at(position)
-	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
-	_claim_button_state()
-	await _load_region_objects(session.regionId)
-
-
-func _update_selected_object(node: Node3D) -> void:
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var body := JSON.stringify({
-		"token": session.token,
-		"x": node.position.x,
-		"y": node.position.y,
-		"z": node.position.z,
-		"rotationY": node.rotation.y,
-		"scale": node.scale.x
-	})
-	var url := "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
-	if update_object_request.request(url, headers, HTTPClient.METHOD_PATCH, body) == OK:
-		await update_object_request.request_completed
-		node.set_meta("parcel", _get_parcel_at(node.position))
-		await _load_region_objects(session.regionId)
-
-
-func _delete_selected_object() -> void:
-	if selected_object_id.is_empty():
-		return
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var is_admin := session.get("role", "resident") == "admin"
-	var body := JSON.stringify(is_admin ? {"token": session.token, "objectId": selected_object_id} : {"token": session.token})
-	var url := is_admin ? "%s/api/admin/objects/delete" % backend_url_input.text.rstrip("/") : "%s/api/objects/%s" % [backend_url_input.text.rstrip("/"), selected_object_id]
-	var method := HTTPClient.METHOD_POST if is_admin else HTTPClient.METHOD_DELETE
-	if delete_object_request.request(url, headers, method, body) == OK:
-		await delete_object_request.request_completed
-		await _load_region_objects(session.regionId)
-	selected_object_id = ""
-	_update_selection_state()
-
-
-func _duplicate_selected_object() -> void:
-	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
-		return
-	var node := object_nodes[selected_object_id]
-	await _create_object(node.position + Vector3(1.0, 0.0, 1.0))
-
-
-func _apply_gizmo_wheel(direction: float) -> void:
-	var node := object_nodes[selected_object_id]
-	if gizmo_mode == "rotate":
-		node.rotation.y += 0.15 * direction
-	elif gizmo_mode == "scale":
-		node.scale *= 1.0 + (0.08 * direction)
-	else:
-		node.position.y += 0.3 * direction
-	await _update_selected_object(node)
-
-
-func _drag_selected_object(event: InputEventMouseMotion) -> void:
-	var node := object_nodes[selected_object_id]
-	if active_drag_axis.is_empty():
-		return
-	var delta := event.relative
-	if gizmo_mode == "move":
-		if active_drag_axis == "x":
-			node.position.x += delta.x * 0.02
-		elif active_drag_axis == "y":
-			node.position.y -= delta.y * 0.02
-		else:
-			node.position.z += delta.x * 0.02
-	elif gizmo_mode == "rotate":
-		var rotation_delta := delta.x * 0.01
-		if active_drag_axis == "x":
-			node.rotation.x += rotation_delta
-		elif active_drag_axis == "y":
-			node.rotation.y += rotation_delta
-		else:
-			node.rotation.z += rotation_delta
-	elif gizmo_mode == "scale":
-		var scale_delta := max(0.2, 1.0 + (delta.x * 0.005))
-		node.scale *= scale_delta
-	active_parcel = _get_parcel_at(node.position)
-	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
-	_claim_button_state()
-
-
-func _get_parcel_at(position: Vector3) -> Dictionary:
-	for parcel in parcels:
-		if position.x >= float(parcel.minX) and position.x <= float(parcel.maxX) and position.z >= float(parcel.minZ) and position.z <= float(parcel.maxZ):
-			return parcel
-	return {}
-
-
-func _render_parcels() -> void:
-	for child in parcels_root.get_children():
-		child.queue_free()
-	parcel_nodes.clear()
-	for parcel in parcels:
-		var root := Node3D.new()
-		var width := float(parcel.maxX) - float(parcel.minX)
-		var depth := float(parcel.maxZ) - float(parcel.minZ)
-		var center := Vector3((float(parcel.minX) + float(parcel.maxX)) / 2.0, 0.03, (float(parcel.minZ) + float(parcel.maxZ)) / 2.0)
-
-		var fill := MeshInstance3D.new()
-		var plane := PlaneMesh.new()
-		plane.size = Vector2(width, depth)
-		fill.mesh = plane
-		fill.rotation_degrees.x = -90
-		fill.position = center
-		var fill_material := StandardMaterial3D.new()
-		fill_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		fill_material.albedo_color = _parcel_color(parcel, true)
-		fill_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		fill.set_surface_override_material(0, fill_material)
-		root.add_child(fill)
-
-		var line_material := StandardMaterial3D.new()
-		line_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		line_material.albedo_color = _parcel_color(parcel, false)
-		line_material.emission_enabled = true
-		line_material.emission = _parcel_color(parcel, false)
-		for edge in _parcel_edges(parcel):
-			var edge_mesh := MeshInstance3D.new()
-			var box := BoxMesh.new()
-			box.size = edge["size"]
-			edge_mesh.mesh = box
-			edge_mesh.position = edge["position"]
-			edge_mesh.set_surface_override_material(0, line_material)
-			root.add_child(edge_mesh)
-
-		var label := Label3D.new()
-		label.text = "%s (%s)" % [parcel.name, parcel.ownerDisplayName if parcel.ownerDisplayName != null else parcel.tier]
-		label.position = center + Vector3(0, 0.25, 0)
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		root.add_child(label)
-
-		parcels_root.add_child(root)
-		parcel_nodes[parcel.id] = root
-
+# ── Backend Profiles ────────────────────────────────────────────────────────
 
 func _load_profiles() -> void:
 	backend_profiles.clear()
@@ -985,18 +677,18 @@ func _persist_profiles() -> void:
 
 
 func _save_current_profile() -> void:
-	var name := "Profile %s" % str(backend_profiles.size() + 1)
+	var profile_name := "Profile %s" % str(backend_profiles.size() + 1)
 	if not display_name_input.text.strip_edges().is_empty():
-		name = display_name_input.text.strip_edges()
+		profile_name = display_name_input.text.strip_edges()
 	backend_profiles.append({
-		"name": name,
+		"name": profile_name,
 		"backendUrl": backend_url_input.text.strip_edges(),
 		"displayName": display_name_input.text.strip_edges(),
 		"authMode": auth_mode_select.selected
 	})
 	_persist_profiles()
 	_load_profiles()
-	status_label.text = "Saved backend profile %s" % name
+	status_label.text = "Saved backend profile %s" % profile_name
 
 
 func _on_profile_selected(index: int) -> void:
@@ -1016,282 +708,22 @@ func _save_login_state() -> void:
 		_persist_profiles()
 
 
-func _parcel_color(parcel: Dictionary, transparent: bool) -> Color:
-	if not active_parcel.is_empty() and parcel.id == active_parcel.get("id", ""):
-		return Color(1.0, 0.95, 0.54, 0.18 if transparent else 1.0)
-	if parcel.tier == "public":
-		return Color(0.4, 1.0, 0.82, 0.08 if transparent else 1.0)
-	if parcel.ownerAccountId == null:
-		return Color(0.95, 0.58, 0.35, 0.08 if transparent else 1.0)
-	if String(parcel.ownerAccountId) == String(session.get("accountId", "")):
-		return Color(1.0, 0.7, 0.42, 0.1 if transparent else 1.0)
-	return Color(0.92, 0.35, 0.35, 0.08 if transparent else 1.0)
+func _on_build_asset_search_changed(search_text: String) -> void:
+	build_asset_select.clear()
+	build_assets = []
+	var lower_search := search_text.strip_edges().to_lower()
+	for asset in build_assets_full:
+		var label_text = asset.get_file().trim_suffix(".gltf").replace("-", " ")
+		if lower_search.is_empty() or label_text.to_lower().contains(lower_search):
+			build_assets.append(asset)
+			build_asset_select.add_item(label_text)
+	if build_asset_select.item_count > 0:
+		build_asset_select.selected = 0
 
 
-func _parcel_edges(parcel: Dictionary) -> Array:
-	var min_x := float(parcel.minX)
-	var max_x := float(parcel.maxX)
-	var min_z := float(parcel.minZ)
-	var max_z := float(parcel.maxZ)
-	var center_x := (min_x + max_x) / 2.0
-	var center_z := (min_z + max_z) / 2.0
-	return [
-		{"position": Vector3(center_x, 0.08, min_z), "size": Vector3(max_x - min_x, 0.08, 0.08)},
-		{"position": Vector3(center_x, 0.08, max_z), "size": Vector3(max_x - min_x, 0.08, 0.08)},
-		{"position": Vector3(min_x, 0.08, center_z), "size": Vector3(0.08, 0.08, max_z - min_z)},
-		{"position": Vector3(max_x, 0.08, center_z), "size": Vector3(0.08, 0.08, max_z - min_z)}
-	]
-
-
-func _can_build_in_parcel(parcel: Dictionary) -> bool:
-	if parcel.is_empty():
-		return false
-	if parcel.tier == "public":
-		return true
-	if parcel.ownerAccountId == null:
-		return false
-	return String(parcel.ownerAccountId) == String(session.accountId)
-
-
-func _parcel_denied_reason(parcel: Dictionary) -> String:
-	if parcel.is_empty():
-		return "Builds must be placed inside a parcel"
-	if parcel.ownerAccountId == null and parcel.tier != "public":
-		return "Claim this parcel before building here"
-	return "Parcel owned by %s" % parcel.get("ownerDisplayName", "another resident")
-
-
-func _update_selection_state() -> void:
-	selection_label.text = "Selected: %s" % selected_object_id if not selected_object_id.is_empty() else "No object selected"
-	for object_id in object_nodes.keys():
-		_apply_selection_visual(object_nodes[object_id], object_id == selected_object_id)
-	active_parcel = object_nodes[selected_object_id].get_meta("parcel", {}) if not selected_object_id.is_empty() and object_nodes.has(selected_object_id) else {}
-	if not selected_object_id.is_empty() and object_nodes.has(selected_object_id):
-		active_parcel = _get_parcel_at(object_nodes[selected_object_id].position)
-	else:
-		active_parcel = {}
-	parcel_label.text = "Parcel: %s" % active_parcel.get("name", "none")
-	_update_gizmo_handles()
-	_claim_button_state()
-
-
-func _apply_selection_visual(node: Node3D, selected: bool) -> void:
-	for child in node.get_children():
-		if child is MeshInstance3D:
-			var mesh_child := child as MeshInstance3D
-			var material := mesh_child.get_active_material(0)
-			if material is StandardMaterial3D:
-				(material as StandardMaterial3D).emission_enabled = selected
-				(material as StandardMaterial3D).emission = Color("ffb36a")
-
-
-func _rebuild_gizmo_handles() -> void:
-	for child in gizmos_root.get_children():
-		child.queue_free()
-	gizmo_handles.clear()
-	for axis in ["x", "y", "z"]:
-		var handle_root := Node3D.new()
-		var handle := MeshInstance3D.new()
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.04
-		mesh.bottom_radius = 0.04
-		mesh.height = 1.3
-		handle.mesh = mesh
-		var material := StandardMaterial3D.new()
-		material.emission_enabled = true
-		material.albedo_color = axis == "x" ? Color("ff6b6b") : axis == "y" ? Color("66ffd1") : Color("6aa8ff")
-		material.emission = material.albedo_color
-		handle.set_surface_override_material(0, material)
-		handle_root.add_child(handle)
-		var body := StaticBody3D.new()
-		body.set_meta("gizmo_axis", axis)
-		var shape := CollisionShape3D.new()
-		var cylinder := CylinderShape3D.new()
-		cylinder.height = 1.3
-		cylinder.radius = 0.18
-		shape.shape = cylinder
-		body.add_child(shape)
-		handle_root.add_child(body)
-		handle_root.visible = false
-		gizmos_root.add_child(handle_root)
-		gizmo_handles[axis] = handle_root
-
-
-func _update_gizmo_handles() -> void:
-	if gizmo_handles.is_empty():
-		_rebuild_gizmo_handles()
-	if selected_object_id.is_empty() or not object_nodes.has(selected_object_id):
-		for handle in gizmo_handles.values():
-			handle.visible = false
+func _save_blueprint_from_selection() -> void:
+	if build.selected_object_id.is_empty():
+		status_label.text = "Select object(s) before saving blueprint"
 		return
-
-	var target := object_nodes[selected_object_id].position
-	var x_handle: Node3D = gizmo_handles["x"]
-	var y_handle: Node3D = gizmo_handles["y"]
-	var z_handle: Node3D = gizmo_handles["z"]
-	x_handle.visible = true
-	y_handle.visible = true
-	z_handle.visible = true
-	x_handle.position = target + Vector3(1.0, 0.65, 0.0)
-	z_handle.position = target + Vector3(0.0, 0.65, 1.0)
-	y_handle.position = target + Vector3(0.0, 1.2, 0.0)
-	x_handle.rotation_degrees.z = 90
-	z_handle.rotation_degrees.x = 90
-	y_handle.rotation = Vector3.ZERO
-
-
-func _claim_button_state() -> void:
-	var is_admin := session.get("role", "resident") == "admin"
-	claim_parcel_button.disabled = active_parcel.is_empty() or active_parcel.get("tier", "") == "public" or (active_parcel.get("ownerAccountId", null) != null and not is_admin)
-	release_parcel_button.disabled = active_parcel.is_empty() or (String(active_parcel.get("ownerAccountId", "")) != String(session.get("accountId", "")) and not is_admin)
-	admin_audit_log.visible = is_admin
-
-
-func _claim_active_parcel() -> void:
-	if active_parcel.is_empty() or session.is_empty() or active_parcel.get("tier", "") == "public":
-		return
-	var request := HTTPRequest.new()
-	add_child(request)
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var is_admin := session.get("role", "resident") == "admin"
-	var body := JSON.stringify(is_admin ? {"token": session.token, "parcelId": active_parcel.id, "ownerAccountId": session.accountId} : {"token": session.token, "parcelId": active_parcel.id})
-	var url := "%s%s" % [backend_url_input.text.rstrip("/"), is_admin ? "/api/admin/parcels/assign" : "/api/parcels/claim"]
-	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-		var result := await request.request_completed
-		if int(result[1]) == 200:
-			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
-			var parcel = payload.get("parcel", {})
-			for index in range(parcels.size()):
-				if parcels[index].id == parcel.id:
-					parcels[index] = parcel
-			active_parcel = parcel
-			_render_parcels()
-			_claim_button_state()
-			status_label.text = "%s %s" % [is_admin ? "Admin claimed" : "Claimed", parcel.get("name", "parcel")]
-			await _load_admin_audit_logs()
-		else:
-			status_label.text = "Parcel claim failed"
-	request.queue_free()
-
-
-func _release_active_parcel() -> void:
-	if active_parcel.is_empty() or session.is_empty():
-		return
-	var request := HTTPRequest.new()
-	add_child(request)
-	var headers := PackedStringArray(["Content-Type: application/json"])
-	var is_admin := session.get("role", "resident") == "admin"
-	var body := JSON.stringify(is_admin ? {"token": session.token, "parcelId": active_parcel.id, "ownerAccountId": null} : {"token": session.token, "parcelId": active_parcel.id})
-	var url := "%s%s" % [backend_url_input.text.rstrip("/"), is_admin ? "/api/admin/parcels/assign" : "/api/parcels/release"]
-	if request.request(url, headers, HTTPClient.METHOD_POST, body) == OK:
-		var result := await request.request_completed
-		if int(result[1]) == 200:
-			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
-			var parcel = payload.get("parcel", {})
-			for index in range(parcels.size()):
-				if parcels[index].id == parcel.id:
-					parcels[index] = parcel
-			active_parcel = parcel
-			_render_parcels()
-			_claim_button_state()
-			status_label.text = "%s %s" % [is_admin ? "Admin cleared" : "Released", parcel.get("name", "parcel")]
-			await _load_admin_audit_logs()
-		else:
-			status_label.text = "Parcel release failed"
-	request.queue_free()
-
-
-func _load_admin_audit_logs() -> void:
-	if session.get("role", "resident") != "admin":
-		admin_audit_log.text = ""
-		return
-	var request := HTTPRequest.new()
-	add_child(request)
-	var url := "%s/api/admin/audit-logs?token=%s&limit=10" % [backend_url_input.text.rstrip("/"), session.token]
-	if request.request(url) == OK:
-		var result := await request.request_completed
-		if int(result[1]) == 200:
-			var payload := JSON.parse_string((result[3] as PackedByteArray).get_string_from_utf8())
-			var lines: Array[String] = []
-			for entry in payload.get("logs", []):
-				lines.append("%s - %s" % [entry.action, entry.details])
-			admin_audit_log.text = "\n".join(lines)
-	request.queue_free()
-
-
-func _find_animation_player(node: Node) -> AnimationPlayer:
-	if node is AnimationPlayer:
-		return node as AnimationPlayer
-	for child in node.get_children():
-		var result := _find_animation_player(child)
-		if result:
-			return result
-	return null
-
-
-func _update_avatar_animation(node: Node3D, movement_delta: float) -> void:
-	var animation_player := _find_animation_player(node)
-	if animation_player == null:
-		return
-	var desired := "Idle"
-	if movement_delta > 0.15:
-		desired = "Run"
-	elif movement_delta > 0.02:
-		desired = "Walk"
-	if animation_player.has_animation(desired) and animation_player.current_animation != desired:
-		animation_player.play(desired)
-
-
-func _play_emote(emote_name: String) -> void:
-	if not avatar_nodes.has(session.avatarId):
-		return
-	var node := avatar_nodes[session.avatarId]
-	var animation_player := _find_animation_player(node)
-	if animation_player == null:
-		return
-	var emote_animations := ["Wave", "Dance", "Point", "Cheer", "Sit", "Jump"]
-	if emote_name in emote_animations and animation_player.has_animation(emote_name):
-		animation_player.play(emote_name)
-		await animation_player.animation_finished
-		animation_player.play("Idle")
-
-
-func _update_local_movement(delta: float) -> void:
-	if session.is_empty() or not avatar_states.has(session.avatarId):
-		return
-
-	var input_vector := Vector2(
-		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
-		Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
-	)
-	if input_vector.length() == 0:
-		return
-
-	input_vector = input_vector.normalized()
-	var move := Vector3(input_vector.x, 0, input_vector.y) * MOVE_SPEED * delta
-	var avatar: Dictionary = avatar_states[session.avatarId]
-	avatar.x = clampf(float(avatar.x) + move.x, -28.0, 28.0)
-	avatar.z = clampf(float(avatar.z) + move.z, -28.0, 28.0)
-	avatar_states[session.avatarId] = avatar
-	_sync_avatars()
-	if websocket.get_ready_state() == WebSocketPeer.STATE_OPEN:
-		websocket.send_text(JSON.stringify({
-			"type": "move",
-			"x": avatar.x,
-			"y": avatar.y,
-			"z": avatar.z
-		}))
-
-
-func _update_camera(delta: float) -> void:
-	if session.is_empty() or not avatar_nodes.has(session.avatarId):
-		return
-
-	var target := avatar_nodes[session.avatarId].position + Vector3(0, 2.5, 0)
-	var desired := target + Vector3(
-		sin(yaw) * cos(pitch) * CAMERA_DISTANCE,
-		sin(pitch) * CAMERA_DISTANCE + 2.0,
-		cos(yaw) * cos(pitch) * CAMERA_DISTANCE
-	)
-	camera_rig.position = camera_rig.position.lerp(desired, minf(1.0, delta * 6.0))
-	camera.look_at(target)
+	var ids: Array = [build.selected_object_id]
+	await blueprint_mgr.save_blueprint("Blueprint %s" % str(Time.get_ticks_msec()), ids)

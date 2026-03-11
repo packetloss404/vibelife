@@ -3,6 +3,20 @@ import pg from "pg";
 
 const { Pool } = pg;
 
+export type RegionBiome = {
+  fogColor: string;
+  fogDensity: number;
+  ambientColor: string;
+  ambientEnergy: number;
+  sunColor: string;
+  sunEnergy: number;
+  skyTint: string;
+  terrainColors: { grass: string; dirt: string; sand: string; stone: string };
+  particleType: string;
+  weatherType: string;
+  musicGenre: string;
+};
+
 export type RegionRecord = {
   id: string;
   name: string;
@@ -10,6 +24,7 @@ export type RegionRecord = {
   terrain: string;
   mood: string;
   themeColor: string;
+  biome: RegionBiome;
 };
 
 export type AccountRecord = {
@@ -302,7 +317,20 @@ const seededRegions: RegionRecord[] = [
     capacity: 80,
     terrain: "floating harbor",
     mood: "social",
-    themeColor: "#66ffd1"
+    themeColor: "#66ffd1",
+    biome: {
+      fogColor: "#ff8844",
+      fogDensity: 0.008,
+      ambientColor: "#ffcc88",
+      ambientEnergy: 0.6,
+      sunColor: "#ffaa55",
+      sunEnergy: 1.2,
+      skyTint: "#ff9966",
+      terrainColors: { grass: "#8ba86a", dirt: "#a07850", sand: "#d4b078", stone: "#7a7068" },
+      particleType: "fireflies",
+      weatherType: "clear",
+      musicGenre: "lo-fi chill"
+    }
   },
   {
     id: "glass-garden",
@@ -310,7 +338,104 @@ const seededRegions: RegionRecord[] = [
     capacity: 50,
     terrain: "botanical sky dome",
     mood: "relaxed",
-    themeColor: "#ffb36a"
+    themeColor: "#ffb36a",
+    biome: {
+      fogColor: "#aaccaa",
+      fogDensity: 0.02,
+      ambientColor: "#88cc88",
+      ambientEnergy: 0.8,
+      sunColor: "#ffffee",
+      sunEnergy: 0.9,
+      skyTint: "#cceecc",
+      terrainColors: { grass: "#4da060", dirt: "#6b5040", sand: "#b8a878", stone: "#607860" },
+      particleType: "leaves",
+      weatherType: "foggy",
+      musicGenre: "ambient nature"
+    }
+  },
+  {
+    id: "neon-district",
+    name: "Neon District",
+    capacity: 100,
+    terrain: "urban grid",
+    mood: "energetic",
+    themeColor: "#ee44ff",
+    biome: {
+      fogColor: "#1a0a2e",
+      fogDensity: 0.015,
+      ambientColor: "#9944cc",
+      ambientEnergy: 0.4,
+      sunColor: "#cc88ff",
+      sunEnergy: 0.3,
+      skyTint: "#2a1040",
+      terrainColors: { grass: "#2a2040", dirt: "#1a1028", sand: "#3a2850", stone: "#0e0818" },
+      particleType: "rain",
+      weatherType: "rainy",
+      musicGenre: "synthwave"
+    }
+  },
+  {
+    id: "cloud-summit",
+    name: "Cloud Summit",
+    capacity: 60,
+    terrain: "mountain peak",
+    mood: "adventurous",
+    themeColor: "#88ccff",
+    biome: {
+      fogColor: "#c8d8ee",
+      fogDensity: 0.025,
+      ambientColor: "#aabbdd",
+      ambientEnergy: 0.7,
+      sunColor: "#eeeeff",
+      sunEnergy: 1.4,
+      skyTint: "#aaccff",
+      terrainColors: { grass: "#6a8870", dirt: "#8a7860", sand: "#c0b898", stone: "#8898a8" },
+      particleType: "dust",
+      weatherType: "windy",
+      musicGenre: "orchestral"
+    }
+  },
+  {
+    id: "cozy-village",
+    name: "Cozy Village",
+    capacity: 40,
+    terrain: "autumn town",
+    mood: "cozy",
+    themeColor: "#ffaa44",
+    biome: {
+      fogColor: "#dda866",
+      fogDensity: 0.012,
+      ambientColor: "#ddaa77",
+      ambientEnergy: 0.65,
+      sunColor: "#ffcc88",
+      sunEnergy: 1.0,
+      skyTint: "#eebb88",
+      terrainColors: { grass: "#aa8844", dirt: "#886040", sand: "#ccaa70", stone: "#887768" },
+      particleType: "leaves",
+      weatherType: "clear",
+      musicGenre: "acoustic folk"
+    }
+  },
+  {
+    id: "zen-retreat",
+    name: "Zen Retreat",
+    capacity: 30,
+    terrain: "japanese garden",
+    mood: "peaceful",
+    themeColor: "#ffbbcc",
+    biome: {
+      fogColor: "#eeddee",
+      fogDensity: 0.01,
+      ambientColor: "#ddccdd",
+      ambientEnergy: 0.75,
+      sunColor: "#fff5ee",
+      sunEnergy: 1.1,
+      skyTint: "#eeddee",
+      terrainColors: { grass: "#6a9a60", dirt: "#7a6050", sand: "#d8c8a0", stone: "#9a9088" },
+      particleType: "cherry_blossoms",
+      weatherType: "clear",
+      musicGenre: "zen ambient"
+    }
   }
 ];
 
@@ -366,6 +491,110 @@ const seededParcels: Omit<ParcelRecord, "ownerDisplayName">[] = [
     minZ: -18,
     maxZ: 10,
     tier: "premium"
+  },
+  {
+    id: "neon-central",
+    regionId: "neon-district",
+    name: "Central Plaza",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -12,
+    maxX: 12,
+    minZ: -12,
+    maxZ: 12,
+    tier: "public"
+  },
+  {
+    id: "neon-alley",
+    regionId: "neon-district",
+    name: "Neon Alley",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: 12,
+    maxX: 26,
+    minZ: -20,
+    maxZ: 8,
+    tier: "homestead"
+  },
+  {
+    id: "cloud-peak",
+    regionId: "cloud-summit",
+    name: "Summit Peak",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -10,
+    maxX: 10,
+    minZ: -10,
+    maxZ: 10,
+    tier: "public"
+  },
+  {
+    id: "cloud-ridge",
+    regionId: "cloud-summit",
+    name: "Wind Ridge",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -24,
+    maxX: -6,
+    minZ: -16,
+    maxZ: 14,
+    tier: "homestead"
+  },
+  {
+    id: "village-square",
+    regionId: "cozy-village",
+    name: "Village Square",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -8,
+    maxX: 8,
+    minZ: -8,
+    maxZ: 8,
+    tier: "public"
+  },
+  {
+    id: "village-cottage-row",
+    regionId: "cozy-village",
+    name: "Cottage Row",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: 8,
+    maxX: 24,
+    minZ: -14,
+    maxZ: 14,
+    tier: "homestead"
+  },
+  {
+    id: "zen-pond",
+    regionId: "zen-retreat",
+    name: "Koi Pond Garden",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -10,
+    maxX: 10,
+    minZ: -10,
+    maxZ: 10,
+    tier: "public"
+  },
+  {
+    id: "zen-grove",
+    regionId: "zen-retreat",
+    name: "Cherry Blossom Grove",
+    ownerAccountId: null,
+    collaboratorAccountIds: [],
+    collaboratorDisplayNames: [],
+    minX: -22,
+    maxX: -4,
+    minZ: -16,
+    maxZ: 12,
+    tier: "homestead"
   }
 ];
 
@@ -1019,7 +1248,8 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       capacity INTEGER NOT NULL,
       terrain TEXT NOT NULL,
       mood TEXT NOT NULL,
-      theme_color TEXT NOT NULL
+      theme_color TEXT NOT NULL,
+      biome JSONB NOT NULL DEFAULT '{}'::jsonb
     )
   `);
 
@@ -1281,16 +1511,17 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
   for (const region of seededRegions) {
     await pool.query(
       `
-        INSERT INTO regions (id, name, capacity, terrain, mood, theme_color)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO regions (id, name, capacity, terrain, mood, theme_color, biome)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           capacity = EXCLUDED.capacity,
           terrain = EXCLUDED.terrain,
           mood = EXCLUDED.mood,
-          theme_color = EXCLUDED.theme_color
+          theme_color = EXCLUDED.theme_color,
+          biome = EXCLUDED.biome
       `,
-      [region.id, region.name, region.capacity, region.terrain, region.mood, region.themeColor]
+      [region.id, region.name, region.capacity, region.terrain, region.mood, region.themeColor, JSON.stringify(region.biome)]
     );
   }
 
@@ -1332,7 +1563,8 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         terrain: string;
         mood: string;
         theme_color: string;
-      }>("SELECT id, name, capacity, terrain, mood, theme_color FROM regions ORDER BY name ASC");
+        biome: string;
+      }>("SELECT id, name, capacity, terrain, mood, theme_color, biome FROM regions ORDER BY name ASC");
 
       return result.rows.map((row) => ({
         id: row.id,
@@ -1340,7 +1572,8 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         capacity: row.capacity,
         terrain: row.terrain,
         mood: row.mood,
-        themeColor: row.theme_color
+        themeColor: row.theme_color,
+        biome: typeof row.biome === "string" ? JSON.parse(row.biome) : row.biome
       }));
     },
     async getOrCreateGuestAccount(displayName) {

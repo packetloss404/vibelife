@@ -122,7 +122,7 @@ const toast = (message, isError = false) => {
   }, 2600);
 };
 
-const presetStorageKey = "thirdlife-build-presets";
+const presetStorageKey = "vibelife-build-presets";
 
 const loadPresets = () => {
   try {

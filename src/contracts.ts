@@ -56,12 +56,23 @@ export type RegionObjectContract = {
   updatedAt: string;
 };
 
+export type ChatChannel = "region" | "whisper" | "global" | "group";
+
+export type ChatHistoryEntry = {
+  avatarId: string;
+  displayName: string;
+  message: string;
+  channel: ChatChannel;
+  createdAt: string;
+};
+
 export type RegionSnapshotEvent = {
   type: "snapshot";
   sequence: number;
   avatars: AvatarStateContract[];
   objects: RegionObjectContract[];
   parcels: ParcelContract[];
+  chatHistory: ChatHistoryEntry[];
 };
 
 export type RegionEvent =
@@ -70,15 +81,62 @@ export type RegionEvent =
   | { type: "avatar:moved"; sequence: number; avatar: AvatarStateContract }
   | { type: "avatar:updated"; sequence: number; avatar: AvatarStateContract }
   | { type: "avatar:left"; sequence: number; avatarId: string }
-  | { type: "chat"; sequence: number; avatarId: string; displayName: string; message: string; createdAt: string }
+  | { type: "chat"; sequence: number; avatarId: string; displayName: string; message: string; channel: ChatChannel; createdAt: string }
+  | { type: "chat:history"; sequence: number; messages: ChatHistoryEntry[] }
+  | { type: "whisper"; sequence: number; fromAvatarId: string; fromDisplayName: string; toAvatarId: string; toDisplayName: string; message: string; createdAt: string }
   | { type: "object:created"; sequence: number; object: RegionObjectContract }
   | { type: "object:updated"; sequence: number; object: RegionObjectContract }
   | { type: "object:deleted"; sequence: number; objectId: string }
-  | { type: "parcel:updated"; sequence: number; parcel: ParcelContract };
+  | { type: "parcel:updated"; sequence: number; parcel: ParcelContract }
+  | { type: "radio:changed"; sequence: number; stationId: string; stationName: string; trackName: string; currentTrack: number }
+  | { type: "avatar:emote"; sequence: number; avatarId: string; displayName: string; emoteName: string; duration_ms: number }
+  | { type: "emote:combo"; sequence: number; avatarIds: string[]; comboName: string; position: { x: number; y: number; z: number } }
+  | { type: "avatar:sit"; sequence: number; avatarId: string; objectId: string; position: { x: number; y: number; z: number } }
+  | { type: "avatar:stand"; sequence: number; avatarId: string }
+  | { type: "group:chat"; sequence: number; groupId: string; avatarId: string; displayName: string; message: string; createdAt: string }
+  | { type: "home:doorbell"; sequence: number; visitorAvatarId: string; visitorDisplayName: string; homeOwnerAccountId: string; parcelName: string }
+  | { type: "event:started"; sequence: number; event: GameEventContract }
+  | { type: "event:ended"; sequence: number; eventId: string };
+
+export type ChatMessageContract = {
+  type: "chat";
+  channel: ChatChannel;
+  message: string;
+  targetAccountId?: string;
+  displayName: string;
+  timestamp: string;
+};
+
+export type ObjectGroupContract = {
+  id: string;
+  name: string;
+  objectIds: string[];
+  ownerId: string;
+};
+
+export type BuildUndoContract = {
+  action: "create" | "delete" | "move" | "rotate" | "scale";
+  objectId: string;
+  beforeState: { x: number; y: number; z: number; rotationY: number; scale: number } | null;
+  afterState: { x: number; y: number; z: number; rotationY: number; scale: number } | null;
+};
+
+export type SnapGridSettings = {
+  enabled: boolean;
+  size: 0.5 | 1.0 | 2.0;
+};
 
 export type RegionCommand =
   | { type: "move"; x: number; y?: number; z: number }
-  | { type: "chat"; message: string };
+  | { type: "chat"; message: string }
+  | { type: "whisper"; targetDisplayName: string; message: string }
+  | { type: "radio:tune"; stationId: string }
+  | { type: "radio:skip" }
+  | { type: "emote"; emoteName: string }
+  | { type: "typing"; typing: boolean }
+  | { type: "sit"; objectId: string }
+  | { type: "stand" }
+  | { type: "group_chat"; groupId: string; message: string };
 
 export const AUTH_MODES: AuthMode[] = ["guest", "register", "login"];
 
@@ -95,6 +153,38 @@ export function isRegionCommand(value: unknown): value is RegionCommand {
 
   if (candidate.type === "chat") {
     return typeof candidate.message === "string";
+  }
+
+  if (candidate.type === "whisper") {
+    return typeof candidate.targetDisplayName === "string" && typeof candidate.message === "string";
+  }
+
+  if (candidate.type === "radio:tune") {
+    return typeof candidate.stationId === "string";
+  }
+
+  if (candidate.type === "radio:skip") {
+    return true;
+  }
+
+  if (candidate.type === "emote") {
+    return typeof candidate.emoteName === "string";
+  }
+
+  if (candidate.type === "typing") {
+    return typeof candidate.typing === "boolean";
+  }
+
+  if (candidate.type === "sit") {
+    return typeof candidate.objectId === "string";
+  }
+
+  if (candidate.type === "stand") {
+    return true;
+  }
+
+  if (candidate.type === "group_chat") {
+    return typeof candidate.groupId === "string" && typeof candidate.message === "string";
   }
 
   return false;
@@ -197,4 +287,139 @@ export type TeleportRequest = {
   x: number;
   y: number;
   z: number;
+};
+
+export type RadioStationContract = {
+  id: string;
+  name: string;
+  genre: string;
+  tracks: string[];
+  currentTrack: number;
+  isPlaying: boolean;
+};
+
+export type EmoteContract = {
+  name: string;
+  category: "greetings" | "expressions" | "actions" | "fun";
+  duration_ms: number;
+};
+
+export type BlueprintContract = {
+  id: string;
+  name: string;
+  creatorAccountId: string;
+  creatorDisplayName: string;
+  objects: Array<{ asset: string; x: number; y: number; z: number; rotationY: number; scale: number }>;
+  createdAt: string;
+};
+
+// ── Tier 2 Contracts ────────────────────────────────────────────────────────
+
+export type PlayerPresenceContract = {
+  accountId: string;
+  displayName: string;
+  status: "online" | "busy" | "away" | "invisible" | "offline";
+  customMessage: string;
+  regionId: string | null;
+  lastActivity: string;
+};
+
+export type ActivityEntryContract = {
+  id: string;
+  accountId: string;
+  displayName: string;
+  action: string;
+  details: string;
+  regionId?: string;
+  createdAt: string;
+  likes: string[];
+};
+
+export type MarketListingContract = {
+  id: string;
+  sellerAccountId: string;
+  sellerDisplayName: string;
+  itemId: string;
+  itemName: string;
+  itemKind: string;
+  price: number;
+  listingType: "fixed" | "auction";
+  currentBid?: number;
+  currentBidder?: string;
+  currentBidderName?: string;
+  minBid?: number;
+  auctionEndTime?: string;
+  createdAt: string;
+  status: "active" | "sold" | "expired" | "cancelled";
+};
+
+export type TradeOfferContract = {
+  id: string;
+  fromAccountId: string;
+  fromDisplayName: string;
+  toAccountId: string;
+  toDisplayName: string;
+  offeredItems: string[];
+  offeredCurrency: number;
+  requestedItems: string[];
+  requestedCurrency: number;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  createdAt: string;
+};
+
+export type GameEventContract = {
+  id: string;
+  name: string;
+  description: string;
+  creatorAccountId: string;
+  creatorDisplayName: string;
+  regionId: string;
+  parcelId?: string;
+  eventType: "build_competition" | "dance_party" | "grand_opening" | "workshop" | "meetup" | "concert" | "market_day" | "exploration";
+  startTime: string;
+  endTime: string;
+  recurring: null | "daily" | "weekly" | "monthly";
+  rsvps: string[];
+  maxAttendees?: number;
+  prizes?: string;
+  createdAt: string;
+};
+
+export type AchievementContract = {
+  id: string;
+  name: string;
+  description: string;
+  category: "explorer" | "builder" | "social" | "collector";
+  icon: string;
+  xpReward: number;
+  requirement: { type: string; count: number };
+};
+
+export type PlayerProgressContract = {
+  accountId: string;
+  xp: number;
+  level: number;
+  title: string;
+  unlockedAchievements: string[];
+  stats: {
+    regionsVisited: string[];
+    objectsPlaced: number;
+    chatMessages: number;
+    friendsMade: number;
+    eventsAttended: number;
+    itemsCollected: number;
+    totalPlayTime: number;
+  };
+  dailyChallenges: DailyChallengeContract[];
+  weeklyChallenges: DailyChallengeContract[];
+};
+
+export type DailyChallengeContract = {
+  id: string;
+  description: string;
+  requirement: { type: string; count: number };
+  progress: number;
+  completed: boolean;
+  xpReward: number;
+  expiresAt: string;
 };

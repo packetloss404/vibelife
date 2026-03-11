@@ -1,44 +1,48 @@
 # Development Documentation
 
-This directory contains technical documentation for features not yet implemented in the ThirdLife backend.
+This directory contains technical implementation specs for VibeLife features — both pending and planned.
 
-## Implemented Features
+For the strategic codebase review, architecture analysis, and feature roadmap, see [docs/review/](../review/README.md).
 
-The following features have been implemented and are ready to use:
+## Implemented Features (No Spec Doc)
 
-- [Inter-region Teleportation](../README.md)
-- [Avatar Animations (Godot)](../native-client/godot)
-- [In-world Scripting](./in-world-scripting.md)
-- [Asset Library System](./asset-library.md)
-- [Friend/Block Lists](./friends.md)
-- [Group/Guild System](./groups.md)
-- [Instant Messaging](./messaging.md)
-- [Linden-like Currency](./currency.md)
-- [Object Permissions](./object-permissions.md)
-- [Region Events/Notices](./region-notices.md)
-- [Avatar Profiles](./profiles.md)
-- [Teleport Landing Points](./teleport-points.md)
-- [Multi-region Persistence](./persistence.md)
-- [Texture/Skin Upload](./texture-upload.md)
-- [Moderation Tools](./moderation.md)
+These features are built and working but don't have standalone spec documents. Their implementation lives directly in the codebase:
 
-## Pending Features
+| Feature | Where to Find It |
+|---------|-----------------|
+| Inter-region Teleportation | `src/world/store.ts` — `teleportToRegion()` |
+| Avatar Animations (Godot) | `native-client/godot/scripts/main.gd` |
+| In-world Scripting | `src/world/store.ts` — `createObjectScript()` and related |
+| Asset Library System | `src/world/store.ts` — `listAssets()`, `createAsset()`, `deleteAsset()` |
+| Friend/Block Lists | `src/world/store.ts` — `addFriend()`, `blockAccount()` and related |
+| Group/Guild System | `src/world/store.ts` — `createGroup()`, `addGroupMember()` and related |
+| Instant Messaging | `src/world/store.ts` — `sendOfflineMessage()`, `listOfflineMessages()` |
+| Linden-like Currency | `src/world/store.ts` — `sendCurrency()`, `getCurrencyBalance()` |
+| Object Permissions | `src/world/store.ts` — `saveObjectPermissions()` |
+| Region Events/Notices | `src/world/store.ts` — `createRegionNotice()`, `listRegionNotices()` |
+| Avatar Profiles | `src/world/store.ts` — `saveAvatarProfile()`, `getAvatarProfile()` |
+| Teleport Landing Points | `src/world/store.ts` — `createTeleportPoint()`, `listTeleportPoints()` |
+| Multi-region Persistence | `src/data/persistence.ts` — full Postgres + in-memory layer |
+| Moderation Tools | `src/world/store.ts` — `banAccount()`, `adminAssignParcel()`, audit logs |
+| Parcel Collaborators | `src/world/store.ts` — `addParcelCollaborator()`, `removeParcelCollaborator()` |
 
-Documentation for features still in the planning phase:
+## Pending Feature Specs
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| [Voice Chat (VoIP)](voice-chat.md) | Real-time spatial audio | Medium |
-| [Parcel Tier Upgrades](parcel-tier-upgrades.md) | Premium land tiers with expanded features | Medium |
-| [Parcel Traffic Analytics](parcel-tier-upgrades.md) | Visitor tracking and analytics | Low |
-| [Region Simulation Workers](region-workers.md) | Horizontal scaling for world simulation | High |
-| [Mobile Client](mobile-client.md) | React Native iOS/Android app | Low |
+Full implementation specs for features still in the planning phase:
+
+| Feature | Spec | Priority | Review Cross-Reference |
+|---------|------|----------|----------------------|
+| [Voice Chat (VoIP)](voice-chat.md) | WebRTC architecture, signaling, spatial audio | High | [Review: Feature Roadmap T3](../review/04-feature-roadmap.md) |
+| [Region Simulation Workers](region-workers.md) | Worker pool, Redis pub/sub, Docker deployment | Critical | [Review: Architecture](../review/02-architecture-review.md) |
+| [Parcel Tier Upgrades](parcel-tier-upgrades.md) | Premium tiers, pricing, DB schema | Medium | [Review: Feature Roadmap T2](../review/04-feature-roadmap.md) |
+| [Parcel Traffic Analytics](traffic-analytics.md) | Event tracking, daily/hourly stats, privacy | Low | [Review: Feature Roadmap T2](../review/04-feature-roadmap.md) |
+| [Mobile Client](mobile-client.md) | React Native, Zustand, touch controls | Low | [Review: Feature Roadmap T4](../review/04-feature-roadmap.md) |
 
 ## Contributing
 
 To add documentation for a new feature:
 
 1. Create a markdown file in this directory
-2. Follow the existing document structure
-3. Include API contracts, database schemas, and implementation details
-4. Update this index to reference the new document
+2. Follow the existing document structure (overview, architecture, API contracts, DB schema, implementation notes)
+3. Update this index to reference the new document
+4. Add a cross-reference to the relevant review roadmap section if applicable

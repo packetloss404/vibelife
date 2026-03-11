@@ -4,75 +4,71 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
-import { isRegionCommand } from "./contracts.js";
+import rateLimit from "@fastify/rate-limit";
+import { isRegionCommand, type ChatChannel } from "./contracts.js";
 import {
-  adminAssignParcel,
-  adminDeleteRegionObject,
-  banAccount,
-  unbanAccount,
-  getActiveBan
+  handleRadioTune,
+  handleRadioSkip,
+  handleEmote
 } from "./world/store.js";
 import {
-  addParcelCollaborator,
-  addFriend,
-  addGroupMember,
-  appendAuditLog,
-  blockAccount,
-  claimParcel,
-  createGroup,
-  createRegionNotice,
-  createRegionObject,
-  createTeleportPoint,
-  createGuestSession,
-  deleteRegionObject,
-  deleteTeleportPoint,
-  deleteRegionNotice,
-  equipInventoryItem,
-  getAvatarProfile,
-  getCurrencyBalance,
-  getGroupMembers,
-  getObjectPermissions,
-  getPersistenceMode,
+  getChatHistory,
   getRegionPopulation,
   getSession,
+  getPersistenceMode,
+  handleChatMessage,
+  handleWhisper,
   initializeWorldStore,
-  listCurrencyTransactions,
-  listFriends,
-  listGroups,
-  listOfflineMessages,
   listParcels,
-  listRegionNotices,
   listRegionObjects,
-  listRegions,
-  listAuditLogs,
-  listTeleportPoints,
-  loginSession,
-  markMessageRead,
   moveAvatar,
-  registerSession,
-  removeFriend,
-  removeGroupMember,
-  removeParcelCollaborator,
-  releaseParcel,
-  removeAvatar,
-  saveAvatarProfile,
-  saveObjectPermissions,
-  sendCurrency,
-  sendOfflineMessage,
-  teleportToRegion,
-  transferParcel,
-  updateAvatarAppearance,
-  updateRegionObject,
-  unblockAccount,
-  createObjectScript,
-  listObjectScripts,
-  updateObjectScript,
-  deleteObjectScript,
-  listAssets,
-  createAsset,
-  deleteAsset
+  removeAvatar
 } from "./world/store.js";
-import { broadcastRegion, getRegionSequence, joinRegion, leaveRegion, nextRegionSequence } from "./world/region.js";
+import { broadcastRegion, broadcastRegionLocal, getRegionSequence, joinRegion, leaveRegion, nextRegionSequence, sendToAvatar, sendToAvatars } from "./world/region.js";
+
+import authRoutes from "./routes/auth.js";
+import regionRoutes from "./routes/regions.js";
+import objectRoutes from "./routes/objects.js";
+import socialRoutes from "./routes/social.js";
+import economyRoutes from "./routes/economy.js";
+import adminRoutes from "./routes/admin.js";
+import parcelRoutes from "./routes/parcels.js";
+import radioRoutes from "./routes/radio.js";
+import emoteRoutes from "./routes/emotes.js";
+import chatRoutes from "./routes/chat.js";
+import avatarRoutes from "./routes/avatar.js";
+import assetRoutes from "./routes/assets.js";
+import { blueprintRoutes } from "./routes/blueprints.js";
+import { recordEmote } from "./world/emote-service.js";
+import { registerGuildRoutes } from "./routes/guilds.js";
+import { registerPresenceRoutes } from "./routes/presence.js";
+import { registerActivityRoutes } from "./routes/activity.js";
+import { registerMarketplaceRoutes } from "./routes/marketplace.js";
+import { homeRoutes } from "./routes/homes.js";
+import { homeRatingRoutes } from "./routes/home-ratings.js";
+import { registerStorefrontRoutes } from "./routes/storefronts.js";
+import { registerAchievementRoutes } from "./routes/achievements.js";
+import {
+  setPresenceOnLogin,
+  setPresenceOnDisconnect,
+  updateLastActivity,
+  updatePresenceRegion,
+} from "./world/presence-service.js";
+import { postActivity } from "./world/activity-service.js";
+import { findHomeParcelOwner, shouldRingDoorbell, checkHomeAccess } from "./world/home-service.js";
+import { onObjectPlaced, onChatMessage, onFriendAdded, onRegionVisited } from "./world/achievement-service.js";
+import {
+  createEvent,
+  listEvents,
+  getEvent,
+  rsvpEvent,
+  cancelEvent,
+  listUpcomingEvents,
+  getEventAttendees,
+  checkEventTransitions,
+  getEventLeaderboard,
+  type GameEventType
+} from "./world/event-service.js";
 
 const app = Fastify({ logger: true });
 const __filename = fileURLToPath(import.meta.url);
@@ -82,7 +78,25 @@ const threeDir = path.resolve(__dirname, "../node_modules/three");
 
 await initializeWorldStore();
 
-await app.register(cors, { origin: true });
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+  : ["http://localhost:3000", "http://127.0.0.1:3000"];
+
+await app.register(cors, {
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      cb(null, true);
+    } else {
+      cb(new Error("CORS origin not allowed"), false);
+    }
+  }
+});
+
+await app.register(rateLimit, {
+  max: 60,
+  timeWindow: "1 minute"
+});
+
 await app.register(websocket);
 await app.register(fastifyStatic, {
   root: publicDir,
@@ -96,6 +110,8 @@ await app.register(fastifyStatic, {
   wildcard: false
 });
 
+// ── Health ──────────────────────────────────────────────────────────────────
+
 app.get("/api/health", async () => ({
   ok: true,
   now: new Date().toISOString(),
@@ -103,875 +119,107 @@ app.get("/api/health", async () => ({
   persistence: getPersistenceMode()
 }));
 
-app.get("/api/regions", async () => ({
-  regions: listRegions().map((region) => ({
-    ...region,
-    population: getRegionPopulation(region.id).length
-  }))
-}));
+// ── Route Plugins ───────────────────────────────────────────────────────────
 
-app.get<{ Params: { regionId: string } }>("/api/regions/:regionId/parcels", async (request) => ({
-  parcels: await listParcels(request.params.regionId)
-}));
+await app.register(authRoutes);
+await app.register(regionRoutes);
+await app.register(objectRoutes);
+await app.register(socialRoutes);
+await app.register(economyRoutes);
+await app.register(adminRoutes);
+await app.register(parcelRoutes);
+await app.register(radioRoutes);
+await app.register(emoteRoutes);
+await app.register(chatRoutes);
+await app.register(avatarRoutes);
+await app.register(assetRoutes);
+await app.register(blueprintRoutes);
 
-app.get<{ Params: { regionId: string } }>("/api/regions/:regionId/objects", async (request) => ({
-  objects: await listRegionObjects(request.params.regionId)
-}));
+// ── Tier 2 Route Plugins ──────────────────────────────────────────────────
+await registerGuildRoutes(app);
+await registerPresenceRoutes(app);
+await registerActivityRoutes(app);
+await registerMarketplaceRoutes(app);
+await app.register(homeRoutes);
+await app.register(homeRatingRoutes);
+await registerStorefrontRoutes(app);
+await registerAchievementRoutes(app);
 
-app.post<{ Body: { displayName?: string; regionId?: string } }>("/api/auth/guest", async (request, reply) => {
-  const displayName = (request.body.displayName ?? "Guest Voyager").trim().slice(0, 32) || "Guest Voyager";
-  const { account, inventory, parcels, appearance, session, avatar } = await createGuestSession(displayName, request.body.regionId);
+// ── Events System ──────────────────────────────────────────────────────────
 
-  return reply.send({
-    session,
-    account,
-    inventory,
-    parcels,
-    appearance,
-    avatar,
-    persistence: getPersistenceMode()
-  });
+app.post<{ Body: { token?: string; name?: string; description?: string; regionId?: string; parcelId?: string; eventType?: string; startTime?: string; endTime?: string; recurring?: string; maxAttendees?: number; prizes?: string } }>("/api/events", async (request, reply) => {
+  const { token, name, description = "", regionId, parcelId, eventType, startTime, endTime, recurring, maxAttendees, prizes } = request.body;
+  if (!token || !name || !regionId || !eventType || !startTime || !endTime) {
+    return reply.code(400).send({ error: "token, name, regionId, eventType, startTime, and endTime are required" });
+  }
+  const validTypes: GameEventType[] = ["build_competition", "dance_party", "grand_opening", "workshop", "meetup", "concert", "market_day", "exploration"];
+  if (!validTypes.includes(eventType as GameEventType)) {
+    return reply.code(400).send({ error: "invalid eventType" });
+  }
+  const event = createEvent(token, { name, description, regionId, parcelId, eventType: eventType as GameEventType, startTime, endTime, recurring: (recurring as "daily" | "weekly" | "monthly") ?? null, maxAttendees, prizes });
+  if (!event) return reply.code(403).send({ error: "failed to create event" });
+  return reply.send({ event });
 });
 
-app.post<{ Body: { displayName?: string; password?: string; regionId?: string } }>("/api/auth/register", async (request, reply) => {
-  const displayName = (request.body.displayName ?? "").trim().slice(0, 32);
-  const password = (request.body.password ?? "").trim();
-  const adminBootstrapToken = (request.body as { adminBootstrapToken?: string }).adminBootstrapToken;
-
-  if (!displayName || password.length < 4) {
-    return reply.code(400).send({ error: "displayName and password are required" });
-  }
-
-  const result = await registerSession(displayName, password, request.body.regionId, adminBootstrapToken);
-
-  if (!result.ok) {
-    return reply.code(409).send({ error: result.reason });
-  }
-
-  await appendAuditLog(result.session.token, "auth.register", "account", result.account.id, `registered ${result.account.kind}/${result.account.role}`, result.session.regionId);
-
-  return reply.send({
-    session: result.session,
-    account: result.account,
-    inventory: result.inventory,
-    parcels: result.parcels,
-    appearance: result.appearance,
-    avatar: result.avatar,
-    persistence: getPersistenceMode()
-  });
+app.get<{ Querystring: { regionId?: string; upcoming?: string } }>("/api/events", async (request, reply) => {
+  const { regionId, upcoming } = request.query;
+  const events = listEvents(regionId, upcoming === "true");
+  return reply.send({ events });
 });
 
-app.post<{ Body: { displayName?: string; password?: string; regionId?: string } }>("/api/auth/login", async (request, reply) => {
-  const displayName = (request.body.displayName ?? "").trim().slice(0, 32);
-  const password = (request.body.password ?? "").trim();
-
-  if (!displayName || password.length < 4) {
-    return reply.code(400).send({ error: "displayName and password are required" });
-  }
-
-  const result = await loginSession(displayName, password, request.body.regionId);
-
-  if (!result.ok) {
-    return reply.code(401).send({ error: result.reason });
-  }
-
-  await appendAuditLog(result.session.token, "auth.login", "account", result.account.id, `login ${result.account.kind}/${result.account.role}`, result.session.regionId);
-
-  return reply.send({
-    session: result.session,
-    account: result.account,
-    inventory: result.inventory,
-    parcels: result.parcels,
-    appearance: result.appearance,
-    avatar: result.avatar,
-    persistence: getPersistenceMode()
-  });
+app.get<{ Querystring: { limit?: string } }>("/api/events/upcoming", async (request, reply) => {
+  const limit = Math.max(1, Math.min(50, Number(request.query.limit ?? 10)));
+  const events = listUpcomingEvents(limit);
+  return reply.send({ events });
 });
 
-app.patch<{
-  Body: {
-    token?: string;
-    bodyColor?: string;
-    accentColor?: string;
-    headColor?: string;
-    hairColor?: string;
-    outfit?: string;
-    accessory?: string;
-  };
-}>("/api/avatar/appearance", async (request, reply) => {
-  const { token, bodyColor, accentColor, headColor, hairColor, outfit, accessory } = request.body;
-
-  if (!token || !bodyColor || !accentColor || !headColor || !hairColor || !outfit || !accessory) {
-    return reply.code(400).send({ error: "complete avatar appearance payload is required" });
-  }
-
-  const avatar = await updateAvatarAppearance(token, { bodyColor, accentColor, headColor, hairColor, outfit, accessory });
-
-  if (!avatar) {
-    return reply.code(404).send({ error: "avatar session not found" });
-  }
-
-  const session = getSession(token);
-  if (session) {
-    broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar });
-  }
-
-  return reply.send({ avatar });
+app.get("/api/events/leaderboard", async (_request, reply) => {
+  const leaderboard = getEventLeaderboard();
+  return reply.send(leaderboard);
 });
 
-app.post<{ Body: { token?: string; itemId?: string } }>("/api/inventory/equip", async (request, reply) => {
-  const { token, itemId } = request.body;
-
-  if (!token || !itemId) {
-    return reply.code(400).send({ error: "token and itemId are required" });
-  }
-
-  const result = await equipInventoryItem(token, itemId);
-  const session = getSession(token);
-
-  if (!session || !result.avatar) {
-    return reply.code(404).send({ error: "unable to equip item" });
-  }
-
-  broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar: result.avatar });
-  return reply.send(result);
+app.get<{ Params: { id: string } }>("/api/events/:id", async (request, reply) => {
+  const event = getEvent(request.params.id);
+  if (!event) return reply.code(404).send({ error: "event not found" });
+  return reply.send({ event });
 });
 
-app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", async (request, reply) => {
-  const token = request.body.token;
-  const parcelId = request.body.parcelId;
-
-  if (!token || !parcelId) {
-    return reply.code(400).send({ error: "token and parcelId are required" });
-  }
-
-  const parcel = await claimParcel(token, parcelId);
-
-  if (!parcel) {
-    return reply.code(409).send({ error: "parcel unavailable" });
-  }
-
-  const session = getSession(token);
-
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "parcel.claim", "parcel", parcel.id, `claimed ${parcel.name}`, session.regionId);
-  }
-
-  return reply.send({ parcel });
+app.post<{ Params: { id: string }; Body: { token?: string } }>("/api/events/:id/rsvp", async (request, reply) => {
+  const { token } = request.body;
+  if (!token) return reply.code(400).send({ error: "token is required" });
+  const event = rsvpEvent(token, request.params.id);
+  if (!event) return reply.code(404).send({ error: "event not found or at capacity" });
+  return reply.send({ event });
 });
 
-app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/release", async (request, reply) => {
-  const token = request.body.token;
-  const parcelId = request.body.parcelId;
-
-  if (!token || !parcelId) {
-    return reply.code(400).send({ error: "token and parcelId are required" });
-  }
-
-  const parcel = await releaseParcel(token, parcelId);
-
-  if (!parcel) {
-    return reply.code(409).send({ error: "parcel unavailable" });
-  }
-
-  const session = getSession(token);
-
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "parcel.release", "parcel", parcel.id, `released ${parcel.name}`, session.regionId);
-  }
-
-  return reply.send({ parcel });
-});
-
-app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | null } }>("/api/admin/parcels/assign", async (request, reply) => {
-  const { token, parcelId, ownerAccountId = null } = request.body;
-
-  if (!token || !parcelId) {
-    return reply.code(400).send({ error: "token and parcelId are required" });
-  }
-
-  const parcel = await adminAssignParcel(token, parcelId, ownerAccountId);
-
-  if (!parcel) {
-    return reply.code(403).send({ error: "admin parcel reassignment failed" });
-  }
-
-  const session = getSession(token);
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "admin.parcel.assign", "parcel", parcel.id, `assigned ${parcel.name} to ${ownerAccountId ?? "none"}`, session.regionId);
-  }
-
-  return reply.send({ parcel });
-});
-
-app.post<{ Body: { token?: string; parcelId?: string; collaboratorAccountId?: string } }>("/api/parcels/collaborators/add", async (request, reply) => {
-  const { token, parcelId, collaboratorAccountId } = request.body;
-  if (!token || !parcelId || !collaboratorAccountId) {
-    return reply.code(400).send({ error: "token, parcelId and collaboratorAccountId are required" });
-  }
-  const parcel = await addParcelCollaborator(token, parcelId, collaboratorAccountId);
-  if (!parcel) {
-    return reply.code(403).send({ error: "unable to add collaborator" });
-  }
-  const session = getSession(token);
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "parcel.collaborator.add", "parcel", parcel.id, `added collaborator ${collaboratorAccountId}`, session.regionId);
-  }
-  return reply.send({ parcel });
-});
-
-app.post<{ Body: { token?: string; parcelId?: string; collaboratorAccountId?: string } }>("/api/parcels/collaborators/remove", async (request, reply) => {
-  const { token, parcelId, collaboratorAccountId } = request.body;
-  if (!token || !parcelId || !collaboratorAccountId) {
-    return reply.code(400).send({ error: "token, parcelId and collaboratorAccountId are required" });
-  }
-  const parcel = await removeParcelCollaborator(token, parcelId, collaboratorAccountId);
-  if (!parcel) {
-    return reply.code(403).send({ error: "unable to remove collaborator" });
-  }
-  const session = getSession(token);
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "parcel.collaborator.remove", "parcel", parcel.id, `removed collaborator ${collaboratorAccountId}`, session.regionId);
-  }
-  return reply.send({ parcel });
-});
-
-app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | null } }>("/api/parcels/transfer", async (request, reply) => {
-  const { token, parcelId, ownerAccountId = null } = request.body;
-  if (!token || !parcelId) {
-    return reply.code(400).send({ error: "token and parcelId are required" });
-  }
-  const parcel = await transferParcel(token, parcelId, ownerAccountId);
-  if (!parcel) {
-    return reply.code(403).send({ error: "unable to transfer parcel" });
-  }
-  const session = getSession(token);
-  if (session) {
-    broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
-    await appendAuditLog(token, "parcel.transfer", "parcel", parcel.id, `transferred parcel to ${ownerAccountId ?? "none"}`, session.regionId);
-  }
-  return reply.send({ parcel });
-});
-
-app.post<{ Body: { token?: string; objectId?: string } }>("/api/admin/objects/delete", async (request, reply) => {
-  const { token, objectId } = request.body;
-
-  if (!token || !objectId) {
-    return reply.code(400).send({ error: "token and objectId are required" });
-  }
-
-  const session = getSession(token);
-  const deleted = await adminDeleteRegionObject(token, objectId);
-
-  if (!deleted || !session) {
-    return reply.code(403).send({ error: "admin object cleanup failed" });
-  }
-
-  broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId });
-  await appendAuditLog(token, "admin.object.delete", "object", objectId, "admin deleted region object", session.regionId);
+app.delete<{ Params: { id: string }; Body: { token?: string } }>("/api/events/:id", async (request, reply) => {
+  const { token } = request.body;
+  if (!token) return reply.code(400).send({ error: "token is required" });
+  const cancelled = cancelEvent(token, request.params.id);
+  if (!cancelled) return reply.code(403).send({ error: "event not found or not authorized" });
   return reply.send({ ok: true });
 });
 
-app.get<{ Querystring: { token?: string; limit?: string } }>("/api/admin/audit-logs", async (request, reply) => {
-  const token = request.query.token;
-  const limit = Number(request.query.limit ?? 50);
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const logs = await listAuditLogs(token, Math.max(1, Math.min(200, limit)));
-
-  if (!logs) {
-    return reply.code(403).send({ error: "admin audit access denied" });
-  }
-
-  return reply.send({ logs });
+app.get<{ Params: { id: string } }>("/api/events/:id/attendees", async (request, reply) => {
+  const attendees = getEventAttendees(request.params.id);
+  return reply.send({ attendees });
 });
 
-app.post<{
-  Params: { regionId: string };
-  Body: { token?: string; asset?: string; x?: number; y?: number; z?: number; rotationY?: number; scale?: number };
-}>("/api/regions/:regionId/objects", async (request, reply) => {
-  const { token, asset, x, y, z, rotationY, scale } = request.body;
-  const session = token ? getSession(token) : undefined;
-
-  if (!token || !asset || x === undefined || y === undefined || z === undefined) {
-    return reply.code(400).send({ error: "token, asset, x, y, and z are required" });
+// Event transition checker (runs every 15 seconds)
+setInterval(() => {
+  const { started, ended } = checkEventTransitions();
+  for (const s of started) {
+    broadcastRegion(s.regionId, { type: "event:started", sequence: nextRegionSequence(s.regionId), event: s.event });
   }
-
-  if (!session || session.regionId !== request.params.regionId) {
-    return reply.code(403).send({ error: "session is not active in this region" });
+  for (const e of ended) {
+    broadcastRegion(e.regionId, { type: "event:ended", sequence: nextRegionSequence(e.regionId), eventId: e.eventId });
   }
+}, 15_000);
 
-  const object = await createRegionObject(token, {
-    asset,
-    x,
-    y,
-    z,
-    rotationY: rotationY ?? 0,
-    scale: scale ?? 1
-  });
+// Track which avatars are sitting: avatarId -> objectId
+const sittingAvatars = new Map<string, string>();
 
-  if (!object.object || object.object.regionId !== request.params.regionId) {
-    return reply.code(403).send({ error: object.permission.reason ?? "unable to create object in region" });
-  }
-
-  broadcastRegion(request.params.regionId, { type: "object:created", sequence: nextRegionSequence(request.params.regionId), object: object.object });
-
-  return reply.send({ object: object.object });
-});
-
-app.patch<{
-  Params: { objectId: string };
-  Body: { token?: string; x?: number; y?: number; z?: number; rotationY?: number; scale?: number };
-}>("/api/objects/:objectId", async (request, reply) => {
-  const { token, x, y, z, rotationY, scale } = request.body;
-
-  if (!token || x === undefined || y === undefined || z === undefined || rotationY === undefined || scale === undefined) {
-    return reply.code(400).send({ error: "token, x, y, z, rotationY, and scale are required" });
-  }
-
-  const object = await updateRegionObject(token, request.params.objectId, { x, y, z, rotationY, scale });
-
-  if (!object.object) {
-    const statusCode = object.permission.allowed ? 404 : 403;
-    return reply.code(statusCode).send({ error: object.permission.reason ?? "object not found or not owned" });
-  }
-
-  broadcastRegion(object.object.regionId, { type: "object:updated", sequence: nextRegionSequence(object.object.regionId), object: object.object });
-
-  return reply.send({ object: object.object });
-});
-
-app.delete<{
-  Params: { objectId: string };
-  Body: { token?: string };
-}>("/api/objects/:objectId", async (request, reply) => {
-  const token = request.body.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const session = getSession(token);
-  const deleted = await deleteRegionObject(token, request.params.objectId);
-
-  if (!deleted) {
-    return reply.code(404).send({ error: "object not found or not owned" });
-  }
-
-  if (session) {
-    broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId: request.params.objectId });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.post<{ Body: { token?: string; targetRegionId?: string; x?: number; y?: number; z?: number } }>("/api/avatar/teleport", async (request, reply) => {
-  const { token, targetRegionId, x = 0, y = 0, z = 0 } = request.body;
-
-  if (!token || !targetRegionId) {
-    return reply.code(400).send({ error: "token and targetRegionId are required" });
-  }
-
-  const result = await teleportToRegion(token, targetRegionId, x, y, z);
-
-  if (!result.ok) {
-    return reply.code(403).send({ error: result.reason });
-  }
-
-  await appendAuditLog(token, "avatar.teleport", "account", result.session?.accountId ?? "", `teleported to ${targetRegionId}`, targetRegionId);
-
-  return reply.send({
-    session: result.session,
-    avatar: result.avatar,
-    regionId: targetRegionId
-  });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/avatar/teleport-points", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const points = await listTeleportPoints(token);
-  return reply.send({ points });
-});
-
-app.post<{ Body: { token?: string; name?: string; regionId?: string; x?: number; y?: number; z?: number; rotationY?: number } }>("/api/avatar/teleport-points", async (request, reply) => {
-  const { token, name, regionId, x, y, z, rotationY = 0 } = request.body;
-
-  if (!token || !name || !regionId || x === undefined || y === undefined || z === undefined) {
-    return reply.code(400).send({ error: "token, name, regionId, x, y, z are required" });
-  }
-
-  const point = await createTeleportPoint(token, name, regionId, x, y, z, rotationY);
-
-  if (!point) {
-    return reply.code(403).send({ error: "failed to create teleport point" });
-  }
-
-  return reply.send({ point });
-});
-
-app.delete<{ Body: { token?: string; pointId?: string } }>("/api/avatar/teleport-points", async (request, reply) => {
-  const { token, pointId } = request.body;
-
-  if (!token || !pointId) {
-    return reply.code(400).send({ error: "token and pointId are required" });
-  }
-
-  const deleted = await deleteTeleportPoint(token, pointId);
-
-  if (!deleted) {
-    return reply.code(404).send({ error: "teleport point not found" });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/friends", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const friends = await listFriends(token);
-  return reply.send({ friends });
-});
-
-app.post<{ Body: { token?: string; friendAccountId?: string } }>("/api/friends", async (request, reply) => {
-  const { token, friendAccountId } = request.body;
-
-  if (!token || !friendAccountId) {
-    return reply.code(400).send({ error: "token and friendAccountId are required" });
-  }
-
-  const friend = await addFriend(token, friendAccountId);
-
-  if (!friend) {
-    return reply.code(409).send({ error: "unable to add friend" });
-  }
-
-  return reply.send({ friend });
-});
-
-app.delete<{ Body: { token?: string; friendAccountId?: string } }>("/api/friends", async (request, reply) => {
-  const { token, friendAccountId } = request.body;
-
-  if (!token || !friendAccountId) {
-    return reply.code(400).send({ error: "token and friendAccountId are required" });
-  }
-
-  const removed = await removeFriend(token, friendAccountId);
-
-  if (!removed) {
-    return reply.code(404).send({ error: "friend not found" });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.post<{ Body: { token?: string; blockedAccountId?: string } }>("/api/friends/block", async (request, reply) => {
-  const { token, blockedAccountId } = request.body;
-
-  if (!token || !blockedAccountId) {
-    return reply.code(400).send({ error: "token and blockedAccountId are required" });
-  }
-
-  const blocked = await blockAccount(token, blockedAccountId);
-  return reply.send({ blocked });
-});
-
-app.delete<{ Body: { token?: string; blockedAccountId?: string } }>("/api/friends/block", async (request, reply) => {
-  const { token, blockedAccountId } = request.body;
-
-  if (!token || !blockedAccountId) {
-    return reply.code(400).send({ error: "token and blockedAccountId are required" });
-  }
-
-  const unblocked = await unblockAccount(token, blockedAccountId);
-  return reply.send({ ok: unblocked });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/groups", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const groups = await listGroups(token);
-  return reply.send({ groups });
-});
-
-app.post<{ Body: { token?: string; name?: string; description?: string } }>("/api/groups", async (request, reply) => {
-  const { token, name, description = "" } = request.body;
-
-  if (!token || !name) {
-    return reply.code(400).send({ error: "token and name are required" });
-  }
-
-  const group = await createGroup(token, name, description);
-
-  if (!group) {
-    return reply.code(403).send({ error: "failed to create group" });
-  }
-
-  return reply.send({ group });
-});
-
-app.get<{ Params: { groupId: string }; Querystring: { token?: string } }>("/api/groups/:groupId/members", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const members = await getGroupMembers(token, request.params.groupId);
-  return reply.send({ members });
-});
-
-app.post<{ Body: { token?: string; groupId?: string; memberAccountId?: string; role?: string } }>("/api/groups/members", async (request, reply) => {
-  const { token, groupId, memberAccountId, role = "member" } = request.body;
-
-  if (!token || !groupId || !memberAccountId) {
-    return reply.code(400).send({ error: "token, groupId, and memberAccountId are required" });
-  }
-
-  await addGroupMember(token, groupId, memberAccountId, role as "member" | "officer" | "owner");
-  return reply.send({ ok: true });
-});
-
-app.delete<{ Body: { token?: string; groupId?: string; memberAccountId?: string } }>("/api/groups/members", async (request, reply) => {
-  const { token, groupId, memberAccountId } = request.body;
-
-  if (!token || !groupId || !memberAccountId) {
-    return reply.code(400).send({ error: "token, groupId, and memberAccountId are required" });
-  }
-
-  const removed = await removeGroupMember(token, groupId, memberAccountId);
-  return reply.send({ ok: removed });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/currency/balance", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const balance = await getCurrencyBalance(token);
-  return reply.send({ balance });
-});
-
-app.post<{ Body: { token?: string; toAccountId?: string; amount?: number; description?: string } }>("/api/currency/send", async (request, reply) => {
-  const { token, toAccountId, amount, description = "gift" } = request.body;
-
-  if (!token || !toAccountId || !amount || amount <= 0) {
-    return reply.code(400).send({ error: "token, toAccountId, and positive amount are required" });
-  }
-
-  const newBalance = await sendCurrency(token, toAccountId, amount, description);
-
-  if (newBalance === undefined) {
-    return reply.code(403).send({ error: "insufficient funds" });
-  }
-
-  return reply.send({ balance: newBalance });
-});
-
-app.get<{ Querystring: { token?: string; limit?: string } }>("/api/currency/transactions", async (request, reply) => {
-  const token = request.query.token;
-  const limit = Number(request.query.limit ?? 20);
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const transactions = await listCurrencyTransactions(token, Math.max(1, Math.min(100, limit)));
-  return reply.send({ transactions });
-});
-
-app.get<{ Querystring: { token?: string; limit?: string } }>("/api/messages/offline", async (request, reply) => {
-  const token = request.query.token;
-  const limit = Number(request.query.limit ?? 50);
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const messages = await listOfflineMessages(token, Math.max(1, Math.min(100, limit)));
-  return reply.send({ messages });
-});
-
-app.post<{ Body: { token?: string; toAccountId?: string; message?: string } }>("/api/messages/offline", async (request, reply) => {
-  const { token, toAccountId, message } = request.body;
-
-  if (!token || !toAccountId || !message) {
-    return reply.code(400).send({ error: "token, toAccountId, and message are required" });
-  }
-
-  const sent = await sendOfflineMessage(token, toAccountId, message.slice(0, 1000));
-
-  if (!sent) {
-    return reply.code(403).send({ error: "failed to send message" });
-  }
-
-  return reply.send({ message: sent });
-});
-
-app.patch<{ Body: { token?: string; messageId?: string } }>("/api/messages/offline/read", async (request, reply) => {
-  const { token, messageId } = request.body;
-
-  if (!token || !messageId) {
-    return reply.code(400).send({ error: "token and messageId are required" });
-  }
-
-  const marked = await markMessageRead(token, messageId);
-  return reply.send({ ok: marked });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/avatar/profile", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const profile = await getAvatarProfile(token);
-  return reply.send({ profile });
-});
-
-app.patch<{ Body: { token?: string; bio?: string; imageUrl?: string } }>("/api/avatar/profile", async (request, reply) => {
-  const { token, bio = "", imageUrl = null } = request.body;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const profile = await saveAvatarProfile(token, bio, imageUrl);
-
-  if (!profile) {
-    return reply.code(403).send({ error: "failed to save profile" });
-  }
-
-  return reply.send({ profile });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/avatar/ban/status", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const ban = await getActiveBan(token);
-  return reply.send({ banned: !!ban, ban });
-});
-
-app.post<{ Body: { token?: string; accountId?: string; reason?: string; expiresAt?: string } }>("/api/admin/ban", async (request, reply) => {
-  const { token, accountId, reason, expiresAt = null } = request.body;
-
-  if (!token || !accountId || !reason) {
-    return reply.code(400).send({ error: "token, accountId, and reason are required" });
-  }
-
-  const ban = await banAccount(token, accountId, reason, expiresAt ?? null);
-
-  if (!ban) {
-    return reply.code(403).send({ error: "ban failed" });
-  }
-
-  await appendAuditLog(token, "admin.ban", "account", accountId, reason, null);
-  return reply.send({ ban });
-});
-
-app.delete<{ Body: { token?: string; accountId?: string } }>("/api/admin/ban", async (request, reply) => {
-  const { token, accountId } = request.body;
-
-  if (!token || !accountId) {
-    return reply.code(400).send({ error: "token and accountId are required" });
-  }
-
-  const unbanned = await unbanAccount(token, accountId);
-
-  if (!unbanned) {
-    return reply.code(404).send({ error: "ban not found" });
-  }
-
-  await appendAuditLog(token, "admin.unban", "account", accountId, "unbanned", null);
-  return reply.send({ ok: true });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/regions/notices", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const notices = await listRegionNotices(token);
-  return reply.send({ notices });
-});
-
-app.post<{ Body: { token?: string; message?: string; parcelId?: string } }>("/api/regions/notices", async (request, reply) => {
-  const { token, message, parcelId = null } = request.body;
-
-  if (!token || !message) {
-    return reply.code(400).send({ error: "token and message are required" });
-  }
-
-  const notice = await createRegionNotice(token, message, parcelId);
-
-  if (!notice) {
-    return reply.code(403).send({ error: "failed to create notice" });
-  }
-
-  return reply.send({ notice });
-});
-
-app.delete<{ Body: { token?: string; noticeId?: string } }>("/api/regions/notices", async (request, reply) => {
-  const { token, noticeId } = request.body;
-
-  if (!token || !noticeId) {
-    return reply.code(400).send({ error: "token and noticeId are required" });
-  }
-
-  const deleted = await deleteRegionNotice(token, noticeId);
-
-  if (!deleted) {
-    return reply.code(404).send({ error: "notice not found" });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.get<{ Params: { objectId: string } }>("/api/objects/:objectId/permissions", async (request, reply) => {
-  const perms = await getObjectPermissions(request.params.objectId);
-  return reply.send({ permissions: perms ?? { objectId: request.params.objectId, allowCopy: true, allowModify: true, allowTransfer: true } });
-});
-
-app.patch<{ Params: { objectId: string }; Body: { token?: string; allowCopy?: boolean; allowModify?: boolean; allowTransfer?: boolean } }>("/api/objects/:objectId/permissions", async (request, reply) => {
-  const { token, allowCopy = true, allowModify = true, allowTransfer = true } = request.body;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const saved = await saveObjectPermissions(token, request.params.objectId, allowCopy, allowModify, allowTransfer);
-
-  if (!saved) {
-    return reply.code(403).send({ error: "failed to save permissions" });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.get<{ Params: { objectId: string }; Querystring: { token?: string } }>("/api/objects/:objectId/scripts", async (request, reply) => {
-  const scripts = await listObjectScripts(request.params.objectId);
-  return reply.send({ scripts });
-});
-
-app.post<{ Body: { token?: string; objectId?: string; scriptName?: string; scriptCode?: string } }>("/api/objects/scripts", async (request, reply) => {
-  const { token, objectId, scriptName, scriptCode = "" } = request.body;
-
-  if (!token || !objectId || !scriptName) {
-    return reply.code(400).send({ error: "token, objectId, and scriptName are required" });
-  }
-
-  const script = await createObjectScript(token, objectId, scriptName, scriptCode);
-
-  if (!script) {
-    return reply.code(403).send({ error: "failed to create script" });
-  }
-
-  return reply.send({ script });
-});
-
-app.patch<{ Body: { token?: string; scriptId?: string; scriptCode?: string; enabled?: boolean } }>("/api/objects/scripts", async (request, reply) => {
-  const { token, scriptId, scriptCode, enabled = true } = request.body;
-
-  if (!token || !scriptId) {
-    return reply.code(400).send({ error: "token and scriptId are required" });
-  }
-
-  const script = await updateObjectScript(token, scriptId, scriptCode ?? "", enabled);
-
-  if (!script) {
-    return reply.code(403).send({ error: "failed to update script" });
-  }
-
-  return reply.send({ script });
-});
-
-app.delete<{ Body: { token?: string; scriptId?: string } }>("/api/objects/scripts", async (request, reply) => {
-  const { token, scriptId } = request.body;
-
-  if (!token || !scriptId) {
-    return reply.code(400).send({ error: "token and scriptId are required" });
-  }
-
-  const deleted = await deleteObjectScript(token, scriptId);
-
-  if (!deleted) {
-    return reply.code(404).send({ error: "script not found" });
-  }
-
-  return reply.send({ ok: true });
-});
-
-app.get<{ Querystring: { token?: string } }>("/api/assets", async (request, reply) => {
-  const token = request.query.token;
-
-  if (!token) {
-    return reply.code(400).send({ error: "token is required" });
-  }
-
-  const assets = await listAssets(token);
-  return reply.send({ assets });
-});
-
-app.post<{ Body: { token?: string; name?: string; description?: string; assetType?: string; url?: string; thumbnailUrl?: string; price?: number } }>("/api/assets", async (request, reply) => {
-  const { token, name, description = "", assetType, url, thumbnailUrl = null, price = 0 } = request.body;
-
-  if (!token || !name || !assetType || !url) {
-    return reply.code(400).send({ error: "token, name, assetType, and url are required" });
-  }
-
-  const asset = await createAsset(token, name, description, assetType, url, thumbnailUrl, price);
-
-  if (!asset) {
-    return reply.code(403).send({ error: "failed to create asset" });
-  }
-
-  return reply.send({ asset });
-});
-
-app.delete<{ Body: { token?: string; assetId?: string } }>("/api/assets", async (request, reply) => {
-  const { token, assetId } = request.body;
-
-  if (!token || !assetId) {
-    return reply.code(400).send({ error: "token and assetId are required" });
-  }
-
-  const deleted = await deleteAsset(token, assetId);
-
-  if (!deleted) {
-    return reply.code(404).send({ error: "asset not found" });
-  }
-
-  return reply.send({ ok: true });
-});
+// ── WebSocket ───────────────────────────────────────────────────────────────
 
 app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) => {
   const { token, lastSequence } = request.query as { token?: string; lastSequence?: string };
@@ -991,12 +239,17 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
 
   joinRegion(regionId, session.avatarId, socket);
 
+  // Achievement + presence hooks on WebSocket join
+  onRegionVisited(session.accountId, regionId);
+  setPresenceOnLogin(session.accountId, session.displayName, regionId);
+
   socket.send(JSON.stringify({
     type: "snapshot",
     sequence: getRegionSequence(regionId),
     avatars: getRegionPopulation(regionId),
     objects: await listRegionObjects(regionId),
-    parcels: await listParcels(regionId)
+    parcels: await listParcels(regionId),
+    chatHistory: getChatHistory(regionId)
   }));
 
   if (lastSequence) {
@@ -1006,6 +259,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
       avatarId: "system",
       displayName: "System",
       message: `Resynced after sequence ${lastSequence}.`,
+      channel: "region",
       createdAt: new Date().toISOString()
     }));
   }
@@ -1024,28 +278,212 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
         throw new Error("Invalid command payload");
       }
 
-      if (message.type === "move") {
-        const avatar = await moveAvatar(
-          token,
-          Math.max(-28, Math.min(28, message.x)),
-          Math.max(-28, Math.min(28, message.z)),
-          Math.max(0, Math.min(4, message.y ?? 0))
-        );
+      if (message.type === "move" && !sittingAvatars.has(session.avatarId)) {
+        const clampedX = Math.max(-28, Math.min(28, message.x));
+        const clampedZ = Math.max(-28, Math.min(28, message.z));
+        const clampedY = Math.max(0, Math.min(4, message.y ?? 0));
+
+        // Check home privacy before allowing move into a home parcel
+        const parcels = await listParcels(regionId);
+        const homeOwnerInfo = findHomeParcelOwner(parcels, clampedX, clampedZ);
+
+        if (homeOwnerInfo && homeOwnerInfo.ownerAccountId !== session.accountId) {
+          const access = await checkHomeAccess(session.accountId, homeOwnerInfo.ownerAccountId, token);
+          if (!access.allowed) {
+            socket.send(JSON.stringify({
+              type: "chat",
+              sequence: nextRegionSequence(regionId),
+              avatarId: "system",
+              displayName: "System",
+              message: access.reason ?? "You cannot enter this home.",
+              channel: "region",
+              createdAt: new Date().toISOString()
+            }));
+            return;
+          }
+        }
+
+        const avatar = await moveAvatar(token, clampedX, clampedZ, clampedY);
 
         if (avatar) {
           broadcastRegion(regionId, { type: "avatar:moved", sequence: nextRegionSequence(regionId), avatar });
+          updateLastActivity(session.accountId);
+
+          // Doorbell notification
+          if (homeOwnerInfo && shouldRingDoorbell(session.accountId, homeOwnerInfo.ownerAccountId)) {
+            broadcastRegion(regionId, {
+              type: "home:doorbell",
+              sequence: nextRegionSequence(regionId),
+              visitorAvatarId: session.avatarId,
+              visitorDisplayName: session.displayName,
+              homeOwnerAccountId: homeOwnerInfo.ownerAccountId,
+              parcelName: homeOwnerInfo.parcelName
+            });
+          }
         }
       }
 
       if (message.type === "chat") {
+        const entry = handleChatMessage(session, message.message);
         broadcastRegion(regionId, {
           type: "chat",
           sequence: nextRegionSequence(regionId),
+          avatarId: entry.avatarId,
+          displayName: entry.displayName,
+          message: entry.message,
+          channel: entry.channel,
+          createdAt: entry.createdAt
+        });
+        updateLastActivity(session.accountId);
+        onChatMessage(session.accountId);
+      }
+
+      if (message.type === "whisper") {
+        const whisperResult = handleWhisper(session, message.targetDisplayName, message.message);
+        if (whisperResult) {
+          const whisperEvent = {
+            type: "whisper" as const,
+            sequence: nextRegionSequence(regionId),
+            fromAvatarId: whisperResult.fromSession.avatarId,
+            fromDisplayName: whisperResult.fromSession.displayName,
+            toAvatarId: whisperResult.toSession.avatarId,
+            toDisplayName: whisperResult.toSession.displayName,
+            message: whisperResult.message,
+            createdAt: new Date().toISOString()
+          };
+          sendToAvatar(regionId, whisperResult.fromSession.avatarId, whisperEvent);
+          sendToAvatar(regionId, whisperResult.toSession.avatarId, whisperEvent);
+        } else {
+          socket.send(JSON.stringify({
+            type: "chat",
+            sequence: nextRegionSequence(regionId),
+            avatarId: "system",
+            displayName: "System",
+            message: `User "${message.targetDisplayName}" not found in this region.`,
+            channel: "region",
+            createdAt: new Date().toISOString()
+          }));
+        }
+      }
+
+      if (message.type === "radio:tune") {
+        const station = handleRadioTune(token, message.stationId);
+        if (station) {
+          broadcastRegion(regionId, {
+            type: "radio:changed",
+            sequence: nextRegionSequence(regionId),
+            stationId: station.id,
+            stationName: station.name,
+            trackName: station.tracks[station.currentTrack],
+            currentTrack: station.currentTrack
+          });
+        }
+      }
+
+      if (message.type === "radio:skip") {
+        const station = handleRadioSkip(token);
+        if (station) {
+          broadcastRegion(regionId, {
+            type: "radio:changed",
+            sequence: nextRegionSequence(regionId),
+            stationId: station.id,
+            stationName: station.name,
+            trackName: station.tracks[station.currentTrack],
+            currentTrack: station.currentTrack
+          });
+        }
+      }
+
+      if (message.type === "emote") {
+        const result = handleEmote(token, message.emoteName);
+        if (result) {
+          broadcastRegion(regionId, {
+            type: "avatar:emote",
+            sequence: nextRegionSequence(regionId),
+            avatarId: result.avatarId,
+            displayName: result.displayName,
+            emoteName: result.emote.name,
+            duration_ms: result.emote.duration_ms
+          });
+
+          // Check for emote combos
+          const combo = recordEmote(session.avatarId, message.emoteName, regionId);
+          if (combo) {
+            broadcastRegion(regionId, {
+              type: "emote:combo",
+              sequence: nextRegionSequence(regionId),
+              avatarIds: combo.avatarIds,
+              comboName: combo.comboName,
+              position: combo.position
+            });
+          }
+        }
+      }
+
+      if (message.type === "typing") {
+        broadcastRegion(regionId, {
+          type: "avatar:typing",
           avatarId: session.avatarId,
           displayName: session.displayName,
-          message: message.message.slice(0, 180),
-          createdAt: new Date().toISOString()
-        });
+          typing: message.typing
+        } as unknown as import("./contracts.js").RegionEvent, socket);
+      }
+
+      if (message.type === "sit") {
+        const objects = await listRegionObjects(regionId);
+        const target = objects.find((obj) => obj.id === message.objectId);
+
+        if (target && (target.asset.includes("bench") || target.asset.includes("chair"))) {
+          sittingAvatars.set(session.avatarId, message.objectId);
+          const sitPosition = { x: target.x, y: target.y + 0.5, z: target.z };
+          const avatar = await moveAvatar(token, sitPosition.x, sitPosition.z, sitPosition.y);
+
+          if (avatar) {
+            broadcastRegion(regionId, {
+              type: "avatar:sit",
+              sequence: nextRegionSequence(regionId),
+              avatarId: session.avatarId,
+              objectId: message.objectId,
+              position: sitPosition
+            });
+          }
+        }
+      }
+
+      if (message.type === "stand") {
+        if (sittingAvatars.has(session.avatarId)) {
+          sittingAvatars.delete(session.avatarId);
+          broadcastRegion(regionId, {
+            type: "avatar:stand",
+            sequence: nextRegionSequence(regionId),
+            avatarId: session.avatarId
+          });
+        }
+      }
+
+      if (message.type === "group_chat") {
+        const { getGroupMembers, listRegions, getRegionPopulation } = await import("./world/store.js");
+        const members = await getGroupMembers(token, message.groupId);
+        if (members.length > 0 && members.some((m) => m.accountId === session.accountId)) {
+          const memberAccountIds = new Set(members.map((m) => m.accountId));
+          const onlineAvatarIds = new Set<string>();
+          for (const region of listRegions()) {
+            for (const avatar of getRegionPopulation(region.id)) {
+              if (memberAccountIds.has(avatar.accountId)) {
+                onlineAvatarIds.add(avatar.avatarId);
+              }
+            }
+          }
+          sendToAvatars(onlineAvatarIds, {
+            type: "group:chat",
+            sequence: nextRegionSequence(regionId),
+            groupId: message.groupId,
+            avatarId: session.avatarId,
+            displayName: session.displayName,
+            message: message.message.slice(0, 180),
+            createdAt: new Date().toISOString()
+          });
+        }
       }
     } catch {
       socket.send(JSON.stringify({
@@ -1054,6 +492,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
         avatarId: "system",
         displayName: "System",
         message: "Ignored malformed event payload.",
+        channel: "region",
         createdAt: new Date().toISOString()
       }));
     }
@@ -1061,6 +500,7 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
 
   socket.on("close", () => {
     leaveRegion(regionId, session.avatarId);
+    sittingAvatars.delete(session.avatarId);
     const removed = removeAvatar(token);
 
     if (removed) {
@@ -1070,6 +510,8 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
         avatarId: removed.avatarId
       });
     }
+
+    setPresenceOnDisconnect(session.accountId);
   });
 });
 

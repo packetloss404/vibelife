@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(wc -l /d/projects/vibelife/server/*.js /d/projects/vibelife/client/*.js /d/projects/vibelife/shared/*.js 2>/dev/null; echo \"---\"; find /d/projects/vibelife -name \"*.js\" -o -name \"*.ts\" -o -name \"*.html\" -o -name \"*.css\" -o -name \"*.json\" | head -100)",
+      "Bash(npx tsc:*)",
+      "Bash(cd D:/projects/vibelife && cp D:/projects/vibelife/.claude/worktrees/agent-a973a811/native-client/godot/scripts/build/grid_overlay.gd native-client/godot/scripts/build/grid_overlay.gd && cp D:/projects/vibelife/.claude/worktrees/agent-a973a811/native-client/godot/scripts/build/undo_manager.gd native-client/godot/scripts/build/undo_manager.gd && cp D:/projects/vibelife/.claude/worktrees/agent-a973a811/native-client/godot/scripts/ui/chat_controller.gd native-client/godot/scripts/ui/chat_controller.gd)",
+      "Bash(find D:/projects/vibelife/.claude/worktrees -maxdepth 4 -name \"*.ts\" -path \"*/routes/*\" 2>/dev/null | head -20)",
+      "Bash(for d:*)",
+      "Bash(do echo:*)",
+      "Read(//d/projects/vibelife/.claude/worktrees/agent-a973a811/.claude/worktrees/agent-afd91e3c/**)",
+      "Bash(done)",
+      "Bash(cd /d/projects/vibelife && npx vitest run 2>&1)",
+      "Bash(cd D:/projects/vibelife && npx tsx src/server.ts)",
+      "Bash(sleep 2 && curl -s http://127.0.0.1:3000/api/regions)",
+      "Bash(cd D:/projects/vibelife && npx vitest run 2>&1 | tail -20)",
+      "Bash(sleep 3 && curl -s http://127.0.0.1:3000/api/regions | python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(f'{len\\(data[\\\\\"regions\\\\\"]\\)} regions'\\); [print\\(f'  - {r[\\\\\"name\\\\\"]} \\({r[\\\\\"id\\\\\"]}\\) biome:{\\\\\"yes\\\\\" if \\\\\"biome\\\\\" in r else \\\\\"no\\\\\"}'\\) for r in data['regions']]\" 2>/dev/null || sleep 2 && curl -s http://127.0.0.1:3000/api/regions 2>&1 | head -3)",
+      "Bash(sleep 4 && curl -s http://127.0.0.1:3000/api/regions | python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'{len\\(d[\\\\\"regions\\\\\"]\\)} regions up'\\)\" 2>/dev/null || echo \"waiting...\" && sleep 2 && curl -s http://127.0.0.1:3000/api/health 2>&1)",
+      "Bash(taskkill //F //FI \"IMAGENAME eq node.exe\" 2>/dev/null; sleep 2; echo \"Processes killed\")",
+      "Bash(npx tsx:*)",
+      "Bash(curl -s http://localhost:3000/api/achievements | head -200 && echo \"---\" && curl -s http://localhost:3000/api/events/upcoming && echo \"---\" && curl -s \"http://localhost:3000/api/storefronts\" && echo \"---\" && curl -s \"http://localhost:3000/api/homes/featured\")"
+    ]
+  }
+}
