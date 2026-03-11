@@ -109,11 +109,11 @@ func has_local_avatar() -> bool:
 func _make_avatar_node(state: Dictionary) -> Node3D:
 	var imported = main.objects.instantiate_imported_asset("/assets/models/avatar-runner.gltf")
 	if imported:
-		var label := Label3D.new()
-		label.text = state.displayName
-		label.position.y = 3.4
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		imported.add_child(label)
+		var name_tag := Label3D.new()
+		name_tag.text = state.displayName
+		name_tag.position.y = 3.4
+		name_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		imported.add_child(name_tag)
 		var animation_player := _find_animation_player(imported)
 		if animation_player and animation_player.has_animation("Idle"):
 			animation_player.play("Idle")
@@ -135,11 +135,11 @@ func _make_avatar_node(state: Dictionary) -> Node3D:
 	head.position.y = 2.75
 	root.add_child(head)
 
-	var label := Label3D.new()
-	label.text = state.displayName
-	label.position.y = 3.4
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	root.add_child(label)
+	var fallback_tag := Label3D.new()
+	fallback_tag.text = state.displayName
+	fallback_tag.position.y = 3.4
+	fallback_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	root.add_child(fallback_tag)
 	return root
 
 
@@ -148,10 +148,10 @@ func _update_avatar_node(node: Node3D, state: Dictionary) -> void:
 	node.position = Vector3(state.x, state.y, state.z)
 	avatar_previous_positions[state.avatarId] = node.position
 	var appearance: Dictionary = state.get("appearance", {})
-	var label: Label3D = null
+	var existing_tag: Label3D = null
 	for child in node.get_children():
 		if child is Label3D:
-			label = child
+			existing_tag = child
 		if child is MeshInstance3D:
 			var mesh_child := child as MeshInstance3D
 			var material := StandardMaterial3D.new()
@@ -160,8 +160,8 @@ func _update_avatar_node(node: Node3D, state: Dictionary) -> void:
 			else:
 				material.albedo_color = Color(appearance.get("bodyColor", "#8cd8ff"))
 			mesh_child.set_surface_override_material(0, material)
-	if label:
-		label.text = state.displayName
+	if existing_tag:
+		existing_tag.text = state.displayName
 	_update_avatar_animation(node, previous.distance_to(node.position))
 
 
