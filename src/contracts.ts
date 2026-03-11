@@ -88,6 +88,16 @@ export type RegionEvent =
   | { type: "object:updated"; sequence: number; object: RegionObjectContract }
   | { type: "object:deleted"; sequence: number; objectId: string }
   | { type: "parcel:updated"; sequence: number; parcel: ParcelContract }
+  | { type: "media:created"; sequence: number; media: MediaObjectContract }
+  | { type: "media:updated"; sequence: number; media: MediaObjectContract }
+  | { type: "media:removed"; sequence: number; objectId: string }
+  | { type: "pet:summoned"; sequence: number; petState: PetStateContract }
+  | { type: "pet:dismissed"; sequence: number; petId: string }
+  | { type: "pet:trick"; sequence: number; petId: string; trick: string; ownerAvatarId: string }
+  | { type: "pet:state_updated"; sequence: number; petState: PetStateContract }
+  | { type: "voice:participant_joined"; sequence: number; participant: VoiceParticipantContract }
+  | { type: "voice:participant_left"; sequence: number; accountId: string; regionId: string }
+  | { type: "voice:speaking_changed"; sequence: number; accountId: string; speaking: boolean }
   | { type: "radio:changed"; sequence: number; stationId: string; stationName: string; trackName: string; currentTrack: number }
   | { type: "avatar:emote"; sequence: number; avatarId: string; displayName: string; emoteName: string; duration_ms: number }
   | { type: "emote:combo"; sequence: number; avatarIds: string[]; comboName: string; position: { x: number; y: number; z: number } }
@@ -422,4 +432,112 @@ export type DailyChallengeContract = {
   completed: boolean;
   xpReward: number;
   expiresAt: string;
+};
+
+// ── Tier 3 Contracts ────────────────────────────────────────────────────────
+
+export type PetContract = {
+  id: string;
+  ownerAccountId: string;
+  name: string;
+  species: "cat" | "dog" | "bird" | "bunny" | "fox" | "dragon" | "slime" | "owl";
+  rarity: "common" | "uncommon" | "rare" | "legendary";
+  color: string;
+  accentColor: string;
+  accessory: "none" | "bow" | "hat" | "scarf" | "collar" | "wings" | "crown";
+  happiness: number;
+  energy: number;
+  tricks: string[];
+  level: number;
+  xp: number;
+  adoptedAt: string;
+  lastFedAt: string;
+  lastPlayedAt: string;
+};
+
+export type PetStateContract = {
+  petId: string;
+  regionId: string;
+  x: number;
+  y: number;
+  z: number;
+  animation: "idle" | "walk" | "run" | "sit" | "trick" | "sleep" | "eat" | "play";
+  followingOwner: boolean;
+  targetX: number;
+  targetZ: number;
+};
+
+export type PhotoCommentContract = {
+  id: string;
+  accountId: string;
+  displayName: string;
+  text: string;
+  createdAt: string;
+};
+
+export type PhotoContract = {
+  id: string;
+  accountId: string;
+  displayName: string;
+  regionId: string;
+  title: string;
+  description: string;
+  filter: "none" | "vintage" | "noir" | "warm" | "cool" | "dreamy" | "pixel" | "posterize";
+  width: number;
+  height: number;
+  thumbnailData: string;
+  position: { x: number; y: number; z: number };
+  cameraRotation: { x: number; y: number };
+  likes: string[];
+  comments: PhotoCommentContract[];
+  visibility: "public" | "friends" | "private";
+  createdAt: string;
+};
+
+export type MediaObjectContract = {
+  id: string;
+  objectId: string;
+  mediaType: "photo_frame" | "video_screen" | "projection" | "billboard" | "slideshow";
+  config: Record<string, unknown>;
+  regionId: string;
+  ownerAccountId: string;
+  createdAt: string;
+};
+
+export type VoiceParticipantContract = {
+  accountId: string;
+  displayName: string;
+  regionId: string;
+  muted: boolean;
+  deafened: boolean;
+  speaking: boolean;
+  joinedAt: string;
+};
+
+export type VoiceChannelContract = {
+  regionId: string;
+  participants: VoiceParticipantContract[];
+};
+
+export type SeasonContract = "spring" | "summer" | "autumn" | "winter";
+
+export type SeasonalItemContract = {
+  id: string;
+  name: string;
+  description: string;
+  season: SeasonContract;
+  holiday?: string;
+  rarity: "common" | "uncommon" | "rare" | "legendary";
+  type: "decoration" | "wearable" | "emote" | "pet_accessory" | "consumable";
+  available: boolean;
+  expiresAt?: string;
+};
+
+export type SeasonalThemeContract = {
+  season: SeasonContract;
+  fogColor: string;
+  sunColor: string;
+  skyTint: string;
+  ambientParticles: string;
+  ambientIntensity: number;
 };

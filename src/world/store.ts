@@ -289,3 +289,157 @@ export {
   onFriendAdded,
   onRegionVisited,
 } from "./achievement-service.js";
+
+// ── Visual Scripting ──────────────────────────────────────────────────────
+export {
+  createScript,
+  getScript,
+  updateScript,
+  deleteScript,
+  listScriptsForParcel,
+  listScriptsForRegion,
+  toggleScript,
+  createTriggerZone,
+  deleteTriggerZone,
+  listTriggerZones,
+  checkTriggerZoneEntry,
+  executeScript,
+} from "./script-service.js";
+export type {
+  VisualScript,
+  ScriptNode,
+  ScriptNodeType,
+  NodeConnection,
+  TriggerZone,
+  TriggerZoneShape,
+  TriggerEvent,
+  ScriptActionResult,
+  ScriptState,
+} from "./script-service.js";
+
+// ── Interactive Objects ───────────────────────────────────────────────────
+export {
+  registerInteractive,
+  removeInteractive,
+  getInteractive,
+  getInteractiveByObjectId,
+  listInteractives,
+  getInteractivesByRegion,
+  interactWith,
+  updateInteractiveState,
+} from "./interactive-service.js";
+export type {
+  InteractiveObject,
+  InteractionType,
+  DoorConfig,
+  ElevatorConfig,
+  PlatformConfig,
+  ButtonConfig,
+} from "./interactive-service.js";
+
+// ── Voice Chat ────────────────────────────────────────────────────────────
+export {
+  joinVoiceChannel,
+  leaveVoiceChannel,
+  setVoiceMuted,
+  setVoiceDeafened,
+  updateVoicePosition,
+  getVoiceParticipants,
+  calculateSpatialVolume,
+  getICEServers,
+  cleanupVoiceForAccount,
+} from "./voice-service.js";
+export type { VoiceParticipant, VoiceChannel, ICEServer } from "./voice-service.js";
+
+// ── Voice Indicators ──────────────────────────────────────────────────────
+export {
+  setSpeaking,
+  getSpeakingAvatars,
+  removeAccountFromVoice,
+  clearRegionVoice,
+} from "./voice-indicator-service.js";
+export type { SpeakingState } from "./voice-indicator-service.js";
+
+// ── Pets ──────────────────────────────────────────────────────────────────
+export {
+  adoptPet,
+  listPets as listUserPets,
+  getActivePet,
+  summonPet,
+  dismissPet,
+  feedPet,
+  playWithPet,
+  petPet,
+  renamePet,
+  customizePet,
+  performTrick,
+  updatePetPosition,
+  getPetStates,
+  levelUpCheck,
+} from "./pet-service.js";
+export type {
+  Pet,
+  PetState,
+  PetSpecies,
+  PetRarity,
+  PetTrick,
+  PetAccessory,
+  PetAnimation,
+} from "./pet-service.js";
+
+// ── Photography ──────────────────────────────────────────────────────────
+export {
+  takePhoto,
+  listPhotos,
+  getPhoto,
+  deletePhoto,
+  likePhoto,
+  commentOnPhoto,
+  getPhotoFeed,
+  getPlayerGallery,
+  getFeaturedPhotos,
+} from "./photo-service.js";
+export type { Photo, PhotoFilter, PhotoComment } from "./photo-service.js";
+
+// ── Placeable Media ──────────────────────────────────────────────────────
+export {
+  validateMediaConfig,
+  createMediaObject,
+  updateMediaConfig,
+  removeMediaObject,
+  getMediaObject,
+  listMediaObjects,
+} from "./media-service.js";
+export type {
+  MediaType,
+  MediaObject,
+  PhotoFrameConfig,
+  VideoScreenConfig,
+  BillboardConfig,
+  SlideshowConfig,
+} from "./media-service.js";
+
+// ── Seasonal Content ─────────────────────────────────────────────────────
+export {
+  getCurrentSeason,
+  getActiveHolidays,
+  getSeasonalItems,
+  collectSeasonalItem,
+  getSeasonalProgress,
+  placeSeasonalDecoration,
+  removeSeasonalDecorations,
+  getSeasonalDecorations,
+  getSeasonalAchievements,
+  checkSeasonalAchievements,
+  getSeasonalLeaderboard,
+  getRegionSeasonalTheme,
+} from "./seasonal-service.js";
+export type {
+  Season,
+  Holiday,
+  SeasonalItem,
+  SeasonalDecoration,
+  SeasonalAchievement,
+  PlayerSeasonalProgress,
+  SeasonalTheme,
+} from "./seasonal-service.js";

@@ -57,6 +57,16 @@ import {
 import { postActivity } from "./world/activity-service.js";
 import { findHomeParcelOwner, shouldRingDoorbell, checkHomeAccess } from "./world/home-service.js";
 import { onObjectPlaced, onChatMessage, onFriendAdded, onRegionVisited } from "./world/achievement-service.js";
+import scriptsPlugin from "./routes/scripts.js";
+import interactivesRoutes from "./routes/interactives.js";
+import voiceRoutes from "./routes/voice.js";
+import { registerVoiceStatusRoutes } from "./routes/voice-status.js";
+import petRoutes from "./routes/pets.js";
+import photosRoutes from "./routes/photos.js";
+import mediaRoutes from "./routes/media.js";
+import seasonalRoutes from "./routes/seasonal.js";
+import { cleanupVoiceForAccount } from "./world/voice-service.js";
+import { removeAccountFromVoice } from "./world/voice-indicator-service.js";
 import {
   createEvent,
   listEvents,
@@ -144,6 +154,16 @@ await app.register(homeRoutes);
 await app.register(homeRatingRoutes);
 await registerStorefrontRoutes(app);
 await registerAchievementRoutes(app);
+
+// ── Tier 3 Route Plugins ──────────────────────────────────────────────────
+await app.register(scriptsPlugin);
+await app.register(interactivesRoutes);
+await app.register(voiceRoutes);
+registerVoiceStatusRoutes(app);
+await app.register(petRoutes);
+await app.register(photosRoutes);
+await app.register(mediaRoutes);
+await app.register(seasonalRoutes);
 
 // ── Events System ──────────────────────────────────────────────────────────
 
@@ -512,6 +532,10 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
     }
 
     setPresenceOnDisconnect(session.accountId);
+    const voiceRegions = cleanupVoiceForAccount(session.accountId);
+    for (const vr of voiceRegions) {
+      removeAccountFromVoice(session.accountId, vr.regionId);
+    }
   });
 });
 
