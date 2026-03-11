@@ -491,10 +491,11 @@ app.get("/ws/regions/:regionId", { websocket: true }, async (socket, request) =>
       if (message.type === "typing") {
         broadcastRegion(regionId, {
           type: "avatar:typing",
+          sequence: nextRegionSequence(regionId),
           avatarId: session.avatarId,
           displayName: session.displayName,
           typing: message.typing
-        } as unknown as import("./contracts.js").RegionEvent, socket);
+        }, socket);
       }
 
       if (message.type === "sit") {

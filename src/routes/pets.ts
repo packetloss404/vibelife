@@ -91,8 +91,7 @@ export default async function petRoutes(app: FastifyInstance) {
         broadcastRegion(session.regionId, {
           type: "pet:summoned",
           sequence: nextRegionSequence(session.regionId),
-          pet: result.pet,
-          state: result.state
+          petState: result.state
         } as any);
       }
 
@@ -209,7 +208,7 @@ export default async function petRoutes(app: FastifyInstance) {
           sequence: nextRegionSequence(session.regionId),
           petId: request.params.id,
           trick,
-          petName: result.pet.name
+          ownerAvatarId: session.avatarId
         } as any);
       }
 
@@ -263,8 +262,7 @@ export default async function petRoutes(app: FastifyInstance) {
           broadcastRegion(session.regionId, {
             type: "pet:state_updated",
             sequence: nextRegionSequence(session.regionId),
-            pet: activePetData.pet,
-            state: activePetData.state
+            petState: activePetData.state
           } as any);
         }
       }

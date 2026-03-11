@@ -184,6 +184,16 @@ export async function handlePlayerDeath(
   }
 
   broadcastRegion(regionId, {
+    type: "combat:death",
+    sequence: nextRegionSequence(regionId),
+    accountId,
+    killedBy: "enemy",
+    respawnX,
+    respawnY,
+    respawnZ
+  });
+
+  broadcastRegion(regionId, {
     type: "combat:respawn",
     sequence: nextRegionSequence(regionId),
     accountId,

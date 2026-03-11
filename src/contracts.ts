@@ -83,6 +83,7 @@ export type RegionEvent =
   | { type: "avatar:moved"; sequence: number; avatar: AvatarStateContract }
   | { type: "avatar:updated"; sequence: number; avatar: AvatarStateContract }
   | { type: "avatar:left"; sequence: number; avatarId: string }
+  | { type: "avatar:typing"; sequence: number; avatarId: string; displayName: string; typing: boolean }
   | { type: "chat"; sequence: number; avatarId: string; displayName: string; message: string; channel: ChatChannel; createdAt: string }
   | { type: "chat:history"; sequence: number; messages: ChatHistoryEntry[] }
   | { type: "whisper"; sequence: number; fromAvatarId: string; fromDisplayName: string; toAvatarId: string; toDisplayName: string; message: string; createdAt: string }

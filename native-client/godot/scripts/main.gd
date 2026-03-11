@@ -113,6 +113,26 @@ var build_assets_full: Array = []
 var clipboard: Array = []
 var session_flow: SessionCoordinator
 
+# Tier 3 modules
+var chat_ctrl: ChatController
+var social_mgr: SocialManager
+var achievement_mgr: AchievementManager
+var guild_mgr: GuildManager
+var marketplace_mgr: MarketplaceManager
+var pet_mgr: PetManager
+var media_mgr: MediaManager
+var seasonal_mgr: SeasonalManager
+var script_mgr: ScriptManager
+var home_mgr: HomeManager
+var interactive_mgr: InteractiveManager
+var event_mgr: EventManager
+var camera_mgr: CameraManager
+var home_rating: HomeRatingPanel
+var storefront_mgr: StorefrontManager
+var spatial_audio_mgr: SpatialAudio
+var grid_overlay: GridOverlay
+var undo_mgr: UndoManager
+
 # Voxel MMORPG modules
 var voxel_mgr: VoxelManager
 var combat_hud: CombatHUD
@@ -180,6 +200,44 @@ func _ready() -> void:
 	# Blueprints
 	blueprint_mgr = BlueprintManager.new()
 	blueprint_mgr.init(self)
+
+	# Tier 3 modules
+	chat_ctrl = ChatController.new()
+	chat_ctrl.init(self)
+	social_mgr = SocialManager.new()
+	social_mgr.init(self)
+	achievement_mgr = AchievementManager.new()
+	achievement_mgr.init(self)
+	guild_mgr = GuildManager.new()
+	guild_mgr.init(self)
+	marketplace_mgr = MarketplaceManager.new()
+	marketplace_mgr.init(self)
+	pet_mgr = PetManager.new()
+	pet_mgr.init(self)
+	media_mgr = MediaManager.new()
+	media_mgr.init(self)
+	seasonal_mgr = SeasonalManager.new()
+	seasonal_mgr.init(self)
+	script_mgr = ScriptManager.new()
+	script_mgr.init(self)
+	home_mgr = HomeManager.new()
+	home_mgr.init(self)
+	interactive_mgr = InteractiveManager.new()
+	interactive_mgr.init(self)
+	event_mgr = EventManager.new()
+	event_mgr.init(self)
+	camera_mgr = CameraManager.new()
+	camera_mgr.init(self)
+	home_rating = HomeRatingPanel.new()
+	home_rating.init(self)
+	storefront_mgr = StorefrontManager.new()
+	storefront_mgr.init(self)
+	spatial_audio_mgr = SpatialAudio.new()
+	spatial_audio_mgr.init(self)
+	grid_overlay = GridOverlay.new()
+	grid_overlay.init(self)
+	undo_mgr = UndoManager.new()
+	undo_mgr.init(self)
 
 	# Session and world streaming coordinator
 	session_flow = SessionCoordinator.new()

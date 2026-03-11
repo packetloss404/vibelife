@@ -7,6 +7,7 @@ import {
   getVoiceParticipants,
 } from "../world/voice-service.js";
 import { getSession } from "../world/store.js";
+import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 /**
  * Voice chat REST routes.
@@ -42,6 +43,20 @@ export default async function voiceRoutes(app: FastifyInstance) {
       return reply.code(409).send({ error: "unable to join voice channel (full or invalid)" });
     }
 
+    broadcastRegion(regionId, {
+      type: "voice:participant_joined",
+      sequence: nextRegionSequence(regionId),
+      participant: {
+        accountId: result.participant.accountId,
+        displayName: result.participant.displayName,
+        regionId: result.participant.regionId,
+        muted: result.participant.muted,
+        deafened: result.participant.deafened,
+        speaking: result.participant.speaking,
+        joinedAt: result.participant.joinedAt,
+      }
+    } as any);
+
     return reply.send({
       channelId: result.channel.id,
       regionId: result.channel.regionId,
@@ -68,6 +83,13 @@ export default async function voiceRoutes(app: FastifyInstance) {
     if (!result) {
       return reply.code(404).send({ error: "not in voice channel" });
     }
+
+    broadcastRegion(regionId, {
+      type: "voice:participant_left",
+      sequence: nextRegionSequence(regionId),
+      accountId: result.accountId,
+      regionId: result.regionId
+    } as any);
 
     return reply.send({ ok: true, accountId: result.accountId, regionId: result.regionId });
   });
