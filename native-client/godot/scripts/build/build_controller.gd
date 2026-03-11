@@ -127,10 +127,10 @@ func handle_build_key(event: InputEventKey) -> void:
 		return
 	# Copy: Ctrl+C
 	if event.ctrl_pressed and event.physical_keycode == KEY_C and not selected_object_id.is_empty() and main.objects.object_nodes.has(selected_object_id):
-		var node = main.objects.object_nodes[selected_object_id]
+		var copy_node = main.objects.object_nodes[selected_object_id]
 		var asset_index = main.build_asset_select.selected
 		var asset_path = main.build_assets[asset_index] if asset_index >= 0 and asset_index < main.build_assets.size() else ""
-		main.clipboard = [{"asset": asset_path, "x": node.position.x, "y": node.position.y, "z": node.position.z, "rotationY": node.rotation.y, "scale": node.scale.x}]
+		main.clipboard = [{"asset": asset_path, "x": copy_node.position.x, "y": copy_node.position.y, "z": copy_node.position.z, "rotationY": copy_node.rotation.y, "scale": copy_node.scale.x}]
 		main.status_label.text = "Copied object to clipboard"
 		return
 	# Paste: Ctrl+V

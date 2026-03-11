@@ -68,7 +68,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func register_tab(tab_name: String, control: Control, icon: String = "") -> void:
+func register_tab(tab_name: String, control: Control, _icon: String = "") -> void:
 	if tabs.has(tab_name):
 		return
 

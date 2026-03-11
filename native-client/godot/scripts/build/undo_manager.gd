@@ -36,13 +36,12 @@ func undo() -> void:
 
 	var action: String = entry.action
 	var object_id: String = entry.object_id
-	var before_state = entry.before_state
-	var after_state = entry.after_state
+	var _before_state = entry.before_state
 
 	match action:
 		"move", "rotate", "scale":
-			if before_state != null:
-				await _apply_object_state(object_id, before_state)
+			if _before_state != null:
+				await _apply_object_state(object_id, _before_state)
 				main.status_label.text = "Undo %s" % action
 		"create":
 			# Undo create = delete the object
@@ -50,8 +49,8 @@ func undo() -> void:
 			main.status_label.text = "Undo create"
 		"delete":
 			# Undo delete = recreate the object
-			if before_state != null:
-				await _recreate_object(before_state)
+			if _before_state != null:
+				await _recreate_object(_before_state)
 				main.status_label.text = "Undo delete"
 
 
@@ -65,18 +64,17 @@ func redo() -> void:
 
 	var action: String = entry.action
 	var object_id: String = entry.object_id
-	var before_state = entry.before_state
-	var after_state = entry.after_state
+	var _after_state = entry.after_state
 
 	match action:
 		"move", "rotate", "scale":
-			if after_state != null:
-				await _apply_object_state(object_id, after_state)
+			if _after_state != null:
+				await _apply_object_state(object_id, _after_state)
 				main.status_label.text = "Redo %s" % action
 		"create":
 			# Redo create = recreate the object
-			if after_state != null:
-				await _recreate_object(after_state)
+			if _after_state != null:
+				await _recreate_object(_after_state)
 				main.status_label.text = "Redo create"
 		"delete":
 			# Redo delete = delete it again
