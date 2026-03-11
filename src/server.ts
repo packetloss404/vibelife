@@ -67,6 +67,12 @@ import mediaRoutes from "./routes/media.js";
 import seasonalRoutes from "./routes/seasonal.js";
 import { cleanupVoiceForAccount } from "./world/voice-service.js";
 import { removeAccountFromVoice } from "./world/voice-indicator-service.js";
+import mobileRoutes from "./routes/mobile.js";
+import creatorToolsRoutes from "./routes/creator-tools.js";
+import { federationRoutes } from "./routes/federation.js";
+import npcRoutes from "./routes/npcs.js";
+import vrRoutes from "./routes/vr.js";
+import { startNpcTickLoop } from "./world/npc-service.js";
 import {
   createEvent,
   listEvents,
@@ -164,6 +170,16 @@ await app.register(petRoutes);
 await app.register(photosRoutes);
 await app.register(mediaRoutes);
 await app.register(seasonalRoutes);
+
+// ── Tier 4 Route Plugins ──────────────────────────────────────────────────
+await app.register(mobileRoutes);
+await app.register(creatorToolsRoutes);
+await app.register(federationRoutes);
+await app.register(npcRoutes);
+await app.register(vrRoutes);
+
+// Start NPC AI tick loop
+startNpcTickLoop();
 
 // ── Events System ──────────────────────────────────────────────────────────
 
