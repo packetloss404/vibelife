@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeLife — Build. Battle. Belong.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+--void:#08080f;--deep:#0c0c18;--surface:#111122;--glass:rgba(17,17,34,.6);
+--border:rgba(255,255,255,.06);--border-l:rgba(255,255,255,.12);
+--text:#e8e8f0;--text2:#8888aa;--text3:#555570;
+--cyan:#22d3ee;--blue:#6bc2ff;--purple:#a78bfa;--magenta:#f472b6;
+--gold:#fbbf24;--red:#f87171;--green:#4ade80;--orange:#fb923c;
+--glow-cyan:0 0 40px rgba(34,211,238,.15);--glow-purple:0 0 40px rgba(167,139,250,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--void);color:var(--text);overflow-x:hidden}
+a{color:var(--cyan);text-decoration:none;transition:.2s}
+a:hover{color:#fff}
+::selection{background:var(--purple);color:#fff}
+
+/* ═══════ NAV ═══════ */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;background:rgba(8,8,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+nav .logo-sm{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.5px}
+nav .logo-sm svg{width:28px;height:28px}
+nav .logo-sm .v{color:var(--cyan)}
+nav .logo-sm .l{color:var(--purple)}
+nav .links{margin-left:auto;display:flex;gap:24px;font-size:13px;font-weight:500}
+nav .links a{color:var(--text2)}nav .links a:hover{color:var(--cyan)}
+.cta-sm{padding:6px 16px;border-radius:6px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:600;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+.cta-sm:hover{color:#000;transform:scale(1.05);box-shadow:var(--glow-cyan)}
+
+/* ═══════ HERO ═══════ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(34,211,238,.06),transparent 70%),radial-gradient(ellipse 60% 50% at 30% 60%,rgba(167,139,250,.05),transparent 60%),radial-gradient(ellipse 50% 40% at 70% 30%,rgba(244,114,182,.04),transparent 60%)}
+.hero canvas{position:absolute;inset:0;z-index:0}
+.hero>*{position:relative;z-index:1}
+
+.logo-main{margin-bottom:32px}
+.logo-main svg{width:280px;height:auto;filter:drop-shadow(0 0 60px rgba(34,211,238,.2)) drop-shadow(0 0 120px rgba(167,139,250,.1))}
+
+.hero h1{font-size:clamp(20px,4vw,28px);font-weight:300;color:var(--text2);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px}
+.hero h1 strong{color:var(--text);font-weight:600}
+.hero .tagline{font-size:clamp(14px,2vw,17px);color:var(--text3);max-width:600px;line-height:1.8;margin-bottom:40px}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.btn-hero{padding:14px 36px;border-radius:8px;font-weight:600;font-size:14px;letter-spacing:.5px;transition:.3s;cursor:pointer;border:none;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;box-shadow:0 4px 30px rgba(34,211,238,.2)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(34,211,238,.35);color:#000}
+.btn-ghost{background:transparent;border:1px solid var(--border-l);color:var(--text);backdrop-filter:blur(8px)}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple);box-shadow:var(--glow-purple)}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);color:var(--text3);font-size:12px;letter-spacing:3px;text-transform:uppercase;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* ═══════ GRID LINES BG ═══════ */
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 70% 50% at 50% 50%,black,transparent)}
+
+/* ═══════ MARQUEE ═══════ */
+.marquee-wrap{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;overflow:hidden;background:var(--deep)}
+.marquee{display:flex;gap:48px;animation:scroll 30s linear infinite;width:max-content;font-size:13px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:2px}
+.marquee span{white-space:nowrap;display:flex;align-items:center;gap:8px}
+.marquee .dot{width:4px;height:4px;border-radius:50%;background:var(--cyan);flex-shrink:0}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ═══════ SPLIT FEATURE ═══════ */
+.split{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;position:relative}
+.split-text{padding:clamp(60px,10vw,120px) clamp(32px,5vw,80px);display:flex;flex-direction:column;justify-content:center}
+.split-visual{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.split-visual::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--void) 0%,transparent 20%)}
+
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--cyan);font-weight:600;margin-bottom:12px}
+.split-text h2{font-size:clamp(28px,4vw,44px);font-weight:700;line-height:1.15;margin-bottom:20px}
+.split-text p{font-size:15px;color:var(--text2);line-height:1.8;max-width:480px;margin-bottom:24px}
+.stat-row{display:flex;gap:32px;margin-top:8px}
+.stat{text-align:left}
+.stat .num{font-size:32px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stat .num.c{color:var(--cyan)}.stat .num.p{color:var(--purple)}.stat .num.g{color:var(--gold)}.stat .num.r{color:var(--red)}.stat .num.gr{color:var(--green)}
+.stat .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* ═══════ VOXEL ASCII ART ═══════ */
+.voxel-art{font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.2;color:var(--cyan);white-space:pre;opacity:.6;padding:40px}
+.voxel-art .stone{color:#808080}.voxel-art .grass{color:#4da060}.voxel-art .gold{color:var(--gold)}.voxel-art .water{color:#3366cc}.voxel-art .crystal{color:#9933e6}
+
+/* ═══════ ENEMY SHOWCASE ═══════ */
+.enemies-strip{display:flex;gap:0;overflow:hidden;background:var(--deep);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.enemy-col{flex:1;padding:48px 32px;text-align:center;position:relative;transition:.4s;cursor:default;border-right:1px solid var(--border)}
+.enemy-col:last-child{border-right:none}
+.enemy-col:hover{background:rgba(255,255,255,.02);flex:1.3}
+.enemy-glyph{font-size:56px;margin-bottom:12px;transition:.3s}
+.enemy-col:hover .enemy-glyph{transform:scale(1.2);filter:drop-shadow(0 0 20px currentColor)}
+.enemy-name{font-weight:700;font-size:16px;margin-bottom:4px}
+.enemy-stats{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);line-height:1.6}
+.enemy-col.slime{color:#33cc33}.enemy-col.skel{color:#e5e0d1}.enemy-col.golem{color:#8b6633}.enemy-col.shadow{color:#9933e6}.enemy-col.drake{color:#cc2614}
+
+/* ═══════ OPEN SOURCE TERMINAL ═══════ */
+.terminal-section{padding:clamp(60px,10vw,120px) clamp(24px,5vw,80px);display:flex;flex-direction:column;align-items:center}
+.terminal{background:#0d0d0d;border:1px solid #333;border-radius:12px;width:100%;max-width:800px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.5)}
+.terminal-bar{height:36px;background:#1a1a1a;display:flex;align-items:center;padding:0 14px;gap:8px;border-bottom:1px solid #333}
+.terminal-dot{width:10px;height:10px;border-radius:50%}
+.terminal-dot.r{background:#ff5f56}.terminal-dot.y{background:#ffbd2e}.terminal-dot.g{background:#27c93f}
+.terminal-title{margin-left:auto;margin-right:auto;font-size:11px;color:#666;font-family:'JetBrains Mono',monospace}
+.terminal-body{padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#aaa;min-height:320px}
+.terminal-body .prompt{color:var(--green)}
+.terminal-body .cmd{color:#fff}
+.terminal-body .comment{color:#555}
+.terminal-body .output{color:var(--cyan)}
+.terminal-body .highlight{color:var(--gold)}
+.terminal-body .link{color:var(--purple);text-decoration:underline;cursor:pointer}
+.terminal-body .link:hover{color:var(--magenta)}
+
+/* ═══════ SOCIAL PROOF / FEATURES TICKER ═══════ */
+.feature-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border);margin:0}
+.feature-cell{background:var(--void);padding:32px 24px;text-align:center;transition:.3s;cursor:default}
+.feature-cell:hover{background:var(--surface)}
+.feature-cell .icon{font-size:28px;margin-bottom:10px;display:block}
+.feature-cell .fname{font-weight:600;font-size:14px;margin-bottom:4px}
+.feature-cell .fdesc{font-size:11.5px;color:var(--text3);line-height:1.5}
+
+/* ═══════ SEASONAL TIMELINE ═══════ */
+.timeline{position:relative;padding:80px clamp(24px,5vw,80px);overflow:hidden}
+.timeline h2{text-align:center;font-size:clamp(24px,3.5vw,38px);margin-bottom:48px}
+.timeline-track{display:flex;gap:0;position:relative}
+.timeline-track::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border-l) 10%,var(--border-l) 90%,transparent)}
+.season-node{flex:1;text-align:center;position:relative;padding:80px 16px 0}
+.season-node::before{content:'';position:absolute;top:calc(50% - 80px + 74px);left:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid;z-index:1}
+.season-node.spring::before{border-color:var(--magenta);background:rgba(244,114,182,.2);box-shadow:0 0 12px rgba(244,114,182,.3)}
+.season-node.summer::before{border-color:var(--gold);background:rgba(251,191,36,.2);box-shadow:0 0 12px rgba(251,191,36,.3)}
+.season-node.autumn::before{border-color:var(--orange);background:rgba(251,146,60,.2);box-shadow:0 0 12px rgba(251,146,60,.3)}
+.season-node.winter::before{border-color:var(--cyan);background:rgba(34,211,238,.2);box-shadow:0 0 12px rgba(34,211,238,.3)}
+.season-label{font-weight:700;font-size:16px;margin-bottom:6px}
+.season-node.spring .season-label{color:var(--magenta)}.season-node.summer .season-label{color:var(--gold)}.season-node.autumn .season-label{color:var(--orange)}.season-node.winter .season-label{color:var(--cyan)}
+.season-items{font-size:11.5px;color:var(--text3);line-height:1.8}
+
+/* ═══════ BOTTOM CTA ═══════ */
+.bottom-cta{text-align:center;padding:clamp(80px,12vw,160px) 24px;position:relative}
+.bottom-cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 60%,rgba(34,211,238,.04),transparent 70%),radial-gradient(ellipse 40% 40% at 40% 40%,rgba(167,139,250,.03),transparent)}
+.bottom-cta>*{position:relative}
+.bottom-cta h2{font-size:clamp(28px,5vw,52px);font-weight:700;margin-bottom:16px;line-height:1.1}
+.bottom-cta h2 .grad{background:linear-gradient(135deg,var(--cyan),var(--purple),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.bottom-cta p{color:var(--text2);font-size:16px;margin-bottom:36px;max-width:500px;margin-left:auto;margin-right:auto}
+.bottom-cta .actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+
+/* ═══════ FOOTER ═══════ */
+footer{border-top:1px solid var(--border);padding:40px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:12px;color:var(--text3)}
+footer .foot-links{display:flex;gap:20px}
+footer a{color:var(--text3)}footer a:hover{color:var(--cyan)}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media(max-width:900px){
+.split{grid-template-columns:1fr}
+.split-visual{min-height:300px}
+.split-visual::after{background:linear-gradient(180deg,var(--void) 0%,transparent 30%)}
+.enemies-strip{flex-wrap:wrap}
+.enemy-col{min-width:50%}
+.stat-row{flex-wrap:wrap;gap:20px}
+.feature-wall{grid-template-columns:repeat(2,1fr)}
+.season-node{padding-top:60px}
+}
+@media(max-width:600px){
+nav .links{display:none}
+.feature-wall{grid-template-columns:1fr 1fr}
+.timeline-track{flex-direction:column;gap:24px}
+.timeline-track::before{display:none}
+.season-node{padding:16px}
+.enemies-strip{flex-direction:column}
+.enemy-col{min-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAV ═══════════════════ -->
+<nav>
+<a href="#" class="logo-sm">
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="2" width="12" height="12" rx="2" fill="#22d3ee" opacity=".9"/>
+<rect x="18" y="2" width="12" height="12" rx="2" fill="#a78bfa" opacity=".7"/>
+<rect x="2" y="18" width="12" height="12" rx="2" fill="#a78bfa" opacity=".7"/>
+<rect x="18" y="18" width="12" height="12" rx="2" fill="#22d3ee" opacity=".9"/>
+<rect x="10" y="10" width="12" height="12" rx="2" fill="#f472b6" opacity=".5"/>
+</svg>
+<span><span class="v">Vibe</span><span class="l">Life</span></span>
+</a>
+<div class="links">
+<a href="#world">World</a>
+<a href="#combat">Combat</a>
+<a href="#social">Social</a>
+<a href="#opensource">Open Source</a>
+<a href="manual/">Game Manual</a>
+<a href="devmanual/" class="cta-sm">Dev Docs</a>
+</div>
+</nav>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="hero">
+<canvas id="particles"></canvas>
+<div class="grid-bg"></div>
+
+<div class="logo-main">
+<!-- VibeLife SVG Logo -->
+<svg viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="gc" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#22d3ee"/>
+<stop offset="50%" stop-color="#a78bfa"/>
+<stop offset="100%" stop-color="#f472b6"/>
+</linearGradient>
+<linearGradient id="gv" x1="0%" y1="0%" x2="100%" y2="0%">
+<stop offset="0%" stop-color="#22d3ee"/>
+<stop offset="100%" stop-color="#6bc2ff"/>
+</linearGradient>
+<linearGradient id="gl" x1="0%" y1="0%" x2="100%" y2="0%">
+<stop offset="0%" stop-color="#a78bfa"/>
+<stop offset="100%" stop-color="#f472b6"/>
+</linearGradient>
+<filter id="glow">
+<feGaussianBlur stdDeviation="3" result="blur"/>
+<feComposite in="SourceGraphic" in2="blur" operator="over"/>
+</filter>
+</defs>
+<!-- Voxel cube icon -->
+<g transform="translate(10,15)">
+<rect x="0" y="0" width="28" height="28" rx="4" fill="#22d3ee" opacity=".9">
+<animate attributeName="opacity" values=".9;.6;.9" dur="3s" repeatCount="indefinite"/>
+</rect>
+<rect x="32" y="0" width="28" height="28" rx="4" fill="#a78bfa" opacity=".7">
+<animate attributeName="opacity" values=".7;.5;.7" dur="3s" begin=".5s" repeatCount="indefinite"/>
+</rect>
+<rect x="0" y="32" width="28" height="28" rx="4" fill="#a78bfa" opacity=".7">
+<animate attributeName="opacity" values=".7;.4;.7" dur="3s" begin="1s" repeatCount="indefinite"/>
+</rect>
+<rect x="32" y="32" width="28" height="28" rx="4" fill="#22d3ee" opacity=".9">
+<animate attributeName="opacity" values=".9;.7;.9" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+</rect>
+<rect x="16" y="16" width="28" height="28" rx="4" fill="#f472b6" opacity=".45">
+<animate attributeName="opacity" values=".45;.25;.45" dur="2.5s" repeatCount="indefinite"/>
+</rect>
+<rect x="16" y="60" width="28" height="28" rx="4" fill="#22d3ee" opacity=".3"/>
+<rect x="0" y="60" width="12" height="28" rx="3" fill="#6bc2ff" opacity=".15"/>
+<rect x="48" y="60" width="12" height="28" rx="3" fill="#a78bfa" opacity=".15"/>
+</g>
+<!-- Text -->
+<text x="90" y="68" font-family="Space Grotesk,system-ui,sans-serif" font-size="72" font-weight="700" fill="url(#gv)" filter="url(#glow)">Vibe</text>
+<text x="310" y="68" font-family="Space Grotesk,system-ui,sans-serif" font-size="72" font-weight="700" fill="url(#gl)" filter="url(#glow)">Life</text>
+<text x="90" y="100" font-family="JetBrains Mono,monospace" font-size="13" fill="#555570" letter-spacing="6">OPEN SOURCE VOXEL MMORPG</text>
+</svg>
+</div>
+
+<h1><strong>Build</strong> worlds. <strong>Battle</strong> monsters. <strong>Belong</strong> to something real.</h1>
+<p class="tagline">A community-owned 3D world where you mine blocks, level up warriors, adopt pets, trade in a player-driven economy, and keep your data forever. No corporate overlord. Just vibes.</p>
+
+<div class="hero-actions">
+<a href="https://github.com" class="btn-hero btn-primary">Download Client</a>
+<a href="devmanual/" class="btn-hero btn-ghost">Read the Source</a>
+</div>
+
+<div class="scroll-hint">scroll to explore</div>
+</section>
+
+<!-- ═══════════════════ MARQUEE ═══════════════════ -->
+<div class="marquee-wrap">
+<div class="marquee">
+<span><i class="dot"></i>Voxel Terrain</span>
+<span><i class="dot"></i>RPG Combat</span>
+<span><i class="dot"></i>5 Enemy Types</span>
+<span><i class="dot"></i>8 Pet Species</span>
+<span><i class="dot"></i>Voice Chat</span>
+<span><i class="dot"></i>Player Marketplace</span>
+<span><i class="dot"></i>33 Achievements</span>
+<span><i class="dot"></i>7 Seasonal Holidays</span>
+<span><i class="dot"></i>Guild System</span>
+<span><i class="dot"></i>14 Emotes</span>
+<span><i class="dot"></i>Open Source</span>
+<span><i class="dot"></i>Godot 4.6 Client</span>
+<span><i class="dot"></i>VR Support</span>
+<span><i class="dot"></i>Federation</span>
+<span><i class="dot"></i>Voxel Terrain</span>
+<span><i class="dot"></i>RPG Combat</span>
+<span><i class="dot"></i>5 Enemy Types</span>
+<span><i class="dot"></i>8 Pet Species</span>
+<span><i class="dot"></i>Voice Chat</span>
+<span><i class="dot"></i>Player Marketplace</span>
+<span><i class="dot"></i>33 Achievements</span>
+<span><i class="dot"></i>7 Seasonal Holidays</span>
+<span><i class="dot"></i>Guild System</span>
+<span><i class="dot"></i>14 Emotes</span>
+<span><i class="dot"></i>Open Source</span>
+<span><i class="dot"></i>Godot 4.6 Client</span>
+<span><i class="dot"></i>VR Support</span>
+<span><i class="dot"></i>Federation</span>
+</div>
+</div>
+
+<!-- ═══════════════════ VOXEL WORLD SPLIT ═══════════════════ -->
+<section class="split" id="world">
+<div class="split-text">
+<div class="eyebrow">// Voxel Engine</div>
+<h2>Your world.<br>Block by block.</h2>
+<p>Sixteen-wide, sixty-four-tall chunks of procedurally generated terrain stretching in every direction. Mine ores, place custom blocks, terraform mountains, flood valleys. Every block you touch persists for everyone.</p>
+<p>Claim a parcel, invite collaborators, and build whatever you can imagine. Save blueprints. Sell them on the marketplace. This is your land.</p>
+<div class="stat-row">
+<div class="stat"><div class="num c">13+</div><div class="label">Block Types</div></div>
+<div class="stat"><div class="num p">16,384</div><div class="label">Blocks / Chunk</div></div>
+<div class="stat"><div class="num g">64</div><div class="label">Build Height</div></div>
+</div>
+</div>
+<div class="split-visual" style="background:linear-gradient(135deg,#0a1a12,#0a0f1a,#120a1a)">
+<pre class="voxel-art">
+                    <span class="grass">####</span>
+                 <span class="grass">##########</span>
+              <span class="grass">################</span>
+           <span class="grass">##</span><span class="gold">$$</span><span class="grass">############</span><span class="crystal">**</span><span class="grass">##</span>
+        <span class="grass">####</span><span class="gold">$$$$</span><span class="grass">##########</span><span class="crystal">****</span><span class="grass">####</span>
+     <span class="grass">########</span><span class="gold">$$</span><span class="grass">##############</span><span class="crystal">**</span><span class="grass">######</span>
+  <span class="grass">##############################################</span>
+  <span class="stone">##</span><span class="grass">####</span><span class="stone">####</span><span class="grass">####</span><span class="stone">######</span><span class="grass">####</span><span class="stone">####</span><span class="grass">####</span><span class="stone">######</span>
+  <span class="stone">################################################</span>
+  <span class="stone">####</span><span class="gold">$$$$</span><span class="stone">####</span><span class="crystal">****</span><span class="stone">############</span><span class="gold">$$$$</span><span class="stone">########</span>
+  <span class="stone">##</span><span class="gold">$$$$$$$$</span><span class="stone">##</span><span class="crystal">******</span><span class="stone">########</span><span class="gold">$$$$$$$$</span><span class="stone">######</span>
+  <span class="stone">####</span><span class="gold">$$$$</span><span class="stone">####</span><span class="crystal">****</span><span class="stone">############</span><span class="gold">$$$$</span><span class="stone">########</span>
+  <span class="stone">################################################</span>
+  <span class="water">~~~~~~~~~~~~~~</span><span class="stone">####</span><span class="water">~~~~</span><span class="stone">####</span><span class="water">~~~~~~~~~~~~~~~~~~</span>
+  <span class="water">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+  <span class="water">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+</pre>
+</div>
+</section>
+
+<!-- ═══════════════════ COMBAT SPLIT ═══════════════════ -->
+<section class="split" id="combat" style="direction:rtl">
+<div class="split-text" style="direction:ltr">
+<div class="eyebrow">// RPG Combat</div>
+<h2>Level up.<br>Fight everything.</h2>
+<p>Melee or magic — your choice. Crit chance, mana management, defense scaling. Five enemy types from squishy slimes to dragon-tier drakes with full AI state machines patrolling, chasing, attacking.</p>
+<p>Die? Lose 5% gold. Win? Loot drops, XP, and the leaderboard glory. Level cap is 100. Good luck.</p>
+<div class="stat-row">
+<div class="stat"><div class="num r">100</div><div class="label">Max Level</div></div>
+<div class="stat"><div class="num g">10%</div><div class="label">Crit Chance</div></div>
+<div class="stat"><div class="num p">1.5x</div><div class="label">Magic Multiplier</div></div>
+</div>
+</div>
+<div class="split-visual" style="direction:ltr;background:linear-gradient(135deg,#1a0a0a,#1a0a18,#0a0a1a)">
+<div style="text-align:center;padding:40px">
+<div style="font-size:120px;line-height:1;filter:drop-shadow(0 0 40px rgba(204,38,20,.4))">
+&#x1F409;
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--red);margin-top:16px;letter-spacing:2px">DRAKE // LVL 5 BOSS</div>
+<div style="margin:16px auto;width:200px;height:8px;background:#261010;border-radius:4px;overflow:hidden">
+<div style="width:100%;height:100%;background:linear-gradient(90deg,#cc2626,#e74c3c);border-radius:4px"></div>
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">HP 625 / 625 &nbsp;&bull;&nbsp; STR 30 &nbsp;&bull;&nbsp; DEF 24</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);margin-top:8px">LOOT: 50-150 gold &nbsp;&bull;&nbsp; Drake Scale (10%)</div>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ ENEMIES STRIP ═══════════════════ -->
+<div class="enemies-strip">
+<div class="enemy-col slime">
+<div class="enemy-glyph" style="color:#33cc33">&#x1F7E2;</div>
+<div class="enemy-name">Slime</div>
+<div class="enemy-stats">HP 50 &bull; STR 5 &bull; DEF 2<br>Drops: 5-15 gold</div>
+</div>
+<div class="enemy-col skel">
+<div class="enemy-glyph" style="color:#e5e0d1">&#x1F480;</div>
+<div class="enemy-name">Skeleton</div>
+<div class="enemy-stats">HP 80 &bull; STR 10 &bull; DEF 5<br>Drops: Bone (30%)</div>
+</div>
+<div class="enemy-col golem">
+<div class="enemy-glyph" style="color:#8b6633">&#x1FAA8;</div>
+<div class="enemy-name">Golem</div>
+<div class="enemy-stats">HP 200 &bull; STR 15 &bull; DEF 15<br>Drops: Stone Core (20%)</div>
+</div>
+<div class="enemy-col shadow">
+<div class="enemy-glyph" style="color:#9933e6">&#x1F47B;</div>
+<div class="enemy-name">Shadow</div>
+<div class="enemy-stats">HP 100 &bull; STR 20 &bull; DEF 3<br>Drops: Shadow Essence (15%)</div>
+</div>
+<div class="enemy-col drake">
+<div class="enemy-glyph" style="color:#cc2614">&#x1F432;</div>
+<div class="enemy-name">Drake</div>
+<div class="enemy-stats">HP 500 &bull; STR 25 &bull; DEF 20<br>Drops: Drake Scale (10%)</div>
+</div>
+</div>
+
+<!-- ═══════════════════ SOCIAL SPLIT ═══════════════════ -->
+<section class="split" id="social">
+<div class="split-text">
+<div class="eyebrow">// Social Living</div>
+<h2>Not just a game.<br>A place to be.</h2>
+<p>Spatial voice chat that fades with distance. Emote combos when you and a friend dance in sync. Guilds with shared treasuries and alliance politics. Seasonal events from Valentine's hearts to Halloween ghost pets.</p>
+<p>Host a build competition. Throw a concert. Open a marketplace stall. Screenshot it all with 8 photo filters and share to the feed.</p>
+<div class="stat-row">
+<div class="stat"><div class="num c">8</div><div class="label">Pet Species</div></div>
+<div class="stat"><div class="num p">14</div><div class="label">Emotes</div></div>
+<div class="stat"><div class="num g">7</div><div class="label">Holidays</div></div>
+<div class="stat"><div class="num gr">33</div><div class="label">Achievements</div></div>
+</div>
+</div>
+<div class="split-visual" style="background:linear-gradient(135deg,#0a0a1a,#0f0a1a,#1a0a18)">
+<div style="padding:40px;width:100%;max-width:360px">
+<div style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;font-size:13px">
+<span style="color:var(--cyan);font-weight:600">xVoxelKing</span> <span style="color:var(--text3)">&bull; 2m ago</span><br>
+<span style="color:var(--text)">just finished my castle, come check it out</span>
+</div>
+<div style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;font-size:13px">
+<span style="color:var(--magenta);font-weight:600">Luna_Builds</span> <span style="color:var(--text3)">&bull; 1m ago</span><br>
+<span style="color:var(--text)">omw! also who wants to raid the drake later??</span>
+</div>
+<div style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;font-size:13px">
+<span style="color:var(--gold);font-weight:600">BlockWizard</span> <span style="color:var(--text3)">&bull; just now</span><br>
+<span style="color:var(--text)">I'm in. need those drake scales for my blueprint</span>
+</div>
+<div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);border-radius:8px;padding:12px;text-align:center;font-size:12px;color:var(--purple)">
+&#9829; Dance Sync combo activated! &bull; +15 XP
+</div>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ FEATURE WALL ═══════════════════ -->
+<div class="feature-wall">
+<div class="feature-cell"><span class="icon">&#9874;</span><span class="fname">Build Mode</span><span class="fdesc">Move, rotate, scale, undo, snap-to-grid, copy/paste</span></div>
+<div class="feature-cell"><span class="icon">&#127760;</span><span class="fname">Regions</span><span class="fdesc">Multiple worlds with unique terrain and communities</span></div>
+<div class="feature-cell"><span class="icon">&#128176;</span><span class="fname">Economy</span><span class="fdesc">Player-driven marketplace, auctions, direct trading</span></div>
+<div class="feature-cell"><span class="icon">&#127925;</span><span class="fname">Radio</span><span class="fdesc">In-world stations with genre playlists and skip controls</span></div>
+<div class="feature-cell"><span class="icon">&#128247;</span><span class="fname">Photos</span><span class="fdesc">8 filters, visibility settings, likes, comments, gallery</span></div>
+<div class="feature-cell"><span class="icon">&#128220;</span><span class="fname">Blueprints</span><span class="fdesc">Save creations as templates, sell them on marketplace</span></div>
+<div class="feature-cell"><span class="icon">&#127968;</span><span class="fname">Homes</span><span class="fdesc">Set home, privacy controls, ratings, doorbell alerts</span></div>
+<div class="feature-cell"><span class="icon">&#128302;</span><span class="fname">Scripting</span><span class="fdesc">Visual node editor, trigger zones, no code required</span></div>
+<div class="feature-cell"><span class="icon">&#128101;</span><span class="fname">Guilds</span><span class="fdesc">Treasury, emblems, alliances, shared parcels, officer ranks</span></div>
+<div class="feature-cell"><span class="icon">&#128225;</span><span class="fname">Mobile</span><span class="fdesc">Companion app: inventory, friends, quick teleport, push alerts</span></div>
+<div class="feature-cell"><span class="icon">&#129685;</span><span class="fname">VR Ready</span><span class="fdesc">Hand tracking, teleport locomotion, spatial audio, comfort modes</span></div>
+<div class="feature-cell"><span class="icon">&#127759;</span><span class="fname">Federation</span><span class="fdesc">Link servers together, cross-server teleport and marketplace</span></div>
+</div>
+
+<!-- ═══════════════════ SEASONAL TIMELINE ═══════════════════ -->
+<section class="timeline">
+<h2>Seasons change. Loot rotates.</h2>
+<div class="timeline-track">
+<div class="season-node spring">
+<div class="season-label">Spring</div>
+<div class="season-items">Cherry Blossom Crown<br>Spring Lantern<br>Blossom Particles</div>
+</div>
+<div class="season-node summer">
+<div class="season-label">Summer</div>
+<div class="season-items">Surfboard<br>Beach Ball Emote<br>Tiki Torch<br>Fireflies</div>
+</div>
+<div class="season-node autumn">
+<div class="season-label">Autumn</div>
+<div class="season-items">Witch Hat<br>Ghost Pet<br>Jack-o-Lantern<br>Falling Leaves</div>
+</div>
+<div class="season-node winter">
+<div class="season-label">Winter</div>
+<div class="season-items">Snowflake Crown<br>Ice Crystal Pet<br>Holiday Sweater<br>Snowflakes</div>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ OPEN SOURCE TERMINAL ═══════════════════ -->
+<section class="terminal-section" id="opensource">
+<div class="eyebrow" style="margin-bottom:12px">// 100% Open Source</div>
+<h2 style="font-size:clamp(24px,3.5vw,38px);text-align:center;margin-bottom:8px">Fork it. Host it. Own it.</h2>
+<p style="color:var(--text2);text-align:center;margin-bottom:32px;max-width:520px;font-size:15px">
+TypeScript backend. Godot 4.6 client. Every line of code is yours to read, modify, and deploy. Run your own world with your own rules.
+</p>
+<div class="terminal">
+<div class="terminal-bar">
+<span class="terminal-dot r"></span>
+<span class="terminal-dot y"></span>
+<span class="terminal-dot g"></span>
+<span class="terminal-title">vibelife &mdash; bash</span>
+</div>
+<div class="terminal-body">
+<span class="comment"># Clone and run your own VibeLife server</span><br>
+<span class="prompt">$ </span><span class="cmd">git clone https://github.com/vibelife/vibelife.git</span><br>
+<span class="prompt">$ </span><span class="cmd">cd vibelife && npm install</span><br>
+<span class="prompt">$ </span><span class="cmd">npm run dev</span><br>
+<br>
+<span class="output">&#9889; Server listening on http://localhost:3000</span><br>
+<span class="output">&#9889; WebSocket ready at /ws/regions/:id</span><br>
+<span class="output">&#9889; 3 regions loaded, 0 players online</span><br>
+<span class="output">&#9889; Enemy AI tick started (1s interval)</span><br>
+<span class="output">&#9889; Combat regen tick started</span><br>
+<br>
+<span class="comment"># Stack: Fastify 5 + TypeScript + Godot 4.6 + GDScript</span><br>
+<span class="comment"># 50+ services &bull; 40+ route files &bull; WebSocket real-time</span><br>
+<span class="comment"># Dual persistence: in-memory (dev) / PostgreSQL (prod)</span><br>
+<br>
+<span class="highlight">Ready.</span> <span class="comment">Read the full developer manual:</span><br>
+<span class="prompt">$ </span><a class="link" href="devmanual/">open docs/devmanual/index.html</a><br>
+<br>
+<span class="comment"># Or read the player guide:</span><br>
+<span class="prompt">$ </span><a class="link" href="manual/">open docs/manual/index.html</a><br>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════ BOTTOM CTA ═══════════════════ -->
+<section class="bottom-cta">
+<h2>Ready to <span class="grad">vibe</span>?</h2>
+<p>Download the client, fork the repo, or just read the source. VibeLife belongs to everyone who builds it.</p>
+<div class="actions">
+<a href="https://github.com" class="btn-hero btn-primary">Get VibeLife</a>
+<a href="manual/" class="btn-hero btn-ghost">Game Manual</a>
+<a href="devmanual/" class="btn-hero btn-ghost">Developer Manual</a>
+</div>
+<div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap">
+<div class="stat"><div class="num c" style="font-size:28px">50+</div><div class="label">Services</div></div>
+<div class="stat"><div class="num p" style="font-size:28px">40+</div><div class="label">API Routes</div></div>
+<div class="stat"><div class="num g" style="font-size:28px">30+</div><div class="label">Client Modules</div></div>
+<div class="stat"><div class="num gr" style="font-size:28px">5</div><div class="label">Feature Tiers</div></div>
+</div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer>
+<div>VibeLife &mdash; Open Source Voxel MMORPG &bull; 2026</div>
+<div class="foot-links">
+<a href="manual/">Game Manual</a>
+<a href="devmanual/">Dev Manual</a>
+<a href="https://github.com">GitHub</a>
+</div>
+</footer>
+
+<!-- ═══════════════════ PARTICLES CANVAS ═══════════════════ -->
+<script>
+(function(){
+const c=document.getElementById('particles');
+if(!c)return;
+const ctx=c.getContext('2d');
+let W,H;
+function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
+resize();window.addEventListener('resize',resize);
+const pts=[];
+const N=80;
+for(let i=0;i<N;i++){
+pts.push({
+x:Math.random()*2000,y:Math.random()*1200,
+vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+r:Math.random()*1.5+.5,
+a:Math.random()*.3+.05,
+color:['#22d3ee','#a78bfa','#f472b6','#6bc2ff'][Math.floor(Math.random()*4)]
+});
+}
+function draw(){
+ctx.clearRect(0,0,W,H);
+for(const p of pts){
+p.x+=p.vx;p.y+=p.vy;
+if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+ctx.beginPath();
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ctx.fillStyle=p.color;
+ctx.globalAlpha=p.a;
+ctx.fill();
+}
+// connections
+ctx.globalAlpha=1;
+for(let i=0;i<N;i++){
+for(let j=i+1;j<N;j++){
+const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;
+const d=Math.sqrt(dx*dx+dy*dy);
+if(d<150){
+ctx.beginPath();
+ctx.moveTo(pts[i].x,pts[i].y);
+ctx.lineTo(pts[j].x,pts[j].y);
+ctx.strokeStyle=pts[i].color;
+ctx.globalAlpha=.04*(1-d/150);
+ctx.lineWidth=.5;
+ctx.stroke();
+}
+}
+}
+ctx.globalAlpha=1;
+requestAnimationFrame(draw);
+}
+draw();
+})();
+</script>
+
+</body>
+</html>
