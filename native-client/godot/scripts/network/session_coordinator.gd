@@ -3,6 +3,9 @@ extends RefCounted
 
 const WS_SNAPSHOT := "snapshot"
 
+## Emitted for every WebSocket event so panels can subscribe and filter by type.
+signal ws_event_received(event_type: String, data: Dictionary)
+
 var main
 
 
@@ -74,6 +77,8 @@ func on_auth_completed(_result: int, response_code: int, _headers: PackedStringA
 	_apply_region_biome(main.session.regionId)
 	main._append_chat("System: joined %s" % main.session.regionId)
 	main.voxel_mgr.configure(main.session.regionId, main.session.token, main.backend_url)
+	# Fetch currency balance on login
+	main._fetch_currency_balance()
 	await load_region_scene(main.session.regionId)
 	await load_region_objects(main.session.regionId)
 	main.avatars.sync_avatars()
@@ -156,7 +161,11 @@ func poll_websocket() -> void:
 
 
 func handle_socket_message(message: Dictionary) -> void:
-	match message.get("type", ""):
+	var event_type: String = message.get("type", "")
+	# Emit signal for all events so panels can subscribe
+	ws_event_received.emit(event_type, message)
+
+	match event_type:
 		WS_SNAPSHOT:
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 			main.avatars.avatar_states.clear()
@@ -266,6 +275,8 @@ func handle_socket_message(message: Dictionary) -> void:
 				if main.combat_hud:
 					main.combat_hud.show_death_overlay()
 				main._append_chat("System: You died! Respawning...")
+				# Refresh currency after death penalty
+				main._fetch_currency_balance()
 			else:
 				main._append_chat("System: A player has fallen!")
 		"combat:respawn":
@@ -279,6 +290,11 @@ func handle_socket_message(message: Dictionary) -> void:
 				if main.combat_hud:
 					main.combat_hud.show_loot_notification(loot_items)
 				main._append_chat("System: Looted %d currency" % loot_currency)
+				# Update currency HUD after loot
+				main.currency_balance += loot_currency
+				main._update_currency_hud()
+				if main.economy_panel:
+					main.economy_panel.set_balance(main.currency_balance)
 		"combat:level_up":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 			var levelup_account: String = message.get("accountId", "")
@@ -298,3 +314,33 @@ func handle_socket_message(message: Dictionary) -> void:
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 			if main.enemy_renderer:
 				main.enemy_renderer.play_death_animation(str(message.enemyId))
+		# ── Previously-ignored event types ───────────────────────────
+		# These are now routed via ws_event_received signal so panels can handle them.
+		"pet:summoned":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"pet:dismissed":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"pet:trick":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"pet:state_updated":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"media:created":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"media:updated":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"media:removed":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"voice:participant_joined":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"voice:participant_left":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"voice:speaking_changed":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"group:chat":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"home:doorbell":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"event:started":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"event:ended":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))

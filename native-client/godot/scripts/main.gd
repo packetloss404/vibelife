@@ -43,14 +43,23 @@ extends Node3D
 # Top bar
 @onready var status_pill: Label = $CanvasLayer/UI/TopBar/TopMargin/TopRow/StatusPill
 
-# Right dock UI
-@onready var inventory_list: ItemList = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryList
-@onready var inventory_selection_label: Label = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventorySelectionLabel
-@onready var equip_item_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow/EquipItemButton
-@onready var use_item_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/InventoryActionRow/UseItemButton
-@onready var chat_log: RichTextLabel = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatLog
-@onready var chat_input: LineEdit = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/ChatInput
-@onready var send_chat_button: Button = $CanvasLayer/UI/RightDock/RightMargin/RightVBox/ChatInputRow/SendChatButton
+# Right dock — now hosts PanelManager (children built programmatically)
+@onready var right_dock_margin: MarginContainer = $CanvasLayer/UI/RightDock/RightMargin
+@onready var toast_mgr: ToastManager = $CanvasLayer/UI/ToastManager
+
+# Panel system (created in _ready)
+var panel_mgr: PanelManager
+
+# Chat panel widgets (built programmatically in _build_chat_panel)
+var chat_log: RichTextLabel
+var chat_input: LineEdit
+var send_chat_button: Button
+
+# Inventory panel widgets (built programmatically in _build_inventory_panel)
+var inventory_list: ItemList
+var inventory_selection_label: Label
+var equip_item_button: Button
+var use_item_button: Button
 
 # Build panel UI
 @onready var build_mode_button: Button = $CanvasLayer/UI/BuildPanel/BuildMargin/BuildVBox/BuildModeButton
@@ -132,6 +141,26 @@ var storefront_mgr: StorefrontManager
 var spatial_audio_mgr: SpatialAudio
 var grid_overlay: GridOverlay
 var undo_mgr: UndoManager
+
+# GUI Panels
+var social_panel: SocialPanel
+var economy_panel: EconomyPanel
+var marketplace_panel: MarketplacePanel
+var guild_panel: GuildPanel
+var achievements_panel: AchievementsPanel
+var events_panel: EventsPanel
+var pets_panel: PetsPanel
+var photos_panel: PhotosPanel
+var radio_panel: RadioPanel
+var seasonal_panel_ui: SeasonalPanel
+var creator_panel: CreatorPanel
+var storefront_panel: StorefrontPanel
+var admin_panel: AdminPanel
+var context_menu: ContextMenuManager
+
+# Currency HUD
+var currency_balance := 0
+var currency_hud_label: Label
 
 # Voxel MMORPG modules
 var voxel_mgr: VoxelManager
@@ -239,9 +268,18 @@ func _ready() -> void:
 	undo_mgr = UndoManager.new()
 	undo_mgr.init(self)
 
+	# Currency HUD in TopBar
+	currency_hud_label = Label.new()
+	currency_hud_label.text = "0 coins"
+	currency_hud_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	$CanvasLayer/UI/TopBar/TopMargin/TopRow.add_child(currency_hud_label)
+
 	# Session and world streaming coordinator
 	session_flow = SessionCoordinator.new()
 	session_flow.init(self)
+
+	# Panel system — build tabbed panels inside the right dock
+	_setup_panel_system()
 
 	# Voxel engine
 	voxel_mgr = VoxelManager.new()
@@ -255,15 +293,12 @@ func _ready() -> void:
 	enemy_renderer = EnemyRenderer.new()
 	enemy_renderer.init(self)
 
-	# Wire signals
+	# Wire signals — sidebar, build panel, HTTP requests
 	refresh_regions_button.pressed.connect(session_flow.fetch_regions)
 	profile_select.item_selected.connect(_on_profile_selected)
 	save_profile_button.pressed.connect(_save_current_profile)
 	join_button.pressed.connect(session_flow.join_world)
 	save_settings_button.pressed.connect(_save_client_settings)
-	send_chat_button.pressed.connect(_send_chat)
-	chat_input.text_submitted.connect(func(_text: String): _send_chat())
-	chat_input.text_changed.connect(func(new_text: String): chat_bubbles.on_chat_input_changed(new_text))
 	build_mode_button.pressed.connect(build.toggle_build_mode)
 	move_mode_button.pressed.connect(func(): build.set_gizmo_mode("move"))
 	rotate_mode_button.pressed.connect(func(): build.set_gizmo_mode("rotate"))
@@ -272,13 +307,18 @@ func _ready() -> void:
 	delete_button.pressed.connect(build._delete_selected_object)
 	claim_parcel_button.pressed.connect(parcels_mgr.claim_active_parcel)
 	release_parcel_button.pressed.connect(parcels_mgr.release_active_parcel)
-	inventory_list.item_selected.connect(_on_inventory_item_selected)
-	equip_item_button.pressed.connect(_equip_selected_inventory_item)
-	use_item_button.pressed.connect(_use_selected_inventory_item)
 	regions_request.request_completed.connect(session_flow.on_regions_loaded)
 	auth_request.request_completed.connect(session_flow.on_auth_completed)
 	scene_request.request_completed.connect(session_flow.on_scene_loaded)
 	objects_request.request_completed.connect(session_flow.on_objects_loaded)
+
+	# Wire chat/inventory signals (widgets created by _setup_panel_system)
+	send_chat_button.pressed.connect(_send_chat)
+	chat_input.text_submitted.connect(func(_text: String): _send_chat())
+	chat_input.text_changed.connect(func(new_text: String): chat_bubbles.on_chat_input_changed(new_text))
+	inventory_list.item_selected.connect(_on_inventory_item_selected)
+	equip_item_button.pressed.connect(_equip_selected_inventory_item)
+	use_item_button.pressed.connect(_use_selected_inventory_item)
 
 	build_assets_full = build_assets.duplicate()
 	build_asset_search.text_changed.connect(_on_build_asset_search_changed)
@@ -331,6 +371,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				await build._update_selected_object(objects.object_nodes[build.selected_object_id])
 		if button.button_index == MOUSE_BUTTON_RIGHT and button.pressed and not build.build_mode and not session.is_empty():
 			if avatars.try_sit_on_object(button.position):
+				return
+			# Context menu on right-click (raycast to identify target)
+			if context_menu and context_menu.handle_right_click(button.position):
 				return
 		if button.button_index == MOUSE_BUTTON_RIGHT or button.button_index == MOUSE_BUTTON_MIDDLE:
 			cam.orbiting = button.pressed
@@ -390,6 +433,165 @@ func _connect_websocket() -> void:
 
 func _poll_websocket() -> void:
 	session_flow.poll_websocket()
+
+
+# ── Panel System Setup ───────────────────────────────────────────────────────
+
+func _setup_panel_system() -> void:
+	# Create PanelManager and add it to the right dock margin
+	panel_mgr = PanelManager.new()
+	panel_mgr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel_mgr.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel_mgr.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_dock_margin.add_child(panel_mgr)
+
+	# Build and register Chat tab
+	var chat_panel := _build_chat_panel()
+	panel_mgr.register_tab("Chat", chat_panel)
+
+	# Build and register Inventory tab
+	var inv_panel := _build_inventory_panel()
+	panel_mgr.register_tab("Inventory", inv_panel)
+
+	# Social panel (tab)
+	social_panel = SocialPanel.new()
+	social_panel.init(self)
+	panel_mgr.register_tab("Social", social_panel)
+
+	# Economy panel (tab)
+	economy_panel = EconomyPanel.new()
+	economy_panel.init(self)
+	panel_mgr.register_tab("Economy", economy_panel)
+
+	# Marketplace panel
+	marketplace_panel = MarketplacePanel.new()
+	marketplace_panel.init(self)
+	panel_mgr.register_tab("Market", marketplace_panel)
+
+	# Guild panel
+	guild_panel = GuildPanel.new()
+	guild_panel.init(self)
+	panel_mgr.register_tab("Guild", guild_panel)
+
+	# Achievements panel
+	achievements_panel = AchievementsPanel.new()
+	achievements_panel.init(self)
+	panel_mgr.register_tab("Achieve", achievements_panel)
+
+	# Events panel
+	events_panel = EventsPanel.new()
+	events_panel.init(self)
+	panel_mgr.register_tab("Events", events_panel)
+
+	# Pets panel
+	pets_panel = PetsPanel.new()
+	pets_panel.init(self)
+	panel_mgr.register_tab("Pets", pets_panel)
+
+	# Photos panel
+	photos_panel = PhotosPanel.new()
+	photos_panel.init(self)
+	panel_mgr.register_tab("Photos", photos_panel)
+
+	# Radio panel
+	radio_panel = RadioPanel.new()
+	radio_panel.init(self)
+	panel_mgr.register_tab("Radio", radio_panel)
+
+	# Seasonal panel
+	seasonal_panel_ui = SeasonalPanel.new()
+	seasonal_panel_ui.init(self)
+	panel_mgr.register_tab("Season", seasonal_panel_ui)
+
+	# Creator panel (visible to creator-flagged accounts)
+	creator_panel = CreatorPanel.new()
+	creator_panel.init(self)
+	panel_mgr.register_tab("Creator", creator_panel)
+
+	# Storefront panel
+	storefront_panel = StorefrontPanel.new()
+	storefront_panel.init(self)
+	panel_mgr.register_tab("Shop", storefront_panel)
+
+	# Admin panel (visible to admin accounts)
+	admin_panel = AdminPanel.new()
+	admin_panel.init(self)
+	panel_mgr.register_tab("Admin", admin_panel)
+
+	# Context menu system (right-click menus for avatars, objects, parcels)
+	context_menu = ContextMenuManager.new()
+	context_menu.init(self)
+	context_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	context_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$CanvasLayer/UI.add_child(context_menu)
+
+
+func _build_chat_panel() -> Control:
+	var panel := Control.new()
+
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Region chat"
+	vbox.add_child(title)
+
+	chat_log = RichTextLabel.new()
+	chat_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chat_log.scroll_following = true
+	chat_log.custom_minimum_size.y = 100
+	vbox.add_child(chat_log)
+
+	var input_row := HBoxContainer.new()
+	vbox.add_child(input_row)
+
+	chat_input = LineEdit.new()
+	chat_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chat_input.placeholder_text = "Say something"
+	input_row.add_child(chat_input)
+
+	send_chat_button = Button.new()
+	send_chat_button.text = "Send"
+	input_row.add_child(send_chat_button)
+
+	return panel
+
+
+func _build_inventory_panel() -> Control:
+	var panel := Control.new()
+
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Inventory"
+	vbox.add_child(title)
+
+	inventory_list = ItemList.new()
+	inventory_list.custom_minimum_size.y = 180
+	inventory_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(inventory_list)
+
+	inventory_selection_label = Label.new()
+	inventory_selection_label.text = "No inventory item selected"
+	vbox.add_child(inventory_selection_label)
+
+	var action_row := HBoxContainer.new()
+	vbox.add_child(action_row)
+
+	equip_item_button = Button.new()
+	equip_item_button.text = "Equip"
+	action_row.add_child(equip_item_button)
+
+	use_item_button = Button.new()
+	use_item_button.text = "Use"
+	action_row.add_child(use_item_button)
+
+	return panel
 
 
 # ── Inventory & Chat ────────────────────────────────────────────────────────
@@ -614,3 +816,28 @@ func _save_blueprint_from_selection() -> void:
 		return
 	var ids: Array = [build.selected_object_id]
 	await blueprint_mgr.save_blueprint("Blueprint %s" % str(Time.get_ticks_msec()), ids)
+
+
+# ── Currency HUD ─────────────────────────────────────────────────────────
+
+func _update_currency_hud() -> void:
+	if currency_hud_label:
+		currency_hud_label.text = "%d coins" % currency_balance
+
+
+func _fetch_currency_balance() -> void:
+	var token: String = session.get("token", "")
+	if token.is_empty():
+		return
+	var url := "%s/api/currency/balance?token=%s" % [backend_url, token]
+	var http := HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(func(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray):
+		if response_code == 200:
+			var payload = JSON.parse_string(body.get_string_from_utf8())
+			if payload and payload.has("balance"):
+				currency_balance = int(payload.balance)
+				_update_currency_hud()
+		http.queue_free()
+	)
+	http.request(url)
