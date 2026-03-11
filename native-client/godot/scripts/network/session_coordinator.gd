@@ -18,7 +18,7 @@ func fetch_regions() -> void:
 	main.status_pill.text = "Loading regions"
 	main.region_select.clear()
 	var url := "%s/api/regions" % main.backend_url
-	var error := main.regions_request.request(url)
+	var error: int = main.regions_request.request(url)
 	if error != OK:
 		main.status_label.text = "Region request failed: %s" % error
 
@@ -52,7 +52,7 @@ func join_world() -> void:
 	})
 	var headers := PackedStringArray(["Content-Type: application/json"])
 	var url := "%s/api/auth/%s" % [main.backend_url, auth_mode]
-	var error := main.auth_request.request(url, headers, HTTPClient.METHOD_POST, body)
+	var error: int = main.auth_request.request(url, headers, HTTPClient.METHOD_POST, body)
 	if error != OK:
 		main.status_label.text = "Auth request failed: %s" % error
 
@@ -103,7 +103,7 @@ func load_region_scene(region_id: String) -> void:
 	for child in main.static_world.get_children():
 		child.queue_free()
 	var url := "%s/scenes/%s.json" % [main.backend_url, region_id]
-	var error := main.scene_request.request(url)
+	var error: int = main.scene_request.request(url)
 	if error != OK:
 		main.status_label.text = "Scene request failed: %s" % error
 		return
@@ -120,7 +120,7 @@ func on_scene_loaded(_result: int, response_code: int, _headers: PackedStringArr
 
 func load_region_objects(region_id: String) -> void:
 	var url := "%s/api/regions/%s/objects" % [main.backend_url, region_id]
-	var error := main.objects_request.request(url)
+	var error: int = main.objects_request.request(url)
 	if error != OK:
 		main.status_label.text = "Objects request failed: %s" % error
 		return
@@ -143,7 +143,7 @@ func connect_websocket() -> void:
 	var base := main.backend_url_input.text.rstrip("/")
 	var ws_url := base.replace("http://", "ws://").replace("https://", "wss://")
 	ws_url += "/ws/regions/%s?token=%s&lastSequence=%s" % [main.session.regionId, main.session.token, str(main.last_sequence)]
-	var error := main.websocket.connect_to_url(ws_url)
+	var error: int = main.websocket.connect_to_url(ws_url)
 	if error != OK:
 		main.status_label.text = "WebSocket failed: %s" % error
 		main.status_pill.text = "Socket failed"
