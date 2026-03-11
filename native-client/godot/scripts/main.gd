@@ -11,6 +11,8 @@ const WS_SNAPSHOT := "snapshot"
 @onready var avatars_root: Node3D = $Avatars
 @onready var gizmos_root: Node3D = $Gizmos
 @onready var parcels_root: Node3D = $Parcels
+@onready var voxels_root: Node3D = $VoxelsRoot
+@onready var enemies_root: Node3D = $EnemiesRoot
 
 # HTTP request nodes
 @onready var regions_request: HTTPRequest = $Network/RegionsRequest
@@ -112,6 +114,11 @@ var blueprint_mgr: BlueprintManager
 var build_assets_full: Array = []
 var clipboard: Array = []
 
+# Voxel MMORPG modules
+var voxel_mgr: VoxelManager
+var combat_hud: CombatHUD
+var enemy_renderer: EnemyRenderer
+
 
 func _ready() -> void:
 	# Initialize modules
@@ -175,6 +182,18 @@ func _ready() -> void:
 	blueprint_mgr = BlueprintManager.new()
 	blueprint_mgr.init(self)
 
+	# Voxel engine
+	voxel_mgr = VoxelManager.new()
+	voxel_mgr.init(self)
+
+	# Combat HUD
+	combat_hud = CombatHUD.new()
+	combat_hud.init(self)
+
+	# Enemy renderer
+	enemy_renderer = EnemyRenderer.new()
+	enemy_renderer.init(self)
+
 	# Wire signals
 	refresh_regions_button.pressed.connect(_fetch_regions)
 	profile_select.item_selected.connect(_on_profile_selected)
@@ -229,6 +248,16 @@ func _process(delta: float) -> void:
 		sky_mgr.set_shader_time(day_night.time_of_day)
 	if day_night and particles:
 		particles.update_time(day_night.time_of_day)
+	# Voxel chunk streaming based on player position
+	if voxel_mgr and avatars.has_local_avatar():
+		voxel_mgr.update_chunks(avatars.get_local_avatar_position())
+		voxel_mgr.update_block_cursor(camera)
+	# Enemy animations
+	if enemy_renderer:
+		enemy_renderer._process_enemies(delta)
+	# Combat HUD updates
+	if combat_hud:
+		combat_hud._process_hud(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -242,7 +271,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if button.button_index == MOUSE_BUTTON_RIGHT and button.pressed and not build.build_mode and not session.is_empty():
 			if avatars.try_sit_on_object(button.position):
 				return
-		if button.button_index == MOUSE_BUTTON_RIGHT:
+		if button.button_index == MOUSE_BUTTON_RIGHT or button.button_index == MOUSE_BUTTON_MIDDLE:
 			cam.orbiting = button.pressed
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
 			if build.build_mode and not build.selected_object_id.is_empty() and objects.object_nodes.has(build.selected_object_id):
@@ -265,6 +294,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		await build.handle_build_click(event.position)
 	elif event is InputEventKey and event.pressed and build.build_mode:
 		await build.handle_build_key(event)
+	# Voxel mode toggle (V key)
+	elif event is InputEventKey and event.pressed and (event as InputEventKey).keycode == KEY_V and not build.build_mode:
+		if voxel_mgr:
+			voxel_mgr.toggle_voxel_mode()
+			if voxel_mgr.voxel_mode:
+				_append_chat("System: Voxel mode enabled (LMB place, RMB break)")
+			else:
+				_append_chat("System: Voxel mode disabled")
+	# Voxel input handling
+	elif voxel_mgr and voxel_mgr.voxel_mode and event is InputEventMouseButton:
+		voxel_mgr.handle_voxel_input(event)
 
 
 # ── Network ─────────────────────────────────────────────────────────────────
@@ -429,6 +469,12 @@ func _handle_socket_message(message: Dictionary) -> void:
 			parcels_mgr.parcels = message.get("parcels", parcels_mgr.parcels)
 			avatars.sync_avatars()
 			objects.sync_objects(message.get("objects", []))
+			# Load enemies from snapshot
+			if enemy_renderer and message.has("enemies"):
+				enemy_renderer.sync_enemies(message.get("enemies", []))
+			# Load combat stats from snapshot
+			if combat_hud and message.has("combatStats"):
+				combat_hud.update_stats(message.combatStats)
 			# Load chat history from snapshot
 			for chat_entry in message.get("chatHistory", []):
 				var ts := _format_chat_timestamp(chat_entry.get("createdAt", ""))
@@ -503,6 +549,66 @@ func _handle_socket_message(message: Dictionary) -> void:
 		"avatar:stand":
 			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
 			avatars.handle_stand(str(message.avatarId))
+		# ── Voxel Events ──────────────────────────────────────────────
+		"voxel:block_placed":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if voxel_mgr:
+				voxel_mgr.apply_block_delta(int(message.x), int(message.y), int(message.z), int(message.blockTypeId))
+		"voxel:block_broken":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if voxel_mgr:
+				voxel_mgr.apply_block_delta(int(message.x), int(message.y), int(message.z), 0)
+		# ── Combat Events ─────────────────────────────────────────────
+		"combat:damage":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if enemy_renderer:
+				enemy_renderer.update_enemy_health(str(message.targetId), int(message.targetHp), int(message.targetMaxHp))
+			if combat_hud:
+				# Show floating damage number at enemy position
+				var target_pos := Vector3(0, 2, 0)
+				if enemy_renderer and enemy_renderer.enemy_nodes.has(str(message.targetId)):
+					target_pos = enemy_renderer.enemy_nodes[str(message.targetId)].global_position + Vector3(0, 1.5, 0)
+				combat_hud.show_damage_number(target_pos, int(message.damage), bool(message.get("critical", false)))
+		"combat:death":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			var dead_account: String = message.get("accountId", "")
+			if dead_account == session.get("accountId", ""):
+				if combat_hud:
+					combat_hud.show_death_overlay()
+				_append_chat("System: You died! Respawning...")
+			else:
+				_append_chat("System: A player has fallen!")
+		"combat:respawn":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+		"combat:loot":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			var loot_account: String = message.get("accountId", "")
+			if loot_account == session.get("accountId", ""):
+				var loot_items: Array = message.get("items", [])
+				var loot_currency: int = int(message.get("currency", 0))
+				if combat_hud:
+					combat_hud.show_loot_notification(loot_items)
+				_append_chat("System: Looted %d currency" % loot_currency)
+		"combat:level_up":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			var levelup_account: String = message.get("accountId", "")
+			if levelup_account == session.get("accountId", ""):
+				if combat_hud:
+					combat_hud.show_level_up(int(message.newLevel))
+				_append_chat("System: Level up! You are now level %d" % int(message.newLevel))
+		# ── Enemy Events ──────────────────────────────────────────────
+		"enemy:spawned":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if enemy_renderer:
+				enemy_renderer.sync_enemies([message.enemy])
+		"enemy:moved":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if enemy_renderer:
+				enemy_renderer.sync_enemies(message.get("enemies", []))
+		"enemy:despawned":
+			last_sequence = maxi(last_sequence, int(message.get("sequence", 0)))
+			if enemy_renderer:
+				enemy_renderer.play_death_animation(str(message.enemyId))
 
 
 # ── Inventory & Chat ────────────────────────────────────────────────────────

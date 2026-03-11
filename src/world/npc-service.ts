@@ -19,7 +19,7 @@ import { broadcastRegion, nextRegionSequence } from "./region.js";
 // Types
 // ---------------------------------------------------------------------------
 
-export type NpcType = "ambient" | "shopkeeper" | "quest-giver" | "tour-guide";
+export type NpcType = "ambient" | "shopkeeper" | "quest-giver" | "tour-guide" | "enemy";
 
 export type BehaviorState =
   | "idle"
@@ -185,6 +185,15 @@ const DEFAULT_APPEARANCES: Record<NpcType, NpcAppearance> = {
     outfit: "vest",
     accessory: "flag",
     nameTagColor: "#ff8866"
+  },
+  enemy: {
+    bodyColor: "#880000",
+    accentColor: "#440000",
+    headColor: "#aa2222",
+    hairColor: "#220000",
+    outfit: "armor",
+    accessory: "none",
+    nameTagColor: "#ff0000"
   }
 };
 

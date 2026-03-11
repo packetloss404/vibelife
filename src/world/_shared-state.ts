@@ -185,6 +185,42 @@ export async function getBuildPermission(session: Session, x: number, z: number)
   };
 }
 
+export type VoxelPermission = {
+  allowed: boolean;
+  reason?: string;
+};
+
+export async function getVoxelPermission(session: Session, x: number, z: number): Promise<VoxelPermission> {
+  const parcels = await persistence.listParcels(session.regionId);
+  const parcel = parcels.find((entry) => pointInParcel(entry, x, z)) ?? null;
+
+  // Wilderness (no parcel): ALLOW voxel edits
+  if (!parcel) {
+    return { allowed: true };
+  }
+
+  // Public parcels: ALLOW
+  if (parcel.tier === "public") {
+    return { allowed: true };
+  }
+
+  // Owner: ALLOW
+  if (parcel.ownerAccountId === session.accountId) {
+    return { allowed: true };
+  }
+
+  // Collaborator: ALLOW
+  if (parcel.collaboratorAccountIds.includes(session.accountId)) {
+    return { allowed: true };
+  }
+
+  // Other player's parcel: DENY
+  return {
+    allowed: false,
+    reason: `parcel owned by ${parcel.ownerDisplayName ?? "another resident"}`
+  };
+}
+
 export function getChatHistoryBuffer(regionId: string): ChatHistoryEntry[] {
   let buffer = chatHistoryByRegion.get(regionId);
   if (!buffer) {

@@ -37,6 +37,10 @@ current = true
 
 [node name="Parcels" type="Node3D" parent="." unique_id=1214908334]
 
+[node name="VoxelsRoot" type="Node3D" parent="."]
+
+[node name="EnemiesRoot" type="Node3D" parent="."]
+
 [node name="Network" type="Node" parent="." unique_id=390607325]
 
 [node name="RegionsRequest" type="HTTPRequest" parent="Network" unique_id=536838016]

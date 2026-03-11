@@ -178,6 +178,12 @@ export async function initializeWorldStore() {
       avatarsByRegion.set(region.id, new Map());
     }
   }
+
+  // Initialize enemies for each region
+  const { initRegionEnemies } = await import("./enemy-service.js");
+  for (const region of regions) {
+    initRegionEnemies(region.id);
+  }
 }
 
 export function listRegions() {
@@ -288,6 +294,10 @@ export {
   onChatMessage,
   onFriendAdded,
   onRegionVisited,
+  onEnemyDefeated,
+  onCombatLevelUp,
+  onBlockPlaced,
+  onBlockBroken,
 } from "./achievement-service.js";
 
 // ── Visual Scripting ──────────────────────────────────────────────────────
@@ -582,6 +592,62 @@ export type {
   PlayerQuestState,
   NpcScript,
 } from "./npc-service.js";
+
+// ── Voxel Engine ──────────────────────────────────────────────────────
+export {
+  getBlockTypes,
+  getOrGenerateChunk,
+  getChunksInRadius,
+  setBlock,
+  getBlock,
+  registerCustomBlock,
+  compressChunk,
+  decompressChunk,
+} from "./voxel-service.js";
+export type { BlockType, ChunkData } from "./voxel-service.js";
+
+// ── RPG Combat ────────────────────────────────────────────────────────
+export {
+  getOrCreateStats,
+  getCombatStats,
+  computeDamage,
+  awardXp,
+  handlePlayerDeath,
+  regenTick,
+  getLeaderboard as getCombatLeaderboard,
+  resetStatsOnDeath,
+} from "./combat-service.js";
+export type { CombatStats, AttackStyle, AttackResult } from "./combat-service.js";
+
+// ── Enemies ───────────────────────────────────────────────────────────
+export {
+  spawnEnemy,
+  initRegionEnemies,
+  getEnemiesInRegion,
+  getEnemy,
+  attackEnemy,
+  startEnemyTickLoop,
+} from "./enemy-service.js";
+export type { EnemyVariant, EnemyState, EnemyInstance, LootDrop } from "./enemy-service.js";
+
+// ── Voxel Shop ────────────────────────────────────────────────────────
+export {
+  registerCustomBlockType,
+  listCustomBlocks,
+  getCustomBlock,
+  saveBlueprint as saveVoxelBlueprintDesign,
+  getBlueprint as getVoxelBlueprintDesign,
+  listBlueprints as listVoxelBlueprints,
+  deleteBlueprint as deleteVoxelBlueprint,
+  placeBlueprint as placeVoxelBlueprintDesign,
+  markBlueprintForSale,
+  listBlueprintsForSale,
+} from "./voxel-shop-service.js";
+export type { CustomBlockRegistration, VoxelBlueprint } from "./voxel-shop-service.js";
+
+// ── Voxel Permission ──────────────────────────────────────────────────
+export { getVoxelPermission } from "./_shared-state.js";
+export type { VoxelPermission } from "./_shared-state.js";
 
 // ── VR Support ───────────────────────────────────────────────────────────
 export {
