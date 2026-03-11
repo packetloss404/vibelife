@@ -1,6 +1,5 @@
-# NPC Manager — Feature 19: AI NPCs for VibeLife
-#
-# INTEGRATION NOTES (do NOT auto-apply):
+# Archived experimental module.
+# NPC manager behavior is not wired into the primary Godot client.
 # - main.gd: Add the following to create and initialize this manager:
 #     var npc_manager = NpcManager.new()
 #     npc_manager.init(self)

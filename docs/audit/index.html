@@ -275,6 +275,8 @@
             <li>Archived stale review positioning, cleaned the dev-doc index, and made this report the canonical audit entry point.</li>
             <li>Applied the follow-up product decision that the browser surface is admin/debug only by converting <code>public/index.html</code> and <code>public/app.js</code> to admin-login-only messaging and behavior.</li>
             <li>Started a partial auth transport cleanup by adding <code>Authorization: Bearer</code> support in <code>src/middleware/auth.ts</code> and using shared token extraction helpers in key route groups.</li>
+            <li>Pruned speculative Godot feature drops out of the primary runtime path by moving them into <code>native-client/godot/scripts/experimental</code> and documenting that they are archived until properly wired and verified.</li>
+            <li>Expanded route deduplication by applying shared auth handling to <code>src/routes/interactives.ts</code>, <code>src/routes/scripts.ts</code>, <code>src/routes/npcs.ts</code>, and token extraction cleanup in <code>src/routes/creator-tools.ts</code>.</li>
           </ul>
         </article>
 
@@ -477,6 +479,7 @@
             <li><strong>Godot caveat:</strong> the current Godot codebase is carrying prototype debt, speculative modules, and orchestration overload in <code>native-client/godot/scripts/main.gd</code>.</li>
             <li><strong>If Godot stops fitting:</strong> the likely reason would not be rendering quality, but team velocity. If iteration speed on gameplay/admin UX matters more than a native-client feel, a web-first product stack would move faster.</li>
             <li><strong>Current recommendation:</strong> keep Godot as the primary world client for now, but prune or sandbox speculative modules instead of pretending every generated subsystem is production-ready.</li>
+            <li><strong>Current action taken:</strong> the most speculative modules now live in <code>native-client/godot/scripts/experimental</code> instead of the active script surface.</li>
           </ul>
         </article>
 

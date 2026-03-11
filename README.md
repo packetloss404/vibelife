@@ -86,6 +86,7 @@ npm run dev:postgres
 ## Native client
 
 - primary client scaffold lives in `native-client/godot`
+- experimental or not-yet-wired Godot modules now live under `native-client/godot/scripts/experimental`
 - uses the existing `/api/regions`, `/api/auth/guest`, `/api/regions/:id/objects`, and `/ws/regions/:regionId` backend flow
 - imports local glTF assets from `native-client/godot/assets/models` when available and falls back to placeholder geometry when needed
 - already includes native login, region, chat, and inventory panels

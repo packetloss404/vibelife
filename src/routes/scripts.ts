@@ -1,9 +1,5 @@
-// ----- Changes needed in server.ts (DO NOT apply automatically) -----
-// import scriptsPlugin from "./routes/scripts.js";
-// await app.register(scriptsPlugin);
-// ---------------------------------------------------------------------
-
 import type { FastifyInstance } from "fastify";
+import { requireAuth } from "../middleware/auth.js";
 import {
   createScript,
   getScript,
@@ -18,7 +14,6 @@ import {
   type NodeConnection,
   type TriggerZoneShape,
 } from "../world/script-service.js";
-import { getSession } from "../world/store.js";
 
 export default async function scriptsPlugin(app: FastifyInstance) {
   // POST /api/scripts — create a visual script
@@ -29,16 +24,16 @@ export default async function scriptsPlugin(app: FastifyInstance) {
       regionId?: string;
       parcelId?: string;
     };
-  }>("/api/scripts", async (request, reply) => {
-    const { token, name, regionId, parcelId } = request.body;
+  }>("/api/scripts", { preHandler: requireAuth }, async (request, reply) => {
+    const { name, regionId, parcelId } = request.body;
+    const token = request.authToken;
 
-    if (!token || !name || !regionId || !parcelId) {
-      return reply.code(400).send({ error: "token, name, regionId, and parcelId are required" });
+    if (!token) {
+      return reply.code(401).send({ error: "invalid session" });
     }
 
-    const session = getSession(token);
-    if (!session) {
-      return reply.code(401).send({ error: "invalid session" });
+    if (!name || !regionId || !parcelId) {
+      return reply.code(400).send({ error: "name, regionId, and parcelId are required" });
     }
 
     const script = await createScript(token, name, regionId, parcelId);
@@ -53,15 +48,10 @@ export default async function scriptsPlugin(app: FastifyInstance) {
   // GET /api/scripts?regionId=&parcelId= — list scripts
   app.get<{
     Querystring: { token?: string; regionId?: string; parcelId?: string };
-  }>("/api/scripts", async (request, reply) => {
-    const { token, regionId, parcelId } = request.query;
+  }>("/api/scripts", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId, parcelId } = request.query;
 
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 
@@ -80,15 +70,8 @@ export default async function scriptsPlugin(app: FastifyInstance) {
   app.get<{
     Params: { id: string };
     Querystring: { token?: string };
-  }>("/api/scripts/:id", async (request, reply) => {
-    const { token } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+  }>("/api/scripts/:id", { preHandler: requireAuth }, async (request, reply) => {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 
@@ -109,11 +92,12 @@ export default async function scriptsPlugin(app: FastifyInstance) {
       nodes?: ScriptNode[];
       connections?: NodeConnection[];
     };
-  }>("/api/scripts/:id", async (request, reply) => {
-    const { token, nodes, connections } = request.body;
+  }>("/api/scripts/:id", { preHandler: requireAuth }, async (request, reply) => {
+    const { nodes, connections } = request.body;
+    const token = request.authToken;
 
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     if (!nodes || !connections) {
@@ -133,11 +117,11 @@ export default async function scriptsPlugin(app: FastifyInstance) {
   app.delete<{
     Params: { id: string };
     Body: { token?: string };
-  }>("/api/scripts/:id", async (request, reply) => {
-    const { token } = request.body;
+  }>("/api/scripts/:id", { preHandler: requireAuth }, async (request, reply) => {
+    const token = request.authToken;
 
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const deleted = await deleteScript(token, request.params.id);
@@ -153,11 +137,11 @@ export default async function scriptsPlugin(app: FastifyInstance) {
   app.post<{
     Params: { id: string };
     Body: { token?: string };
-  }>("/api/scripts/:id/toggle", async (request, reply) => {
-    const { token } = request.body;
+  }>("/api/scripts/:id/toggle", { preHandler: requireAuth }, async (request, reply) => {
+    const token = request.authToken;
 
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const script = await toggleScript(token, request.params.id);
@@ -172,15 +156,10 @@ export default async function scriptsPlugin(app: FastifyInstance) {
   // GET /api/trigger-zones?regionId= — list trigger zones
   app.get<{
     Querystring: { token?: string; regionId?: string };
-  }>("/api/trigger-zones", async (request, reply) => {
-    const { token, regionId } = request.query;
+  }>("/api/trigger-zones", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId } = request.query;
 
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 
@@ -202,11 +181,16 @@ export default async function scriptsPlugin(app: FastifyInstance) {
       shape?: TriggerZoneShape;
       size?: { x: number; y: number; z: number };
     };
-  }>("/api/trigger-zones", async (request, reply) => {
-    const { token, scriptId, position, radius = 3, shape = "sphere", size } = request.body;
+  }>("/api/trigger-zones", { preHandler: requireAuth }, async (request, reply) => {
+    const { scriptId, position, radius = 3, shape = "sphere", size } = request.body;
+    const token = request.authToken;
 
-    if (!token || !scriptId || !position) {
-      return reply.code(400).send({ error: "token, scriptId, and position are required" });
+    if (!token) {
+      return reply.code(401).send({ error: "invalid session" });
+    }
+
+    if (!scriptId || !position) {
+      return reply.code(400).send({ error: "scriptId and position are required" });
     }
 
     const zone = await createTriggerZone(

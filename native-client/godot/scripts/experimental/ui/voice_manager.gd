@@ -1,5 +1,5 @@
 class_name VoiceManager extends RefCounted
-## Voice chat manager — handles joining/leaving voice channels,
+## Archived experimental module.
 ## mute/deafen state, spatial audio volume calculation, and WebSocket
 ## signaling events for WebRTC peer connections.
 ##

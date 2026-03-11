@@ -1,11 +1,5 @@
-// Creator Tools Routes — Feature 17: Creator Tools Platform
-//
-// Integration notes (DO NOT auto-apply):
-//   server.ts — register this plugin:
-//     import creatorToolsRoutes from "./routes/creator-tools.js";
-//     await app.register(creatorToolsRoutes);
-
 import type { FastifyInstance } from "fastify";
+import { getRequestToken } from "../middleware/auth.js";
 import {
   submitAssetForReview,
   getSubmission,
@@ -81,7 +75,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
     Params: { submissionId: string };
     Querystring: { token?: string };
   }>("/api/creator/assets/submit/:submissionId", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -100,7 +94,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string };
   }>("/api/creator/assets/submissions", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -118,7 +112,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string; status?: string };
   }>("/api/creator/assets/review", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
     const status = request.query.status;
 
     if (!token) {
@@ -176,7 +170,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string; periodDays?: string };
   }>("/api/creator/analytics", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
     const periodDays = Math.max(1, Math.min(365, Number(request.query.periodDays ?? 30)));
 
     if (!token) {
@@ -228,7 +222,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string };
   }>("/api/creator/revenue", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -272,7 +266,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string };
   }>("/api/creator/revenue/payouts", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -334,7 +328,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string };
   }>("/api/creator/plugins", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -349,7 +343,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
     Params: { pluginId: string };
     Querystring: { token?: string };
   }>("/api/creator/plugins/:pluginId", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -396,7 +390,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
     Params: { pluginId: string };
     Body: { token?: string };
   }>("/api/creator/plugins/:pluginId", async (request, reply) => {
-    const token = request.body.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -416,7 +410,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
     Params: { pluginId: string };
     Body: { token?: string };
   }>("/api/creator/plugins/:pluginId/regenerate-key", async (request, reply) => {
-    const token = request.body.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -483,7 +477,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
   app.get<{
     Querystring: { token?: string };
   }>("/api/creator/webhooks", async (request, reply) => {
-    const token = request.query.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });
@@ -523,7 +517,7 @@ export default async function creatorToolsRoutes(app: FastifyInstance) {
     Params: { webhookId: string };
     Body: { token?: string };
   }>("/api/creator/webhooks/:webhookId", async (request, reply) => {
-    const token = request.body.token;
+    const token = getRequestToken(request);
 
     if (!token) {
       return reply.code(400).send({ error: "token is required" });

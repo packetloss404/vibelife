@@ -1,7 +1,7 @@
 class_name VrManager
 extends RefCounted
 
-## VR Support Manager — Feature 20
+## Archived experimental module.
 ##
 ## Handles XR initialization, hand tracking, teleport locomotion, comfort
 ## vignette, VR UI panels, spatial audio integration, and VR build mode.

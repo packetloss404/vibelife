@@ -1,6 +1,5 @@
-# Creator Dashboard — Feature 17: Creator Tools Platform
-#
-# GDScript module for the Godot native client.
+# Archived experimental module.
+# Creator dashboard behavior is not wired into the primary Godot client.
 # Provides asset pipeline submission, review status tracking,
 # creator analytics, revenue sharing, and plugin management.
 #

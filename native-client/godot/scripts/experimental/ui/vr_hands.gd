@@ -1,7 +1,7 @@
 class_name VrHands
 extends RefCounted
 
-## VR Hand Model Management — Feature 20
+## Archived experimental module.
 ##
 ## Manages hand model rendering, gesture recognition, grab/point/pinch
 ## detection, and haptic feedback triggers for VR hand tracking.

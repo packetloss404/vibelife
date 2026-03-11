@@ -1,7 +1,7 @@
 class_name ServerBrowser
 extends RefCounted
 
-## Feature 18: Federation / Multi-Server — Client-side server browser,
+## Archived experimental module.
 ## cross-server teleport, and federated marketplace browsing.
 ##
 ## Usage from main.gd:

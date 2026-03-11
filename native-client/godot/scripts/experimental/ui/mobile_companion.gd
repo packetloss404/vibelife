@@ -1,6 +1,5 @@
-# =============================================================================
-# MobileCompanion — Feature 16: Mobile Companion App (Godot client module)
-# =============================================================================
+# Archived experimental module.
+# Mobile companion behavior is not wired into the primary Godot client.
 # Handles mobile-specific API calls from the Godot desktop client, allowing
 # the desktop client to interact with mobile companion features such as:
 #   - Mobile session management

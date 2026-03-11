@@ -1,9 +1,5 @@
-// NOTE for server.ts: register this plugin:
-//   import interactivesRoutes from "./routes/interactives.js";
-//   await app.register(interactivesRoutes);
-
 import type { FastifyInstance } from "fastify";
-import { getSession } from "../world/store.js";
+import { requireAuth } from "../middleware/auth.js";
 import {
   registerInteractive,
   removeInteractive,
@@ -33,18 +29,13 @@ export default async function interactivesRoutes(app: FastifyInstance) {
       interactionType?: string;
       config?: Record<string, unknown>;
     };
-  }>("/api/interactives", async (request, reply) => {
-    const { token, objectId, regionId, interactionType, config = {} } = request.body;
+  }>("/api/interactives", { preHandler: requireAuth }, async (request, reply) => {
+    const { objectId, regionId, interactionType, config = {} } = request.body;
 
-    if (!token || !objectId || !regionId || !interactionType) {
+    if (!objectId || !regionId || !interactionType) {
       return reply.code(400).send({
-        error: "token, objectId, regionId, and interactionType are required",
+        error: "objectId, regionId, and interactionType are required",
       });
-    }
-
-    const session = getSession(token);
-    if (!session) {
-      return reply.code(401).send({ error: "invalid session" });
     }
 
     if (!VALID_TYPES.includes(interactionType as InteractionType)) {
@@ -66,14 +57,9 @@ export default async function interactivesRoutes(app: FastifyInstance) {
   // GET /api/interactives?regionId= — list interactives in a region
   app.get<{
     Querystring: { regionId?: string; token?: string };
-  }>("/api/interactives", async (request, reply) => {
-    const { regionId, token } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
+  }>("/api/interactives", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId } = request.query;
+    const session = request.session;
     if (!session) {
       return reply.code(401).send({ error: "invalid session" });
     }
@@ -87,15 +73,8 @@ export default async function interactivesRoutes(app: FastifyInstance) {
   app.get<{
     Params: { objectId: string };
     Querystring: { token?: string };
-  }>("/api/interactives/:objectId", async (request, reply) => {
-    const { token } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+  }>("/api/interactives/:objectId", { preHandler: requireAuth }, async (request, reply) => {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 
@@ -111,11 +90,10 @@ export default async function interactivesRoutes(app: FastifyInstance) {
   app.post<{
     Params: { objectId: string };
     Body: { token?: string };
-  }>("/api/interactives/:objectId/interact", async (request, reply) => {
-    const { token } = request.body;
-
+  }>("/api/interactives/:objectId/interact", { preHandler: requireAuth }, async (request, reply) => {
+    const token = request.authToken;
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const result = interactWith(token, request.params.objectId);
@@ -133,15 +111,8 @@ export default async function interactivesRoutes(app: FastifyInstance) {
   app.delete<{
     Params: { objectId: string };
     Body: { token?: string };
-  }>("/api/interactives/:objectId", async (request, reply) => {
-    const { token } = request.body;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+  }>("/api/interactives/:objectId", { preHandler: requireAuth }, async (request, reply) => {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 

@@ -1,16 +1,5 @@
-// NPC Routes — Feature 19: AI NPCs for VibeLife
-//
-// INTEGRATION NOTES (do NOT auto-apply):
-// - server.ts: Register this plugin:
-//     import npcRoutes from "./routes/npcs.js";
-//     await app.register(npcRoutes);
-//
-// - server.ts: Start the tick loop after initializeWorldStore():
-//     import { startNpcTickLoop } from "./world/npc-service.js";
-//     startNpcTickLoop();
-
 import type { FastifyInstance } from "fastify";
-import { getSession } from "../world/store.js";
+import { requireAuth } from "../middleware/auth.js";
 import {
   listNpcsByRegion,
   getNpc,
@@ -35,14 +24,9 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // GET /api/npcs — List NPCs in a region
   // -----------------------------------------------------------------------
-  app.get<{ Querystring: { token?: string; regionId?: string } }>("/api/npcs", async (request, reply) => {
-    const { token, regionId } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
+  app.get<{ Querystring: { token?: string; regionId?: string } }>("/api/npcs", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId } = request.query;
+    const session = request.session;
     if (!session) {
       return reply.code(401).send({ error: "invalid session" });
     }
@@ -58,15 +42,8 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // GET /api/npcs/:id — Get a single NPC's details
   // -----------------------------------------------------------------------
-  app.get<{ Params: { id: string }; Querystring: { token?: string } }>("/api/npcs/:id", async (request, reply) => {
-    const { token } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
-    if (!session) {
+  app.get<{ Params: { id: string }; Querystring: { token?: string } }>("/api/npcs/:id", { preHandler: requireAuth }, async (request, reply) => {
+    if (!request.session) {
       return reply.code(401).send({ error: "invalid session" });
     }
 
@@ -81,11 +58,10 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // POST /api/npcs/:id/interact — Begin interaction with an NPC
   // -----------------------------------------------------------------------
-  app.post<{ Params: { id: string }; Body: { token?: string } }>("/api/npcs/:id/interact", async (request, reply) => {
-    const { token } = request.body;
-
+  app.post<{ Params: { id: string }; Body: { token?: string } }>("/api/npcs/:id/interact", { preHandler: requireAuth }, async (request, reply) => {
+    const token = request.authToken;
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const npc = getNpc(request.params.id);
@@ -109,11 +85,16 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // POST /api/npcs/:id/dialogue — Advance a dialogue with an option choice
   // -----------------------------------------------------------------------
-  app.post<{ Params: { id: string }; Body: { token?: string; optionId?: string } }>("/api/npcs/:id/dialogue", async (request, reply) => {
-    const { token, optionId } = request.body;
+  app.post<{ Params: { id: string }; Body: { token?: string; optionId?: string } }>("/api/npcs/:id/dialogue", { preHandler: requireAuth }, async (request, reply) => {
+    const { optionId } = request.body;
+    const token = request.authToken;
 
-    if (!token || !optionId) {
-      return reply.code(400).send({ error: "token and optionId are required" });
+    if (!token) {
+      return reply.code(401).send({ error: "invalid session" });
+    }
+
+    if (!optionId) {
+      return reply.code(400).send({ error: "optionId is required" });
     }
 
     const result = advanceDialogue(token, request.params.id, optionId);
@@ -132,11 +113,10 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // GET /api/npcs/quests — List player's active and completed quests
   // -----------------------------------------------------------------------
-  app.get<{ Querystring: { token?: string } }>("/api/npcs/quests", async (request, reply) => {
-    const { token } = request.query;
-
+  app.get<{ Querystring: { token?: string } }>("/api/npcs/quests", { preHandler: requireAuth }, async (request, reply) => {
+    const token = request.authToken;
     if (!token) {
-      return reply.code(400).send({ error: "token is required" });
+      return reply.code(401).send({ error: "invalid session" });
     }
 
     const quests = getPlayerQuests(token);
@@ -150,14 +130,9 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // GET /api/npcs/quests/available — List all quests available in region
   // -----------------------------------------------------------------------
-  app.get<{ Querystring: { token?: string; regionId?: string } }>("/api/npcs/quests/available", async (request, reply) => {
-    const { token, regionId } = request.query;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
+  app.get<{ Querystring: { token?: string; regionId?: string } }>("/api/npcs/quests/available", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId } = request.query;
+    const session = request.session;
     if (!session) {
       return reply.code(401).send({ error: "invalid session" });
     }
@@ -209,14 +184,14 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // POST /api/npcs/quests/progress — Update quest objective progress
   // -----------------------------------------------------------------------
-  app.post<{ Body: { token?: string; objectiveType?: string; target?: string; increment?: number } }>("/api/npcs/quests/progress", async (request, reply) => {
-    const { token, objectiveType, target, increment = 1 } = request.body;
+  app.post<{ Body: { token?: string; objectiveType?: string; target?: string; increment?: number } }>("/api/npcs/quests/progress", { preHandler: requireAuth }, async (request, reply) => {
+    const { objectiveType, target, increment = 1 } = request.body;
+    const session = request.session;
 
-    if (!token || !objectiveType || !target) {
-      return reply.code(400).send({ error: "token, objectiveType, and target are required" });
+    if (!objectiveType || !target) {
+      return reply.code(400).send({ error: "objectiveType and target are required" });
     }
 
-    const session = getSession(token);
     if (!session) {
       return reply.code(401).send({ error: "invalid session" });
     }
@@ -247,14 +222,14 @@ export default async function npcRoutes(app: FastifyInstance) {
       interactRadius?: number;
       appearance?: Record<string, string>;
     }
-  }>("/api/npcs/spawn", async (request, reply) => {
-    const { token, regionId, displayName, npcType, x, y, z, patrolRadius, interactRadius, appearance } = request.body;
+  }>("/api/npcs/spawn", { preHandler: requireAuth }, async (request, reply) => {
+    const { regionId, displayName, npcType, x, y, z, patrolRadius, interactRadius, appearance } = request.body;
 
-    if (!token || !regionId || !displayName || !npcType) {
-      return reply.code(400).send({ error: "token, regionId, displayName, and npcType are required" });
+    if (!regionId || !displayName || !npcType) {
+      return reply.code(400).send({ error: "regionId, displayName, and npcType are required" });
     }
 
-    const session = getSession(token);
+    const session = request.session;
     if (!session || session.role !== "admin") {
       return reply.code(403).send({ error: "admin access required" });
     }
@@ -280,14 +255,8 @@ export default async function npcRoutes(app: FastifyInstance) {
   // -----------------------------------------------------------------------
   // DELETE /api/npcs/:id — Admin: despawn an NPC
   // -----------------------------------------------------------------------
-  app.delete<{ Params: { id: string }; Body: { token?: string } }>("/api/npcs/:id", async (request, reply) => {
-    const { token } = request.body;
-
-    if (!token) {
-      return reply.code(400).send({ error: "token is required" });
-    }
-
-    const session = getSession(token);
+  app.delete<{ Params: { id: string }; Body: { token?: string } }>("/api/npcs/:id", { preHandler: requireAuth }, async (request, reply) => {
+    const session = request.session;
     if (!session || session.role !== "admin") {
       return reply.code(403).send({ error: "admin access required" });
     }
