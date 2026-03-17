@@ -40,6 +40,9 @@ func init(main: Node3D) -> void:
 	_create_death_overlay()
 	_create_loot_container()
 
+	# Hide HUD until player joins a world
+	hud_root.visible = false
+
 
 func _create_hp_bar() -> void:
 	hp_bar = ProgressBar.new()
@@ -211,7 +214,16 @@ func _create_loot_container() -> void:
 	hud_root.add_child(loot_container)
 
 
+func show_hud() -> void:
+	hud_root.visible = true
+
+
+func hide_hud() -> void:
+	hud_root.visible = false
+
+
 func update_stats(stats: Dictionary) -> void:
+	hud_root.visible = true
 	if stats.has("hp") and stats.has("maxHp"):
 		hp_bar.max_value = float(stats.maxHp)
 		hp_bar.value = float(stats.hp)

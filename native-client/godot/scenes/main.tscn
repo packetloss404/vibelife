@@ -111,7 +111,7 @@ anchor_bottom = 1.0
 offset_left = 0.0
 offset_top = 58.0
 offset_right = 280.0
-offset_bottom = 0.0
+offset_bottom = -40.0
 grow_vertical = 2
 
 [node name="Margin" type="MarginContainer" parent="CanvasLayer/UI/Sidebar" unique_id=1819621985]
@@ -238,10 +238,10 @@ layout_mode = 1
 anchors_preset = -1
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 280.0
+offset_left = 0.0
 offset_top = -480.0
-offset_right = 640.0
-offset_bottom = 0.0
+offset_right = 300.0
+offset_bottom = -40.0
 
 [node name="BuildMargin" type="MarginContainer" parent="CanvasLayer/UI/BuildPanel" unique_id=697774347]
 layout_mode = 2
@@ -332,10 +332,10 @@ anchors_preset = -1
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -350.0
+offset_left = -300.0
 offset_top = 58.0
 offset_right = 0.0
-offset_bottom = 0.0
+offset_bottom = -40.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -345,6 +345,40 @@ theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
+
+[node name="BottomBar" type="PanelContainer" parent="CanvasLayer/UI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_bottom = 0.0
+grow_horizontal = 2
+
+[node name="BottomMargin" type="MarginContainer" parent="CanvasLayer/UI/BottomBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="ChatRow" type="HBoxContainer" parent="CanvasLayer/UI/BottomBar/BottomMargin" unique_id=2050607891]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ChatChannelSelect" type="OptionButton" parent="CanvasLayer/UI/BottomBar/BottomMargin/ChatRow" unique_id=2050607892]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+
+[node name="ChatInput" type="LineEdit" parent="CanvasLayer/UI/BottomBar/BottomMargin/ChatRow" unique_id=2050607893]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Say something"
+
+[node name="SendButton" type="Button" parent="CanvasLayer/UI/BottomBar/BottomMargin/ChatRow" unique_id=2050607894]
+layout_mode = 2
+text = "Send"
 
 [node name="ToastManager" type="Control" parent="CanvasLayer/UI"]
 layout_mode = 1

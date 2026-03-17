@@ -3,12 +3,10 @@ import {
   appendAuditLog,
   createTeleportPoint,
   deleteTeleportPoint,
-  getSession,
   listTeleportPoints,
   teleportToRegion,
   updateAvatarAppearance
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function avatarRoutes(app: FastifyInstance) {
   app.patch<{
@@ -32,11 +30,6 @@ export default async function avatarRoutes(app: FastifyInstance) {
 
     if (!avatar) {
       return reply.code(404).send({ error: "avatar session not found" });
-    }
-
-    const session = getSession(token);
-    if (session) {
-      broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar });
     }
 
     return reply.send({ avatar });

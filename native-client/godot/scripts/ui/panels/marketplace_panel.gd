@@ -262,13 +262,13 @@ func _buy_listing(listing_id: String) -> void:
 
 	var http := HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(_result, code, _headers, response_body):
+	http.request_completed.connect(func(_result, _code, _headers, response_body):
 		var json = JSON.parse_string(response_body.get_string_from_utf8())
 		if json and json.get("ok", false):
 			main._append_chat("[Market] Purchase successful!")
 			_refresh_browse()
 		else:
-			var err := json.get("error", "Purchase failed") if json else "Purchase failed"
+			var err: String = json.get("error", "Purchase failed") if json else "Purchase failed"
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
 	)
@@ -324,7 +324,7 @@ func _place_bid(listing_id: String, amount: int) -> void:
 			main._append_chat("[Market] Bid placed: %d coins" % amount)
 			_refresh_browse()
 		else:
-			var err := json.get("error", "Bid failed") if json else "Bid failed"
+			var err: String = json.get("error", "Bid failed") if json else "Bid failed"
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
 	)
@@ -535,7 +535,7 @@ func _on_list_item() -> void:
 			sell_status.text = "Listed: %s" % json["listing"].get("itemName", "item")
 			main._append_chat("[Market] Item listed successfully!")
 		else:
-			var err := json.get("error", "Listing failed") if json else "Listing failed"
+			var err: String = json.get("error", "Listing failed") if json else "Listing failed"
 			sell_status.text = err
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
@@ -647,7 +647,7 @@ func _cancel_listing(listing_id: String) -> void:
 			main._append_chat("[Market] Listing cancelled.")
 			_refresh_my_listings()
 		else:
-			var err := json.get("error", "Cancel failed") if json else "Cancel failed"
+			var err: String = json.get("error", "Cancel failed") if json else "Cancel failed"
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
 	)
@@ -820,7 +820,7 @@ func _accept_trade(trade_id: String) -> void:
 			main._append_chat("[Market] Trade accepted!")
 			_refresh_trades()
 		else:
-			var err := json.get("error", "Accept failed") if json else "Accept failed"
+			var err: String = json.get("error", "Accept failed") if json else "Accept failed"
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
 	)
@@ -839,7 +839,7 @@ func _decline_trade(trade_id: String) -> void:
 			main._append_chat("[Market] Trade declined.")
 			_refresh_trades()
 		else:
-			var err := json.get("error", "Decline failed") if json else "Decline failed"
+			var err: String = json.get("error", "Decline failed") if json else "Decline failed"
 			main._append_chat("[Market] %s" % err)
 		http.queue_free()
 	)

@@ -6,10 +6,12 @@ import {
   createGroup,
   getAvatarProfile,
   getGroupMembers,
+  handleChatMessage,
   listFriends,
   listGroups,
   listOfflineMessages,
   markMessageRead,
+  onChatMessage,
   removeFriend,
   removeGroupMember,
   saveAvatarProfile,
@@ -207,5 +209,31 @@ export default async function socialRoutes(app: FastifyInstance) {
 
     const marked = await markMessageRead(token, messageId);
     return reply.send({ ok: marked });
+  });
+
+  // ── Spigot bridge: chat persistence ─────────────────────────────────────
+
+  app.post<{ Body: { accountId?: string; displayName?: string; regionId?: string; message?: string } }>("/api/chat/persist", async (request, reply) => {
+    const { accountId, displayName, regionId, message } = request.body;
+
+    if (!accountId || !displayName || !regionId || !message) {
+      return reply.code(400).send({ error: "accountId, displayName, regionId, and message are required" });
+    }
+
+    // Create a minimal session-like object for the chat service
+    const pseudoSession = {
+      token: "",
+      accountId,
+      avatarId: accountId,
+      displayName,
+      regionId,
+      role: "resident" as const,
+      expiresAt: Date.now() + 60000
+    };
+
+    const entry = handleChatMessage(pseudoSession, message);
+    const unlocked = onChatMessage(accountId);
+
+    return reply.send({ entry, achievements: unlocked });
   });
 }

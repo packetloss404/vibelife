@@ -2,13 +2,14 @@ import { FastifyInstance } from "fastify";
 import {
   addParcelCollaborator,
   appendAuditLog,
+  checkBuildPermissionByAccount,
   claimParcel,
   getSession,
+  listParcels,
   releaseParcel,
   removeParcelCollaborator,
   transferParcel
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function parcelRoutes(app: FastifyInstance) {
   app.post<{ Body: { token?: string; parcelId?: string } }>("/api/parcels/claim", async (request, reply) => {
@@ -28,7 +29,6 @@ export default async function parcelRoutes(app: FastifyInstance) {
     const session = getSession(token);
 
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "parcel.claim", "parcel", parcel.id, `claimed ${parcel.name}`, session.regionId);
     }
 
@@ -52,7 +52,6 @@ export default async function parcelRoutes(app: FastifyInstance) {
     const session = getSession(token);
 
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "parcel.release", "parcel", parcel.id, `released ${parcel.name}`, session.regionId);
     }
 
@@ -70,7 +69,6 @@ export default async function parcelRoutes(app: FastifyInstance) {
     }
     const session = getSession(token);
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "parcel.collaborator.add", "parcel", parcel.id, `added collaborator ${collaboratorAccountId}`, session.regionId);
     }
     return reply.send({ parcel });
@@ -87,7 +85,6 @@ export default async function parcelRoutes(app: FastifyInstance) {
     }
     const session = getSession(token);
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "parcel.collaborator.remove", "parcel", parcel.id, `removed collaborator ${collaboratorAccountId}`, session.regionId);
     }
     return reply.send({ parcel });
@@ -104,9 +101,26 @@ export default async function parcelRoutes(app: FastifyInstance) {
     }
     const session = getSession(token);
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "parcel.transfer", "parcel", parcel.id, `transferred parcel to ${ownerAccountId ?? "none"}`, session.regionId);
     }
     return reply.send({ parcel });
+  });
+
+  // ── Spigot bridge endpoints ─────────────────────────────────────────────
+
+  app.get<{ Params: { regionId: string } }>("/api/parcels/by-region/:regionId", async (request, reply) => {
+    const parcels = await listParcels(request.params.regionId);
+    return reply.send({ parcels });
+  });
+
+  app.post<{ Body: { accountId?: string; regionId?: string; x?: number; z?: number } }>("/api/parcels/check-build", async (request, reply) => {
+    const { accountId, regionId, x, z } = request.body;
+
+    if (!accountId || !regionId || x === undefined || z === undefined) {
+      return reply.code(400).send({ error: "accountId, regionId, x, and z are required" });
+    }
+
+    const permission = await checkBuildPermissionByAccount(accountId, regionId, x, z);
+    return reply.send(permission);
   });
 }

@@ -37,7 +37,7 @@ func load_media(region_id: String) -> void:
 	_load_request.request_completed.connect(_on_load_completed)
 	_load_request.request(url, [], HTTPClient.METHOD_GET)
 
-func _on_load_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_load_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	_cleanup_request(_load_request)
 	_load_request = null
 	if response_code != 200:
@@ -66,7 +66,7 @@ func attach_media(object_id: String, media_type: String, config: Dictionary) -> 
 	_attach_request.request_completed.connect(_on_attach_completed)
 	_attach_request.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, payload)
 
-func _on_attach_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_attach_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	_cleanup_request(_attach_request)
 	_attach_request = null
 	if response_code != 200:
@@ -92,7 +92,7 @@ func update_media(object_id: String, config: Dictionary) -> void:
 	_update_request.request_completed.connect(_on_update_completed)
 	_update_request.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_PATCH, payload)
 
-func _on_update_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_update_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	_cleanup_request(_update_request)
 	_update_request = null
 	if response_code != 200:
@@ -117,7 +117,7 @@ func remove_media(object_id: String) -> void:
 	_remove_request.request_completed.connect(_on_remove_completed.bind(object_id))
 	_remove_request.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_DELETE, payload)
 
-func _on_remove_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray, object_id: String) -> void:
+func _on_remove_completed(_result: int, response_code: int, _headers: PackedStringArray, _body: PackedByteArray, object_id: String) -> void:
 	_cleanup_request(_remove_request)
 	_remove_request = null
 	if response_code != 200:
@@ -269,7 +269,7 @@ func _create_photo_frame(config: Dictionary) -> Node3D:
 
 	return root
 
-func _create_video_screen(config: Dictionary) -> Node3D:
+func _create_video_screen(_config: Dictionary) -> Node3D:
 	var root = Node3D.new()
 
 	# Large flat quad as a screen placeholder
@@ -409,7 +409,7 @@ func _on_slideshow_tick(object_id: String) -> void:
 			var hue = float(current_index) / float(photo_ids.size())
 			mat.albedo_color = Color.from_hsv(hue, 0.15, 0.9)
 
-func _create_projection(config: Dictionary) -> Node3D:
+func _create_projection(_config: Dictionary) -> Node3D:
 	var root = Node3D.new()
 
 	# Simple projected-light style placeholder

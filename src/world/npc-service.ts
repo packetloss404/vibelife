@@ -935,12 +935,9 @@ function npcTick(): void {
     }));
 
     broadcastRegion(regionId, {
-      type: "chat",
+      type: "npc:positions",
       sequence: nextRegionSequence(regionId),
-      avatarId: "npc:tick",
-      displayName: "NPC System",
-      message: JSON.stringify({ npcPositions: npcStates }),
-      createdAt: new Date().toISOString()
+      npcs: npcStates
     });
   }
 }

@@ -47,8 +47,8 @@ func calculate_pan(listener_pos: Vector3, listener_forward: Vector3, speaker_pos
 	var right = Vector3.UP.cross(forward).normalized()
 
 	# Dot product with right vector gives panning: -1 left, +1 right
-	var pan = to_speaker.dot(right)
-	return clampf(pan, -1.0, 1.0)
+	var pan_value = to_speaker.dot(right)
+	return clampf(pan_value, -1.0, 1.0)
 
 func apply_spatial_audio(audio_player: Node, speaker_pos: Vector3) -> void:
 	if main == null or audio_player == null:
@@ -63,7 +63,7 @@ func apply_spatial_audio(audio_player: Node, speaker_pos: Vector3) -> void:
 		listener_forward = -main.camera.global_transform.basis.z
 
 	var volume = calculate_volume(listener_pos, speaker_pos)
-	var pan = calculate_pan(listener_pos, listener_forward, speaker_pos)
+	var _pan = calculate_pan(listener_pos, listener_forward, speaker_pos)
 
 	# Convert volume to dB for Godot audio: linear_to_db
 	if audio_player.has_method("set"):

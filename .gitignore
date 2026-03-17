@@ -5,3 +5,8 @@ npm-debug.log*
 native-client/godot/.godot/
 *.uid
 .claude/settings.local.json
+
+# Java/Gradle build artifacts
+**/build/
+**/.gradle/
+*.jar

@@ -300,8 +300,8 @@ func _refresh_challenges() -> void:
 func _refresh_leaderboard() -> void:
 	if main == null or main.achievement_mgr == null:
 		return
-	var cat_index := _leaderboard_category.selected if _leaderboard_category != null else 0
-	var category := LEADERBOARD_CATEGORIES[cat_index] if cat_index >= 0 and cat_index < LEADERBOARD_CATEGORIES.size() else ""
+	var cat_index: int = _leaderboard_category.selected if _leaderboard_category != null else 0
+	var category: String = LEADERBOARD_CATEGORIES[cat_index] if cat_index >= 0 and cat_index < LEADERBOARD_CATEGORIES.size() else ""
 	main.achievement_mgr.load_leaderboard(category)
 	await main.get_tree().create_timer(0.5).timeout
 	_render_leaderboard()
@@ -333,7 +333,7 @@ func _render_achievements() -> void:
 	_xp_label.text = "XP: %d" % int(progress.get("xp", 0))
 
 	# Filter by category
-	var selected_cat := CATEGORIES[_category_filter.selected] if _category_filter.selected >= 0 else "All"
+	var selected_cat: String = CATEGORIES[_category_filter.selected] if _category_filter.selected >= 0 else "All"
 
 	for ach in mgr.achievements:
 		var cat: String = ach.get("category", "")
@@ -625,7 +625,7 @@ func _render_titles() -> void:
 			var equip_btn := Button.new()
 			equip_btn.text = "Set Active"
 			equip_btn.custom_minimum_size = Vector2(90, 0)
-			var captured_title := title_name
+			var captured_title: String = title_name
 			equip_btn.pressed.connect(func(): _set_active_title(captured_title))
 			row.add_child(equip_btn)
 

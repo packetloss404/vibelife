@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
+  setPresenceOnLogin,
+  setPresenceOnDisconnect,
   setPresenceStatus,
   getPresence,
   getFriendsPresence,
@@ -56,6 +58,32 @@ export async function registerPresenceRoutes(app: FastifyInstance) {
 
       const presences = await getFriendsPresence(token);
       return reply.send({ presences });
+    }
+  );
+
+  // ── Spigot bridge endpoints (accountId-based) ──────────────────────────
+
+  app.post<{ Body: { accountId?: string; displayName?: string; regionId?: string } }>(
+    "/api/presence/online",
+    async (request, reply) => {
+      const { accountId, displayName, regionId } = request.body;
+      if (!accountId || !displayName || !regionId) {
+        return reply.code(400).send({ error: "accountId, displayName, and regionId are required" });
+      }
+      setPresenceOnLogin(accountId, displayName, regionId);
+      return reply.send({ ok: true });
+    }
+  );
+
+  app.post<{ Body: { accountId?: string } }>(
+    "/api/presence/offline",
+    async (request, reply) => {
+      const { accountId } = request.body;
+      if (!accountId) {
+        return reply.code(400).send({ error: "accountId is required" });
+      }
+      setPresenceOnDisconnect(accountId);
+      return reply.send({ ok: true });
     }
   );
 }

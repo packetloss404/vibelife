@@ -1,6 +1,4 @@
 import type { FastifyInstance } from "fastify";
-import { getSession } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 import {
   adoptPet,
   listPets,
@@ -86,15 +84,6 @@ export default async function petRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "pet not found or not owned" });
       }
 
-      const session = getSession(token);
-      if (session) {
-        broadcastRegion(session.regionId, {
-          type: "pet:summoned",
-          sequence: nextRegionSequence(session.regionId),
-          petState: result.state
-        } as any);
-      }
-
       return reply.send({ pet: result.pet, state: result.state });
     }
   );
@@ -114,12 +103,6 @@ export default async function petRoutes(app: FastifyInstance) {
       if (!result) {
         return reply.code(404).send({ error: "no active pet to dismiss" });
       }
-
-      broadcastRegion(result.regionId, {
-        type: "pet:dismissed",
-        sequence: nextRegionSequence(result.regionId),
-        petId: result.petId
-      } as any);
 
       return reply.send({ ok: true, petId: result.petId });
     }
@@ -201,17 +184,6 @@ export default async function petRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "pet not found or not owned" });
       }
 
-      const session = getSession(token);
-      if (session && result.state) {
-        broadcastRegion(session.regionId, {
-          type: "pet:trick",
-          sequence: nextRegionSequence(session.regionId),
-          petId: request.params.id,
-          trick,
-          ownerAvatarId: session.avatarId
-        } as any);
-      }
-
       return reply.send({ pet: result.pet, message: result.message });
     }
   );
@@ -253,18 +225,6 @@ export default async function petRoutes(app: FastifyInstance) {
 
       if (!pet) {
         return reply.code(400).send({ error: "no updates provided" });
-      }
-
-      const session = getSession(token);
-      if (session) {
-        const activePetData = getActivePet(token);
-        if (activePetData && activePetData.pet.id === request.params.id) {
-          broadcastRegion(session.regionId, {
-            type: "pet:state_updated",
-            sequence: nextRegionSequence(session.regionId),
-            petState: activePetData.state
-          } as any);
-        }
       }
 
       return reply.send({ pet });

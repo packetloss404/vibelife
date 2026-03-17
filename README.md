@@ -1,207 +1,215 @@
 # VibeLife
 
-An open-source virtual world MMORPG built with a TypeScript/Fastify backend and a Godot 4.x native client. Think Second Life meets Minecraft meets an RPG — build, fight, socialize, and create in a persistent shared world.
-
-**[Game Manual](docs/manual/index.html)** | **[Developer Manual](docs/devmanual/index.html)** | **[Website](docs/index.html)**
-
-## Features
-
-### World & Building
-- Persistent shared regions with real-time multiplayer via WebSocket
-- Parcel-based land ownership with build permissions and collaborators
-- Object placement, transform gizmos (move/rotate/scale), snapping, and undo
-- Blueprint system — save, load, and share prefab builds
-- Region scene manifests and generated glTF assets
-
-### Voxel Engine
-- 16x64x16 chunk-based voxel world with terrain generation
-- 13 block types with RLE compression for network efficiency
-- Place and break blocks in real-time (synced to all players)
-- Voxel blueprints and a custom block shop
-- LRU chunk cache with distance-based streaming
-
-### RPG Combat
-- Player stats (HP, Mana, Strength, Defense), XP, and leveling
-- 5 enemy types (Slime, Skeleton, Golem, Shadow, Drake) with AI state machines
-- Melee and magic attack styles with damage formulas and critical hits
-- Loot tables with currency and item drops
-- Death penalties, respawn system, and HP/Mana regeneration
-
-### Social
-- Friends list, friend requests, blocking, and presence status
-- Real-time region chat, whispers, and group chat
-- Guilds with roles, treasury, emblems, alliances, and parcel assignment
-- Avatar profiles with bios, titles, and play-time stats
-- Offline messages and activity feeds
-- Emote system with combo detection
-
-### Economy
-- Currency system with balance tracking and transaction history
-- Marketplace with fixed-price and auction listings
-- Peer-to-peer trading with offer/accept/decline flow
-- Storefronts, commissions, and trending items
-- Creator tools with asset submission, analytics, and revenue tracking
-
-### Progression
-- 5 achievement categories (Explorer, Builder, Social, Collector, Warrior)
-- Daily and weekly challenges with XP rewards
-- Leaderboards by category
-- Unlockable titles
-
-### Pets
-- 8 species (Cat, Dog, Bird, Bunny, Fox, Dragon, Slime, Owl)
-- Adopt, summon, feed, play, pet, and teach tricks
-- Pet customization (colors, accessories), leveling, and happiness/energy
-
-### Media & Photography
-- In-game camera mode with 8 filters (vintage, noir, warm, cool, dreamy, pixel, posterize)
-- Photo gallery with likes, comments, and visibility controls
-- In-world media objects (photo frames, billboards, slideshows)
-
-### Homes
-- Set home parcel with teleport-home support
-- Privacy controls (public, friends-only, private)
-- Home ratings, favorites, featured homes, and visitor counts
-- Doorbell notifications when visitors arrive
-
-### Events & Seasonal
-- Player-created events with types, RSVP, and scheduling
-- 4 seasons with themed world visuals (fog, sky, particles)
-- 7 holidays with collectible seasonal items
-- Seasonal achievements and leaderboards
-
-### Radio & Voice
-- Multi-station radio with genre labels and track skipping
-- Voice chat channels with join/leave, mute, deafen
-- Spatial audio with distance-based volume falloff
-- Speaking indicators on avatars
-
-### Platform
-- Mobile companion service (REST API for mobile clients)
-- Federation/multi-server architecture
-- AI NPCs with dialogue trees and behavior states
-- VR support service
-- Creator tools platform with plugins, webhooks, and API keys
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Server | TypeScript, Fastify, Node.js |
-| Client | Godot 4.x, GDScript |
-| Transport | WebSocket (real-time), REST (CRUD) |
-| Persistence | In-memory Maps + PostgreSQL (dual-mode) |
-| Auth | Guest, Register, Login with per-account salted hashes |
+A social MMORPG platform built on Minecraft. Uses a Spigot server for core gameplay, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
 
 ## Architecture
 
 ```
-src/
-  server.ts          — Route registration, WS handlers, tick loops
-  contracts.ts       — Shared types (RegionEvent, RegionCommand unions)
-  routes/            — 37 Fastify route plugins
-  world/             — 30+ service modules
-    store.ts         — Barrel re-exports from all services
-    _shared-state.ts — Sessions, regions, shared helpers
-  data/
-    persistence.ts   — Dual-mode persistence layer
-
-native-client/godot/
-  scripts/
-    main.gd          — Entry point, module init, WS handling
-    network/         — Session coordinator, WS event router
-    ui/              — 15 GUI panels, panel manager, toast system
-    world/           — Object, avatar, voxel, pet, enemy managers
-    build/           — Build controller, blueprints, grid, undo
-    visual/          — Sky, weather, day/night, particles, materials
-    audio/           — Radio controller
-    camera/          — Camera controller
-  scenes/
-    main.tscn        — Scene tree with responsive UI anchoring
+┌─────────────┐     Plugin Messages     ┌──────────────┐
+│  Fabric Mod  │◄──────────────────────►│ Spigot Plugin │
+│  (Client UI) │                        │  (MC Server)  │
+└──────┬───────┘                        └──────┬────────┘
+       │ HTTP (direct)                         │ HTTP (localhost)
+       │                                       │
+       └──────────►┌──────────────┐◄───────────┘
+                   │   Fastify    │
+                   │  (Sidecar)   │
+                   │  :3000       │
+                   └──────────────┘
 ```
 
-## Run It
+- **Spigot Plugin** (Java 21) — Thin bridge: intercepts MC events, calls sidecar REST API, forwards notifications to Fabric mod via plugin message channel
+- **Fastify Sidecar** (TypeScript) — All business logic: social, economy, marketplace, achievements, events, parcels, media, and more
+- **Fabric Mod** (Java 21) — Custom GUI screens, HUD overlays, keybinds. Calls sidecar HTTP directly for UI data
+
+## Features
+
+### Social
+- Friends list, friend requests, blocking, and presence status
+- Real-time chat persistence and achievement tracking
+- Guilds with roles, treasury, emblems, alliances, and parcel assignment
+- Avatar profiles with bios, titles, and play-time stats
+- Offline messages and activity feeds
+
+### Economy
+- Currency system (Vibes) with balance tracking and transaction history
+- Vault API integration — any Vault-compatible plugin works with VibeLife currency
+- In-game commands: `/balance`, `/pay <player> <amount>`
+- Fabric GUI for full economy management (V key)
+
+### Marketplace
+- Fixed-price and auction listings
+- Peer-to-peer trading with offer/accept/decline flow
+- Storefronts, commissions, and trending items
+- In-game `/market` command + full Fabric GUI (M key)
+
+### Parcels & Building
+- Parcel-based land ownership with build permissions and collaborators
+- Spigot-side block protection (cached parcel checks + sidecar fallback)
+- In-game commands: `/parcel info|claim|release|list`
+- Periodic parcel sync from sidecar (source of truth)
+
+### Achievements & Progression
+- 5 achievement categories (Explorer, Builder, Social, Collector, Warrior)
+- Automatic stat tracking from MC events (block place/break, mob kills, world changes)
+- Daily and weekly challenges with XP rewards
+- Leaderboards, unlockable titles
+- Toast notifications via Fabric mod (J key for full GUI)
+
+### Events & Seasonal
+- Player-created events with types, RSVP, and scheduling
+- 4 seasons with themed content, 7 holidays with collectibles
+- Seasonal achievements and leaderboards
+- Fabric GUI (K key)
+
+### Additional Features
+- Pets (8 species, adopt/summon/interact/customize)
+- In-game photography with filters and galleries
+- Home system with privacy, ratings, and doorbell notifications
+- Radio stations with genre labels and track skipping
+- Voice chat channels with spatial audio
+- NPC dialogue trees and quests
+- Creator tools platform
+- Mobile companion API
+- Federation/multi-server support
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Game Server | Spigot (Minecraft 1.21.4) |
+| Client Mod | Fabric API (Minecraft 1.21.4) |
+| Sidecar | TypeScript, Fastify, Node.js |
+| Persistence | In-memory Maps + PostgreSQL (dual-mode) |
+| Auth | MC UUID linking + guest/register/login flows |
+| Build | Gradle 8.12 (Java), npm (TypeScript) |
+
+## Project Structure
+
+```
+src/                              # Fastify sidecar
+  server.ts                       — Route registration, event system
+  contracts.ts                    — Shared types
+  routes/                         — 32 Fastify route plugins
+  world/                          — 25+ service modules
+    store.ts                      — Barrel re-exports
+    _shared-state.ts              — Sessions, regions, permissions
+  data/
+    persistence.ts                — Dual-mode persistence layer
+
+spigot-plugin/                    # Spigot server plugin (Java 21)
+  src/main/java/com/vibelife/spigot/
+    VibeLifePlugin.java           — Main entry, registers all listeners/commands
+    bridge/SidecarClient.java     — Async HTTP client for sidecar
+    auth/LoginListener.java       — MC UUID → VibeLife account linking
+    parcels/ParcelManager.java    — Parcel cache + WorldGuard sync
+    parcels/ParcelListener.java   — Block protection via parcel permissions
+    economy/VaultProvider.java    — Vault Economy backed by sidecar
+    achievements/AchievementHook.java — MC events → achievement stat tracking
+    chat/ChatListener.java        — Chat persistence + achievement hooks
+    commands/                     — /parcel, /friends, /market, /balance, /pay
+    messaging/                    — Plugin channel for Fabric mod
+
+fabric-mod/                       # Fabric client mod (Java 21)
+  src/main/java/com/vibelife/fabric/
+    VibeLifeClient.java           — Mod entry, session management
+    network/SidecarApi.java       — Async HTTP client for sidecar
+    network/PluginChannelHandler.java — Server → client notifications
+    screen/                       — EconomyScreen, SocialScreen, MarketplaceScreen,
+                                    AchievementsScreen, EventsScreen
+    hud/AchievementToast.java     — Achievement unlock notifications
+    keybind/KeybindManager.java   — V/N/M/J/K keybinds
+
+native-client/                    # DEPRECATED (Godot 4.x client, kept for reference)
+```
+
+## Keybinds (Fabric Mod)
+
+| Key | Screen |
+|-----|--------|
+| V | Economy (balance, send, transactions) |
+| N | Social (friends, groups, messages) |
+| M | Marketplace (browse, buy, sell, trades) |
+| J | Achievements (progress, challenges, leaderboard) |
+| K | Events (calendar, RSVP) |
+
+## Setup
+
+### Prerequisites
+- Java 21 (OpenJDK)
+- Node.js 20+
+- Spigot 1.21.4 server
+- (Optional) PostgreSQL for persistent storage
+
+### Build
 
 ```bash
+# Sidecar
 npm install
 npm run dev
+
+# Spigot plugin
+cd spigot-plugin
+./gradlew build
+# Output: build/libs/vibelife-spigot-1.0.0-SNAPSHOT.jar
+
+# Fabric mod
+cd fabric-mod
+./gradlew build
+# Output: build/libs/vibelife-fabric-1.0.0-SNAPSHOT.jar
 ```
 
-Backend starts on `http://localhost:3000`. Open the Godot project at `native-client/godot/project.godot` in Godot 4.2+ and connect.
+### Deploy
+
+1. Copy `vibelife-spigot-*.jar` to your Spigot server's `plugins/` directory
+2. Start the Fastify sidecar (`npm run dev`) on the same machine
+3. Edit `plugins/VibeLife/config.yml` to set sidecar URL and region mappings
+4. Players install `vibelife-fabric-*.jar` in their Fabric mods folder
+5. Connect to the MC server — account is auto-created on first join
+
+### Configuration
+
+**Spigot plugin** (`plugins/VibeLife/config.yml`):
+```yaml
+sidecar:
+  url: "http://localhost:3000"
+  api-key: "change-me-in-production"
+  timeout-ms: 5000
+
+regions:
+  world: "aurora-docks"
+  world_nether: "nether-realm"
+  world_the_end: "end-realm"
+```
+
+**Sidecar environment**:
+```bash
+PORT=3000                    # Sidecar port
+DATABASE_URL=postgres://...  # Optional, falls back to in-memory
+CORS_ORIGINS=http://...      # Allowed origins
+ADMIN_BOOTSTRAP_TOKEN=...    # For first admin registration
+```
+
+## Auth Flow
+
+1. Player joins MC server with their UUID
+2. Spigot plugin calls `POST /api/auth/mc-login` with UUID + username
+3. Sidecar creates or finds linked VibeLife account, returns session token
+4. Token sent to Fabric mod via plugin message channel
+5. Fabric mod uses token for all direct sidecar API calls
+6. Existing accounts can link via `/vibelife link <displayName> <password>`
 
 ## Development
 
 ```bash
-npm run dev          # Backend only
-npm run dev:local    # Guided local startup
-npm run dev:postgres # Backend with local Postgres
-npm run check        # Full verification (TypeScript + Godot + asset drift)
+npm run dev          # Sidecar with hot reload
+npm run check        # TypeScript type checking
+npm test             # Run test suite
 ```
 
-### Optional PostgreSQL
-
-Set `DATABASE_URL` to use persistent storage. Falls back to in-memory mode if not set.
-
-```bash
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/vibelife
-npm run dev
-```
-
-### Scene Pipeline
-
-- Region layouts: `public/scenes/*.json`
-- World assets: `public/assets/models/*.gltf`
-- Regenerate: `npm run generate:assets`
-
-## Client GUI
-
-The Godot client features a tabbed panel system with 15 feature panels:
-
-| Tab | Features |
-|-----|----------|
-| Chat | Region chat, whispers, group chat channel selector |
-| Inventory | Item list, equip, use |
-| Social | Friends, requests, blocking, presence, offline messages |
-| Economy | Balance, send currency, transaction history |
-| Market | Browse, buy, sell, auction, bid, trade offers |
-| Guild | Create/join, members, treasury, settings, alliances |
-| Achievements | Progress, challenges, leaderboards, titles |
-| Events | Upcoming, create, RSVP |
-| Pets | Adopt, summon, interact, customize |
-| Photos | Camera mode, gallery, likes, comments |
-| Radio | Stations, now playing, skip, volume |
-| Seasonal | Items, collection progress, achievements |
-| Voice | Join/leave, mute/deafen, participants |
-| Creator | Asset submission, analytics, revenue |
-| Admin | Bans, parcel/object management, audit log |
-
-Plus: currency HUD, toast notifications, right-click context menus, and responsive viewport scaling.
-
-## WebSocket Protocol
-
-**13 commands** (client -> server): move, chat, whisper, radio:tune, radio:skip, emote, typing, sit, stand, group_chat, voxel:place_block, voxel:break_block, combat:attack
-
-**43 events** (server -> client): snapshot, avatar:joined/moved/updated/left/typing/emote/sit/stand, chat, whisper, chat:history, object:created/updated/deleted, parcel:updated, media:created/updated/removed, pet:summoned/dismissed/trick/state_updated, voice:participant_joined/left/speaking_changed, radio:changed, emote:combo, group:chat, home:doorbell, event:started/ended, voxel:chunk_data/block_placed/block_broken, combat:damage/death/respawn/loot/level_up, enemy:spawned/moved/despawned
-
-## Auth
-
-- Guest, register, and login flows
-- Admin registration requires `ADMIN_BOOTSTRAP_TOKEN`
-- Per-account salted password hashes
-- Server-side session expiry with TTL management
-- Rate limiting: 60 req/min global, 5-10 req/min on auth endpoints
-- CORS whitelist with configurable `CORS_ORIGINS`
-
-## Documentation
-
-- **[Game Manual](docs/manual/index.html)** — Player-facing guide covering all features
-- **[Developer Manual](docs/devmanual/index.html)** — Architecture, services, API reference, and how-to guides
-- **[Website](docs/index.html)** — Interactive project website
-- **[Sprint Plans](dev/rev3/)** — Rev3 GUI sprint documentation
-
-## Contributing
-
-VibeLife is open source. The developer manual covers how to add new services, routes, WebSocket commands, and client modules with step-by-step guides.
+### Optional Plugins
+- **Vault** — Required for economy integration with other plugins
+- **WorldGuard** — Optional, parcels sync to WG regions for native protection
 
 ## License
 

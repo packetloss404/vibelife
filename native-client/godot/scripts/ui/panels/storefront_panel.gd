@@ -169,7 +169,7 @@ func _build_browse_tab() -> void:
 		var star_btn := Button.new()
 		star_btn.text = str(i)
 		star_btn.custom_minimum_size = Vector2(36, 30)
-		var rating := i
+		var rating: int = i
 		star_btn.pressed.connect(func(): _rate_storefront(rating))
 		rate_row.add_child(star_btn)
 		rate_buttons.append(star_btn)

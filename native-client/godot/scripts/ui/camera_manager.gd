@@ -281,11 +281,11 @@ func _create_viewfinder_overlay() -> void:
 	_viewfinder_overlay.add_child(tl)
 
 	# Corner brackets (top-right)
-	var tr = _make_corner_bracket()
-	tr.anchor_left = 1.0
-	tr.anchor_right = 1.0
-	tr.position = Vector2(-90, 50)
-	_viewfinder_overlay.add_child(tr)
+	var top_right = _make_corner_bracket()
+	top_right.anchor_left = 1.0
+	top_right.anchor_right = 1.0
+	top_right.position = Vector2(-90, 50)
+	_viewfinder_overlay.add_child(top_right)
 
 	# Corner brackets (bottom-left)
 	var bl = _make_corner_bracket()
@@ -445,7 +445,7 @@ func _upload_photo(base64_data) -> void:
 	upload_request.request(url, headers, HTTPClient.METHOD_POST, json_body)
 
 
-func _on_upload_response(result, response_code, _headers, body, request_node) -> void:
+func _on_upload_response(_result, response_code, _headers, _body, request_node) -> void:
 	if request_node:
 		request_node.queue_free()
 
@@ -465,7 +465,7 @@ func _on_upload_response(result, response_code, _headers, body, request_node) ->
 				_capture_label.text = "F - Capture  |  Tab - Filter  |  Esc - Exit"
 
 
-func _on_gallery_response(result, response_code, _headers, body) -> void:
+func _on_gallery_response(_result, response_code, _headers, body) -> void:
 	if response_code != 200:
 		return
 

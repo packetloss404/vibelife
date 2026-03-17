@@ -70,7 +70,7 @@ func handle_chat_input(text: String) -> void:
 
 
 func handle_chat_event(message: Dictionary) -> void:
-	var channel: String = message.get("channel", "region")
+	var _channel: String = message.get("channel", "region")
 	var display_name: String = message.get("displayName", "Unknown")
 	var text: String = message.get("message", "")
 	var created_at: String = message.get("createdAt", "")

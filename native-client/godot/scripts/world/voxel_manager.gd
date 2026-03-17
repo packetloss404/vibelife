@@ -89,8 +89,12 @@ func _decode_rle(rle: Array) -> PackedByteArray:
 	for i in range(0, rle.size(), 2):
 		if i + 1 >= rle.size():
 			break
-		var block_id := int(rle[i])
-		var count := int(rle[i + 1])
+		var raw_block = rle[i]
+		var raw_count = rle[i + 1]
+		if raw_block == null or raw_count == null:
+			continue
+		var block_id := int(raw_block)
+		var count := int(raw_count)
 		for _j in range(count):
 			if offset >= blocks.size():
 				return blocks
@@ -138,8 +142,10 @@ func on_chunks_loaded(result: int, response_code: int, headers: PackedStringArra
 		if not chunk_data is Dictionary:
 			continue
 
-		var cx: int = int(chunk_data.get("chunkX", chunk_data.get("cx", 0)))
-		var cz: int = int(chunk_data.get("chunkZ", chunk_data.get("cz", 0)))
+		var raw_cx = chunk_data.get("chunkX", chunk_data.get("cx", 0))
+		var raw_cz = chunk_data.get("chunkZ", chunk_data.get("cz", 0))
+		var cx: int = 0 if raw_cx == null else int(raw_cx)
+		var cz: int = 0 if raw_cz == null else int(raw_cz)
 		var key := "%d:%d" % [cx, cz]
 
 		var chunk_palette_data: Array = chunk_data.get("palette", [])
@@ -365,11 +371,17 @@ func apply_block_delta(x: int, y: int, z: int, block_type_id: int) -> void:
 	if not chunk_palette.is_empty():
 		var palette_index := -1
 		for i in range(chunk_palette.size()):
-			if int(chunk_palette[i]) == block_type_id:
+			var entry = chunk_palette[i]
+			var entry_id: int = 0
+			if entry is Dictionary:
+				entry_id = int(entry.get("id", 0))
+			elif entry != null:
+				entry_id = int(entry)
+			if entry_id == block_type_id:
 				palette_index = i
 				break
 		if palette_index == -1:
-			chunk_palette.append(block_type_id)
+			chunk_palette.append({"id": block_type_id})
 			palette_index = chunk_palette.size() - 1
 		blocks[index] = palette_index
 	else:

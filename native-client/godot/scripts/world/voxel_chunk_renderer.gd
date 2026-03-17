@@ -93,7 +93,12 @@ func _resolve_block_id(raw_id: int, chunk_palette: Array) -> int:
 	if chunk_palette.is_empty():
 		return raw_id
 	if raw_id >= 0 and raw_id < chunk_palette.size():
-		return int(chunk_palette[raw_id])
+		var val = chunk_palette[raw_id]
+		if val == null:
+			return 0
+		if val is Dictionary:
+			return int(val.get("id", raw_id))
+		return int(val)
 	return 0
 
 

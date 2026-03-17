@@ -7,7 +7,6 @@ import {
   deleteBlueprint,
   placeBlueprint
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export async function blueprintRoutes(app: FastifyInstance) {
   app.post<{ Body: { token?: string; name?: string; objectIds?: string[] } }>("/api/blueprints", async (request, reply) => {
@@ -80,10 +79,6 @@ export async function blueprintRoutes(app: FastifyInstance) {
 
     if (objects.length === 0) {
       return reply.code(403).send({ error: "unable to place blueprint" });
-    }
-
-    for (const obj of objects) {
-      broadcastRegion(regionId, { type: "object:created", sequence: nextRegionSequence(regionId), object: obj });
     }
 
     return reply.send({ objects });

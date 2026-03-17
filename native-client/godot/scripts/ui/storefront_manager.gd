@@ -43,7 +43,7 @@ func create_storefront(shop_name: String, description: String, banner_color: Str
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("storefront"):
@@ -61,7 +61,7 @@ func load_storefronts(sort: String = "") -> void:
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("storefronts"):
@@ -77,7 +77,7 @@ func load_trending(limit: int = 10) -> void:
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("items"):
@@ -103,7 +103,7 @@ func create_commission(builder_account_id: String, description: String, budget: 
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("commission"):
@@ -125,7 +125,7 @@ func complete_commission(commission_id: String) -> void:
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("commission"):
@@ -144,7 +144,7 @@ func load_commissions() -> void:
 
 	var http = HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(result: int, code: int, headers: PackedStringArray, body_bytes: PackedByteArray):
+	http.request_completed.connect(func(_result: int, code: int, _headers: PackedStringArray, body_bytes: PackedByteArray):
 		if code == 200:
 			var json = JSON.parse_string(body_bytes.get_string_from_utf8())
 			if json and json.has("commissions"):

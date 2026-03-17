@@ -33,6 +33,7 @@ export type AccountRecord = {
   kind: "guest" | "registered";
   role: "resident" | "admin";
   createdAt: string;
+  mcUuid?: string;
 };
 
 export type AccountAuthRecord = AccountRecord & {
@@ -299,6 +300,9 @@ export type PersistenceLayer = {
   getOrCreateGuestAccount(displayName: string): Promise<{ account: AccountRecord; isNew: boolean }>;
   registerAccount(displayName: string, passwordHash: string, role: "resident" | "admin"): Promise<{ account: AccountRecord; isNew: boolean }>;
   authenticateAccount(displayName: string): Promise<AccountAuthRecord | undefined>;
+  getAccountByMcUuid(mcUuid: string): Promise<AccountRecord | undefined>;
+  getOrCreateMcAccount(mcUuid: string, mcUsername: string): Promise<{ account: AccountRecord; isNew: boolean }>;
+  linkMcUuid(accountId: string, mcUuid: string): Promise<boolean>;
   getInventory(accountId: string): Promise<InventoryItemRecord[]>;
   equipInventoryItem(accountId: string, itemId: string): Promise<InventoryItemRecord[]>;
   getAvatarAppearance(accountId: string): Promise<AvatarAppearanceRecord>;
@@ -701,6 +705,7 @@ function createStarterPosition(accountId: string, regionId: string): AvatarPosit
 function createMemoryPersistence(): PersistenceLayer {
   const accountsById = new Map<string, AccountRecord>();
   const accountIdsByName = new Map<string, string>();
+  const accountIdsByMcUuid = new Map<string, string>();
   const passwordHashesById = new Map<string, string | null>();
   const inventory = new Map<string, InventoryItemRecord[]>();
   const appearances = new Map<string, AvatarAppearanceRecord>();
@@ -819,6 +824,60 @@ function createMemoryPersistence(): PersistenceLayer {
       return account?.kind === "registered"
         ? { ...account, passwordHash: passwordHashesById.get(existingId) ?? null }
         : undefined;
+    },
+    async getAccountByMcUuid(mcUuid) {
+      const accountId = accountIdsByMcUuid.get(mcUuid);
+      return accountId ? accountsById.get(accountId) : undefined;
+    },
+    async getOrCreateMcAccount(mcUuid, mcUsername) {
+      const existingId = accountIdsByMcUuid.get(mcUuid);
+      if (existingId) {
+        return { account: accountsById.get(existingId) as AccountRecord, isNew: false };
+      }
+
+      const account: AccountRecord = {
+        id: randomUUID(),
+        displayName: mcUsername,
+        kind: "registered",
+        role: "resident",
+        createdAt: new Date().toISOString(),
+        mcUuid
+      };
+
+      accountsById.set(account.id, account);
+      accountIdsByName.set(normalizeDisplayName(mcUsername), account.id);
+      accountIdsByMcUuid.set(mcUuid, account.id);
+      passwordHashesById.set(account.id, null);
+      inventory.set(
+        account.id,
+        starterInventory.map((item) => ({
+          id: randomUUID(),
+          accountId: account.id,
+          name: item.name,
+          kind: item.kind,
+          slot: item.slot,
+          appearanceKey: item.appearanceKey,
+          equipped: item.equipped,
+          rarity: item.rarity,
+          createdAt: new Date().toISOString()
+        }))
+      );
+      appearances.set(account.id, createDefaultAppearance(account.id));
+
+      return { account, isNew: true };
+    },
+    async linkMcUuid(accountId, mcUuid) {
+      const account = accountsById.get(accountId);
+      if (!account) return false;
+
+      // Remove old mapping if this UUID was linked elsewhere
+      for (const [uuid, id] of accountIdsByMcUuid) {
+        if (id === accountId) { accountIdsByMcUuid.delete(uuid); break; }
+      }
+
+      account.mcUuid = mcUuid;
+      accountIdsByMcUuid.set(mcUuid, accountId);
+      return true;
     },
     async getInventory(accountId) {
       return inventory.get(accountId) ?? [];
@@ -1828,6 +1887,94 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
         passwordHash: row.password_hash,
         createdAt: row.created_at
       };
+    },
+    async getAccountByMcUuid(mcUuid) {
+      const result = await pool.query<{
+        id: string;
+        display_name: string;
+        kind: "guest" | "registered";
+        role: "resident" | "admin";
+        created_at: string;
+        mc_uuid: string | null;
+      }>(
+        "SELECT id, display_name, kind, role, created_at, mc_uuid FROM accounts WHERE mc_uuid = $1 LIMIT 1",
+        [mcUuid]
+      );
+
+      const row = result.rows[0];
+      if (!row) return undefined;
+
+      return {
+        id: row.id,
+        displayName: row.display_name,
+        kind: row.kind,
+        role: row.role,
+        createdAt: row.created_at,
+        mcUuid: row.mc_uuid ?? undefined
+      };
+    },
+    async getOrCreateMcAccount(mcUuid, mcUsername) {
+      const existing = await pool.query<{
+        id: string;
+        display_name: string;
+        kind: "guest" | "registered";
+        role: "resident" | "admin";
+        created_at: string;
+      }>(
+        "SELECT id, display_name, kind, role, created_at FROM accounts WHERE mc_uuid = $1 LIMIT 1",
+        [mcUuid]
+      );
+
+      if (existing.rows[0]) {
+        return {
+          account: {
+            id: existing.rows[0].id,
+            displayName: existing.rows[0].display_name,
+            kind: existing.rows[0].kind,
+            role: existing.rows[0].role,
+            createdAt: existing.rows[0].created_at,
+            mcUuid
+          },
+          isNew: false
+        };
+      }
+
+      const account: AccountRecord = {
+        id: randomUUID(),
+        displayName: mcUsername,
+        kind: "registered",
+        role: "resident",
+        createdAt: new Date().toISOString(),
+        mcUuid
+      };
+
+      const displayNameKey = normalizeDisplayName(mcUsername);
+      await pool.query(
+        "INSERT INTO accounts (id, display_name, display_name_key, kind, role, password_hash, mc_uuid, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [account.id, account.displayName, displayNameKey, account.kind, account.role, null, mcUuid, account.createdAt]
+      );
+
+      for (const item of starterInventory) {
+        await pool.query(
+          "INSERT INTO inventory_items (id, account_id, name, kind, rarity, created_at, slot, appearance_key, equipped) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+          [randomUUID(), account.id, item.name, item.kind, item.rarity, new Date().toISOString(), item.slot, item.appearanceKey, item.equipped]
+        );
+      }
+
+      const appearance = createDefaultAppearance(account.id);
+      await pool.query(
+        "INSERT INTO avatar_appearances (account_id, body_color, accent_color, head_color, hair_color, outfit, accessory, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [appearance.accountId, appearance.bodyColor, appearance.accentColor, appearance.headColor, appearance.hairColor, appearance.outfit, appearance.accessory, appearance.updatedAt]
+      );
+
+      return { account, isNew: true };
+    },
+    async linkMcUuid(accountId, mcUuid) {
+      const result = await pool.query(
+        "UPDATE accounts SET mc_uuid = $1 WHERE id = $2",
+        [mcUuid, accountId]
+      );
+      return (result.rowCount ?? 0) > 0;
     },
     async getInventory(accountId) {
       return readInventory(accountId);

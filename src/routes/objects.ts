@@ -16,7 +16,6 @@ import {
   groupDeleteObjects,
   duplicateObjects
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function objectRoutes(app: FastifyInstance) {
   app.patch<{
@@ -36,8 +35,6 @@ export default async function objectRoutes(app: FastifyInstance) {
       return reply.code(statusCode).send({ error: object.permission.reason ?? "object not found or not owned" });
     }
 
-    broadcastRegion(object.object.regionId, { type: "object:updated", sequence: nextRegionSequence(object.object.regionId), object: object.object });
-
     return reply.send({ object: object.object });
   });
 
@@ -51,15 +48,10 @@ export default async function objectRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "token is required" });
     }
 
-    const session = getSession(token);
     const deleted = await deleteRegionObject(token, request.params.objectId);
 
     if (!deleted) {
       return reply.code(404).send({ error: "object not found or not owned" });
-    }
-
-    if (session) {
-      broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId: request.params.objectId });
     }
 
     return reply.send({ ok: true });
@@ -184,13 +176,6 @@ export default async function objectRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "failed to duplicate group" });
     }
 
-    const session = getSession(token);
-    if (session) {
-      for (const obj of duplicated) {
-        broadcastRegion(session.regionId, { type: "object:created", sequence: nextRegionSequence(session.regionId), object: obj });
-      }
-    }
-
     return reply.send({ objects: duplicated });
   });
 
@@ -207,10 +192,6 @@ export default async function objectRoutes(app: FastifyInstance) {
     }
 
     const updated = await groupMoveObjects(token, objectIds, deltaX, deltaY, deltaZ);
-
-    for (const obj of updated) {
-      broadcastRegion(session.regionId, { type: "object:updated", sequence: nextRegionSequence(session.regionId), object: obj });
-    }
 
     return reply.send({ objects: updated });
   });
@@ -229,10 +210,6 @@ export default async function objectRoutes(app: FastifyInstance) {
 
     const deleted = await groupDeleteObjects(token, objectIds);
 
-    for (const objectId of deleted) {
-      broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId });
-    }
-
     return reply.send({ deletedIds: deleted });
   });
 
@@ -249,10 +226,6 @@ export default async function objectRoutes(app: FastifyInstance) {
     }
 
     const created = await duplicateObjects(token, regionId, objectIds, offsetX, offsetZ);
-
-    for (const obj of created) {
-      broadcastRegion(regionId, { type: "object:created", sequence: nextRegionSequence(regionId), object: obj });
-    }
 
     return reply.send({ objects: created });
   });

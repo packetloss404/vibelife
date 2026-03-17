@@ -3,8 +3,6 @@ class_name PetManager extends RefCounted
 var main
 var active_pets = {}  # petId -> { node: Node3D, state: Dictionary }
 var my_pet_id = ""
-var _follow_offset_x = 1.5
-var _follow_offset_z = 1.5
 
 func init(main_node) -> void:
 	main = main_node

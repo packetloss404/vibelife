@@ -50,10 +50,12 @@ extends Node3D
 # Panel system (created in _ready)
 var panel_mgr: PanelManager
 
-# Chat panel widgets (built programmatically in _build_chat_panel)
+# Chat panel widgets
 var chat_log: RichTextLabel
-var chat_input: LineEdit
-var send_chat_button: Button
+# Bottom bar chat widgets (wired from scene)
+@onready var chat_input: LineEdit = $CanvasLayer/UI/BottomBar/BottomMargin/ChatRow/ChatInput
+@onready var send_chat_button: Button = $CanvasLayer/UI/BottomBar/BottomMargin/ChatRow/SendButton
+@onready var chat_channel_select: OptionButton = $CanvasLayer/UI/BottomBar/BottomMargin/ChatRow/ChatChannelSelect
 
 # Inventory panel widgets (built programmatically in _build_inventory_panel)
 var inventory_list: ItemList
@@ -161,6 +163,11 @@ var context_menu: ContextMenuManager
 # Currency HUD
 var currency_balance := 0
 var currency_hud_label: Label
+
+# Sidebar collapse
+var _sidebar_panel: PanelContainer
+var _sidebar_toggle: Button
+var _sidebar_collapsed := false
 
 # Voxel MMORPG modules
 var voxel_mgr: VoxelManager
@@ -332,6 +339,19 @@ func _ready() -> void:
 	_load_client_settings()
 	session_flow.fetch_regions()
 	build.set_gizmo_mode("move")
+
+	# Hide build panel by default — only show when build mode is active
+	$CanvasLayer/UI/BuildPanel.visible = false
+
+	# Add sidebar collapse button
+	_sidebar_panel = $CanvasLayer/UI/Sidebar
+	_sidebar_toggle = Button.new()
+	_sidebar_toggle.text = "<"
+	_sidebar_toggle.custom_minimum_size = Vector2(28, 28)
+	_sidebar_toggle.position = Vector2(284, 62)
+	_sidebar_toggle.z_index = 10
+	_sidebar_toggle.pressed.connect(_toggle_sidebar)
+	$CanvasLayer/UI.add_child(_sidebar_toggle)
 
 
 func _process(delta: float) -> void:
@@ -544,17 +564,10 @@ func _build_chat_panel() -> Control:
 	chat_log.custom_minimum_size.y = 100
 	vbox.add_child(chat_log)
 
-	var input_row := HBoxContainer.new()
-	vbox.add_child(input_row)
-
-	chat_input = LineEdit.new()
-	chat_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	chat_input.placeholder_text = "Say something"
-	input_row.add_child(chat_input)
-
-	send_chat_button = Button.new()
-	send_chat_button.text = "Send"
-	input_row.add_child(send_chat_button)
+	# Chat input is now in the BottomBar (scene node)
+	# Add channel options to the bottom bar select
+	for channel in ["Region", "Whisper", "Guild", "Trade"]:
+		chat_channel_select.add_item(channel)
 
 	return panel
 
@@ -841,3 +854,18 @@ func _fetch_currency_balance() -> void:
 		http.queue_free()
 	)
 	http.request(url)
+
+
+# ── Sidebar Toggle ───────────────────────────────────────────────────────
+
+func _toggle_sidebar() -> void:
+	_sidebar_collapsed = not _sidebar_collapsed
+	_sidebar_panel.visible = not _sidebar_collapsed
+	_sidebar_toggle.text = ">" if _sidebar_collapsed else "<"
+	_sidebar_toggle.position.x = 4.0 if _sidebar_collapsed else 284.0
+
+
+func _show_build_panel(show: bool) -> void:
+	var build_panel = $CanvasLayer/UI/BuildPanel
+	if build_panel:
+		build_panel.visible = show

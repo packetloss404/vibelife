@@ -130,6 +130,39 @@ export async function loginSession(displayName: string, password: string, region
   return { ok: true as const, ...(await createSessionForAccount(account, displayName, regionId)) };
 }
 
+export async function createMcSession(mcUuid: string, mcUsername: string, regionId?: string): Promise<{
+  ok: true;
+  account: Account;
+  inventory: InventoryItem[];
+  parcels: Parcel[];
+  appearance: AvatarAppearance;
+  session: Session;
+  avatar: AvatarState;
+  isNewAccount: boolean;
+}> {
+  const { account, isNew } = await persistence.getOrCreateMcAccount(mcUuid, mcUsername);
+  const result = await createSessionForAccount(account, account.displayName, regionId);
+  return { ok: true as const, ...result, isNewAccount: isNew };
+}
+
+export async function linkMcAccount(mcUuid: string, displayName: string, password: string): Promise<
+  | { ok: true; accountId: string }
+  | { ok: false; reason: string }
+> {
+  const account = await persistence.authenticateAccount(displayName);
+
+  if (!account || !verifyPassword(password, account.passwordHash)) {
+    return { ok: false, reason: "invalid credentials" };
+  }
+
+  const linked = await persistence.linkMcUuid(account.id, mcUuid);
+  if (!linked) {
+    return { ok: false, reason: "failed to link account" };
+  }
+
+  return { ok: true, accountId: account.id };
+}
+
 export function removeAvatar(token: string): { regionId: string; avatarId: string } | undefined {
   const session = sessions.get(token);
 

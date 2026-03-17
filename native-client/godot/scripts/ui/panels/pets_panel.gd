@@ -371,7 +371,7 @@ func _build_adopt_dialog() -> void:
 		btn.text = species.capitalize()
 		btn.custom_minimum_size = Vector2(80, 40)
 		btn.toggle_mode = true
-		var captured := species
+		var captured: String = species
 		btn.pressed.connect(func(): _select_species(captured))
 		_adopt_species_grid.add_child(btn)
 		_species_buttons[species] = btn
@@ -493,7 +493,7 @@ func _render_pets_list() -> void:
 		hbox.add_child(info_vbox)
 
 		var name_lbl := Label.new()
-		var display_text := pet.get("name", "Pet")
+		var display_text: String = pet.get("name", "Pet")
 		if is_active:
 			display_text += " (Active)"
 		name_lbl.text = display_text
@@ -525,7 +525,7 @@ func _render_pets_list() -> void:
 		var click_btn := Button.new()
 		click_btn.text = ">"
 		click_btn.custom_minimum_size = Vector2(24, 0)
-		var captured_i := i
+		var captured_i: int = i
 		click_btn.pressed.connect(func(): _select_pet(captured_i))
 		hbox.add_child(click_btn)
 
@@ -646,7 +646,7 @@ func _on_trick_pressed() -> void:
 	if trick_index < 0:
 		return
 	# Get the actual trick name from the pet's learned tricks or TRICKS array
-	var pet := _pets_data[_selected_pet_index]
+	var pet: Dictionary = _pets_data[_selected_pet_index]
 	var learned_tricks: Array = pet.get("tricks", [])
 	var trick_name: String
 	if not learned_tricks.is_empty() and trick_index < learned_tricks.size():
@@ -674,7 +674,7 @@ func _on_save_customization() -> void:
 	if pet_id.is_empty():
 		return
 	var acc_index := _accessory_select.selected
-	var accessory := ACCESSORIES[acc_index] if acc_index >= 0 and acc_index < ACCESSORIES.size() else "none"
+	var accessory: String = ACCESSORIES[acc_index] if acc_index >= 0 and acc_index < ACCESSORIES.size() else "none"
 	_send_customize(pet_id, {
 		"color": "#" + _body_color_picker.color.to_html(false),
 		"accentColor": "#" + _accent_color_picker.color.to_html(false),

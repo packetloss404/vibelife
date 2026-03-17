@@ -203,7 +203,7 @@ func _build_ui() -> void:
 		btn.custom_minimum_size = Vector2(110, 30)
 		btn.toggle_mode = true
 		btn.button_pressed = (i == 0)
-		var idx := i
+		var idx: int = i
 		btn.pressed.connect(func(): _switch_tab(idx))
 		tab_row.add_child(btn)
 		_tab_buttons.append(btn)

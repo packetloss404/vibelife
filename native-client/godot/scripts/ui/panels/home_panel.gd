@@ -287,7 +287,7 @@ func _build_rating_dialog() -> void:
 		star_btn.text = "*"
 		star_btn.custom_minimum_size = Vector2(40, 36)
 		star_btn.add_theme_font_size_override("font_size", 20)
-		var captured_i := i
+		var captured_i: int = i
 		star_btn.pressed.connect(func(): _set_rating(captured_i))
 		stars_row.add_child(star_btn)
 		_rating_stars.append(star_btn)
@@ -487,7 +487,7 @@ func _add_home_card(parent: VBoxContainer, home: Dictionary, show_favorite: bool
 
 	var visit_btn := Button.new()
 	visit_btn.text = "Visit"
-	var captured_parcel := parcel_id
+	var captured_parcel: String = parcel_id
 	visit_btn.pressed.connect(func(): _visit_home(captured_parcel))
 	action_row.add_child(visit_btn)
 

@@ -225,7 +225,7 @@ func _create_guild() -> void:
 			main._append_chat("[Guild] Created guild: %s" % guild_name)
 			_switch_to_guild_view()
 		else:
-			var err := json.get("error", "Failed to create guild") if json else "Failed to create guild"
+			var err: String = json.get("error", "Failed to create guild") if json else "Failed to create guild"
 			no_guild_status.text = err
 		http.queue_free()
 	)
@@ -377,7 +377,7 @@ func _load_guild_details() -> void:
 
 	var http := HTTPRequest.new()
 	main.add_child(http)
-	http.request_completed.connect(func(_result, code, _headers, response_body):
+	http.request_completed.connect(func(_result, _code, _headers, response_body):
 		var json = JSON.parse_string(response_body.get_string_from_utf8())
 		if json and json.has("details"):
 			var details: Dictionary = json["details"]
@@ -407,7 +407,7 @@ func _leave_guild() -> void:
 			main._append_chat("[Guild] You left the guild.")
 			_switch_to_no_guild_view()
 		else:
-			var err := json.get("error", "Failed to leave") if json else "Failed to leave"
+			var err: String = json.get("error", "Failed to leave") if json else "Failed to leave"
 			main._append_chat("[Guild] %s" % err)
 		http.queue_free()
 	)
@@ -608,7 +608,7 @@ func _invite_member() -> void:
 			invite_input.clear()
 			_refresh_members()
 		else:
-			var err := json.get("error", "Invite failed") if json else "Invite failed"
+			var err: String = json.get("error", "Invite failed") if json else "Invite failed"
 			main._append_chat("[Guild] %s" % err)
 		http.queue_free()
 	)
@@ -705,7 +705,7 @@ func _deposit_treasury() -> void:
 			treasury_balance_label.text = "Treasury Balance: %d coins" % treasury_balance
 			main._append_chat("[Guild] Deposited %d coins." % amount)
 		else:
-			var err := json.get("error", "Deposit failed") if json else "Deposit failed"
+			var err: String = json.get("error", "Deposit failed") if json else "Deposit failed"
 			main._append_chat("[Guild] %s" % err)
 		http.queue_free()
 	)
@@ -732,7 +732,7 @@ func _withdraw_treasury() -> void:
 			treasury_balance_label.text = "Treasury Balance: %d coins" % treasury_balance
 			main._append_chat("[Guild] Withdrew %d coins." % amount)
 		else:
-			var err := json.get("error", "Withdraw failed") if json else "Withdraw failed"
+			var err: String = json.get("error", "Withdraw failed") if json else "Withdraw failed"
 			main._append_chat("[Guild] %s" % err)
 		http.queue_free()
 	)
@@ -996,7 +996,7 @@ func _send_alliance_request() -> void:
 			alliance_target_input.clear()
 			_refresh_alliances()
 		else:
-			var err := json.get("error", "Request failed") if json else "Request failed"
+			var err: String = json.get("error", "Request failed") if json else "Request failed"
 			main._append_chat("[Guild] %s" % err)
 		http.queue_free()
 	)
@@ -1139,17 +1139,9 @@ func _show_guild_tab(tab_idx: int) -> void:
 # ── Group Chat Integration ───────────────────────────────────────────────────
 
 func _build_chat_channel_selector() -> void:
-	# Add a channel selector before the chat input row in the main UI
-	chat_channel_select = OptionButton.new()
-	chat_channel_select.add_item("Region")
-	chat_channel_select.add_item("Guild")
-	chat_channel_select.custom_minimum_size = Vector2(90, 0)
-
-	# Insert into the chat input row if it exists
-	var chat_input_row = main.chat_input.get_parent()
-	if chat_input_row:
-		chat_input_row.add_child(chat_channel_select)
-		chat_input_row.move_child(chat_channel_select, 0)
+	# Use the existing channel selector from the bottom bar
+	if main.chat_channel_select:
+		chat_channel_select = main.chat_channel_select
 
 
 func get_selected_chat_channel() -> String:

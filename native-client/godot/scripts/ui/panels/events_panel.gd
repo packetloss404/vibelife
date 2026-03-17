@@ -407,7 +407,7 @@ func _add_event_card(parent: VBoxContainer, ev: Dictionary, show_cancel: bool) -
 	rsvp_btn.text = "Going" if is_rsvpd else "RSVP"
 	if is_rsvpd:
 		rsvp_btn.add_theme_color_override("font_color", Color.GREEN)
-	var captured_id := event_id
+	var captured_id: String = event_id
 	rsvp_btn.pressed.connect(func(): _rsvp_event(captured_id))
 	action_row.add_child(rsvp_btn)
 
@@ -438,7 +438,7 @@ func _toggle_event_detail(parent_vbox: VBoxContainer, ev: Dictionary) -> void:
 	var sep := HSeparator.new()
 	detail.add_child(sep)
 
-	var desc := ev.get("description", "No description provided.")
+	var desc: String = ev.get("description", "No description provided.")
 	var desc_lbl := Label.new()
 	desc_lbl.text = desc
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -475,7 +475,7 @@ func _submit_create_event() -> void:
 		return
 
 	var type_index := _create_type_select.selected
-	var event_type := EVENT_TYPES[type_index] if type_index >= 0 and type_index < EVENT_TYPES.size() else "custom"
+	var event_type: String = EVENT_TYPES[type_index] if type_index >= 0 and type_index < EVENT_TYPES.size() else "custom"
 
 	var description := _create_description_input.text.strip_edges()
 	var date_str := _create_date_input.text.strip_edges()
@@ -484,7 +484,7 @@ func _submit_create_event() -> void:
 	var start_time := "%sT%s:00Z" % [date_str, time_str]
 
 	var recurring_index := _create_recurring_select.selected
-	var recurring := RECURRING_OPTIONS[recurring_index].to_lower() if recurring_index > 0 else ""
+	var recurring: String = RECURRING_OPTIONS[recurring_index].to_lower() if recurring_index > 0 else ""
 
 	var region_id: String = main.session.get("regionId", "")
 

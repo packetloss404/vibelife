@@ -1,6 +1,4 @@
 import type { FastifyInstance } from "fastify";
-import { getSession } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 import {
   createMediaObject,
   updateMediaConfig,
@@ -51,15 +49,6 @@ export default async function mediaRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "failed to attach media (invalid session, duplicate, or bad config)" });
     }
 
-    const session = getSession(token);
-    if (session) {
-      broadcastRegion(session.regionId, {
-        type: "media:created",
-        sequence: nextRegionSequence(session.regionId),
-        media,
-      } as any);
-    }
-
     return reply.send({ media });
   });
 
@@ -107,15 +96,6 @@ export default async function mediaRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "failed to update media" });
     }
 
-    const session = getSession(token);
-    if (session) {
-      broadcastRegion(session.regionId, {
-        type: "media:updated",
-        sequence: nextRegionSequence(session.regionId),
-        media,
-      } as any);
-    }
-
     return reply.send({ media });
   });
 
@@ -130,20 +110,10 @@ export default async function mediaRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "token is required" });
     }
 
-    const existing = await getMediaObject(request.params.objectId);
     const deleted = await removeMediaObject(token, request.params.objectId);
 
     if (!deleted) {
       return reply.code(404).send({ error: "media not found or not owned" });
-    }
-
-    const session = getSession(token);
-    if (session && existing) {
-      broadcastRegion(session.regionId, {
-        type: "media:removed",
-        sequence: nextRegionSequence(session.regionId),
-        objectId: request.params.objectId,
-      } as any);
     }
 
     return reply.send({ ok: true });

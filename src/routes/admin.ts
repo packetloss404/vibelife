@@ -11,7 +11,6 @@ import {
   getSession,
   listAuditLogs
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function adminRoutes(app: FastifyInstance) {
   app.post<{ Body: { token?: string; parcelId?: string; ownerAccountId?: string | null } }>("/api/admin/parcels/assign", async (request, reply) => {
@@ -29,7 +28,6 @@ export default async function adminRoutes(app: FastifyInstance) {
 
     const session = getSession(token);
     if (session) {
-      broadcastRegion(session.regionId, { type: "parcel:updated", sequence: nextRegionSequence(session.regionId), parcel });
       await appendAuditLog(token, "admin.parcel.assign", "parcel", parcel.id, `assigned ${parcel.name} to ${ownerAccountId ?? "none"}`, session.regionId);
     }
 
@@ -50,7 +48,6 @@ export default async function adminRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "admin object cleanup failed" });
     }
 
-    broadcastRegion(session.regionId, { type: "object:deleted", sequence: nextRegionSequence(session.regionId), objectId });
     await appendAuditLog(token, "admin.object.delete", "object", objectId, "admin deleted region object", session.regionId);
     return reply.send({ ok: true });
   });

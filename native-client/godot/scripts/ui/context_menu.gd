@@ -135,7 +135,7 @@ func _handle_parcel_action(id: int) -> void:
 
 
 func _send_friend_request(account_id: String, display_name: String) -> void:
-	var token := main.session.get("token", "")
+	var token: String = main.session.get("token", "")
 	if token.is_empty():
 		return
 	var url := "%s/api/social/friend-request" % main.backend_url
@@ -154,7 +154,7 @@ func _send_friend_request(account_id: String, display_name: String) -> void:
 
 
 func _block_player(account_id: String, display_name: String) -> void:
-	var token := main.session.get("token", "")
+	var token: String = main.session.get("token", "")
 	if token.is_empty():
 		return
 	var url := "%s/api/social/block" % main.backend_url
@@ -188,7 +188,7 @@ func handle_right_click(screen_pos: Vector2) -> bool:
 	if result.is_empty():
 		return false
 
-	var collider := result.get("collider")
+	var collider = result.get("collider")
 	if collider == null:
 		return false
 

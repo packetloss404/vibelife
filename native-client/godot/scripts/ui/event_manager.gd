@@ -119,7 +119,7 @@ func _on_rsvp_completed(_result: int, response_code: int, _headers: PackedString
 	main._append_chat("System: RSVP toggled for '%s'" % parsed.event.get("name", ""))
 
 
-func _on_cancel_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_cancel_completed(_result: int, response_code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
 	if response_code != 200:
 		main._append_chat("System: failed to cancel event")
 		return

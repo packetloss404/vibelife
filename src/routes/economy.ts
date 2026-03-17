@@ -2,11 +2,13 @@ import { FastifyInstance } from "fastify";
 import {
   equipInventoryItem,
   getCurrencyBalance,
+  getBalanceByAccount,
+  hasBalanceByAccount,
   getSession,
   listCurrencyTransactions,
-  sendCurrency
+  sendCurrency,
+  serverTransfer
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function economyRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { token?: string } }>("/api/currency/balance", async (request, reply) => {
@@ -62,7 +64,51 @@ export default async function economyRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "unable to equip item" });
     }
 
-    broadcastRegion(session.regionId, { type: "avatar:updated", sequence: nextRegionSequence(session.regionId), avatar: result.avatar });
     return reply.send(result);
+  });
+
+  // ── Spigot bridge endpoints (accountId-based, API key auth) ─────────────
+
+  app.get<{ Params: { accountId: string } }>("/api/economy/balance/:accountId", async (request, reply) => {
+    const balance = await getBalanceByAccount(request.params.accountId);
+    return reply.send({ balance });
+  });
+
+  app.get<{ Params: { accountId: string }; Querystring: { amount?: string } }>("/api/economy/has/:accountId", async (request, reply) => {
+    const amount = Number(request.query.amount ?? 0);
+    const has = await hasBalanceByAccount(request.params.accountId, amount);
+    return reply.send({ has });
+  });
+
+  app.get<{ Params: { accountId: string }; Querystring: { limit?: string } }>("/api/economy/transactions/:accountId", async (request, reply) => {
+    const limit = Math.max(1, Math.min(100, Number(request.query.limit ?? 20)));
+    const transactions = await listCurrencyTransactions("__bypass__", limit);
+    // For server calls, get by accountId directly
+    const { persistence } = await import("../world/_shared-state.js");
+    const txns = await persistence.listCurrencyTransactions(request.params.accountId, limit);
+    return reply.send({ transactions: txns });
+  });
+
+  app.post<{ Body: { fromAccountId?: string | null; toAccountId?: string | null; amount?: number; type?: string; description?: string } }>("/api/economy/server-transfer", async (request, reply) => {
+    const { fromAccountId = null, toAccountId = null, amount, type = "bonus", description = "server transfer" } = request.body;
+
+    if (!amount || amount <= 0) {
+      return reply.code(400).send({ error: "positive amount is required" });
+    }
+
+    if (!fromAccountId && !toAccountId) {
+      return reply.code(400).send({ error: "fromAccountId or toAccountId is required" });
+    }
+
+    const validTypes = ["gift", "purchase", "sale", "bonus", "region_tax", "loot", "death_penalty"] as const;
+    const txType = validTypes.includes(type as any) ? (type as typeof validTypes[number]) : "bonus";
+
+    const result = await serverTransfer(fromAccountId ?? null, toAccountId ?? null, amount, txType, description);
+
+    if (!result.success) {
+      return reply.code(403).send({ error: result.reason });
+    }
+
+    return reply.send({ success: true, balance: result.balance });
   });
 }

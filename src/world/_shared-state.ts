@@ -185,6 +185,37 @@ export async function getBuildPermission(session: Session, x: number, z: number)
   };
 }
 
+/**
+ * Check build permission using accountId + regionId directly (for Spigot plugin calls).
+ * Same logic as getBuildPermission but doesn't require a session.
+ */
+export async function checkBuildPermissionByAccount(accountId: string, regionId: string, x: number, z: number): Promise<BuildPermission> {
+  const parcels = await persistence.listParcels(regionId);
+  const parcel = parcels.find((entry) => pointInParcel(entry, x, z)) ?? null;
+
+  if (!parcel) {
+    return { allowed: false, parcel: null, reason: "builds must be placed inside a parcel" };
+  }
+
+  if (parcel.tier === "public") {
+    return { allowed: true, parcel };
+  }
+
+  if (parcel.ownerAccountId === accountId) {
+    return { allowed: true, parcel };
+  }
+
+  if (parcel.collaboratorAccountIds.includes(accountId)) {
+    return { allowed: true, parcel };
+  }
+
+  if (!parcel.ownerAccountId) {
+    return { allowed: false, parcel, reason: "claim this parcel before building here" };
+  }
+
+  return { allowed: false, parcel, reason: `parcel owned by ${parcel.ownerDisplayName ?? "another resident"}` };
+}
+
 export type VoxelPermission = {
   allowed: boolean;
   reason?: string;

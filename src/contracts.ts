@@ -120,7 +120,8 @@ export type RegionEvent =
   | { type: "combat:level_up"; sequence: number; accountId: string; newLevel: number }
   | { type: "enemy:spawned"; sequence: number; enemy: EnemyStateContract }
   | { type: "enemy:moved"; sequence: number; enemies: Array<{ id: string; x: number; y: number; z: number; state: string; hp: number }> }
-  | { type: "enemy:despawned"; sequence: number; enemyId: string };
+  | { type: "enemy:despawned"; sequence: number; enemyId: string }
+  | { type: "npc:positions"; sequence: number; npcs: Array<{ id: string; x: number; y: number; z: number; behaviorState: string; displayName: string; npcType: string; appearance: Record<string, string> }> };
 
 export type ChatMessageContract = {
   type: "chat";

@@ -28,6 +28,7 @@ func toggle_build_mode() -> void:
 	build_mode = not build_mode
 	main.build_mode_button.text = "Disable build mode" if build_mode else "Enable build mode"
 	main.status_label.text = "Build mode enabled" if build_mode else "Build mode disabled"
+	main._show_build_panel(build_mode)
 	if not build_mode:
 		drag_selected = false
 		active_drag_axis = ""

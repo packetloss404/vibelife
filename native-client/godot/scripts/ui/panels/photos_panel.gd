@@ -156,7 +156,7 @@ func _build_ui() -> void:
 		btn.custom_minimum_size = Vector2(100, 30)
 		btn.toggle_mode = true
 		btn.button_pressed = (i == 0)
-		var idx := i
+		var idx: int = i
 		btn.pressed.connect(func(): _switch_tab(idx))
 		tab_row.add_child(btn)
 		_tab_buttons.append(btn)
@@ -178,7 +178,7 @@ func _build_ui() -> void:
 		fbtn.text = filter_name.capitalize()
 		fbtn.custom_minimum_size = Vector2(70, 26)
 		fbtn.add_theme_font_size_override("font_size", 11)
-		var fname := filter_name
+		var fname: String = filter_name
 		fbtn.pressed.connect(func(): _apply_filter(fname))
 		_filter_bar.add_child(fbtn)
 

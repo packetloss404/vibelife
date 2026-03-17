@@ -76,6 +76,9 @@ func on_auth_completed(_result: int, response_code: int, _headers: PackedStringA
 	await main.parcels_mgr.load_admin_audit_logs()
 	_apply_region_biome(main.session.regionId)
 	main._append_chat("System: joined %s" % main.session.regionId)
+	# Auto-collapse sidebar after joining to give more viewport space
+	if not main._sidebar_collapsed:
+		main._toggle_sidebar()
 	main.voxel_mgr.configure(main.session.regionId, main.session.token, main.backend_url)
 	# Fetch currency balance on login
 	main._fetch_currency_balance()
@@ -140,8 +143,8 @@ func connect_websocket() -> void:
 	if main.websocket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
 		main.websocket.close()
 	main.websocket = WebSocketPeer.new()
-	var base := main.backend_url_input.text.rstrip("/")
-	var ws_url := base.replace("http://", "ws://").replace("https://", "wss://")
+	var base: String = main.backend_url_input.text.rstrip("/")
+	var ws_url: String = base.replace("http://", "ws://").replace("https://", "wss://")
 	ws_url += "/ws/regions/%s?token=%s&lastSequence=%s" % [main.session.regionId, main.session.token, str(main.last_sequence)]
 	var error: int = main.websocket.connect_to_url(ws_url)
 	if error != OK:
@@ -155,6 +158,9 @@ func poll_websocket() -> void:
 			main.status_pill.text = "Disconnected"
 		return
 	main.websocket.poll()
+	if main.websocket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		if main.status_pill.text != "Online":
+			main.status_pill.text = "Online"
 	while main.websocket.get_available_packet_count() > 0:
 		var payload = JSON.parse_string(main.websocket.get_packet().get_string_from_utf8())
 		handle_socket_message(payload)
@@ -179,11 +185,15 @@ func handle_socket_message(message: Dictionary) -> void:
 			if main.combat_hud and message.has("combatStats"):
 				main.combat_hud.update_stats(message.combatStats)
 			for chat_entry in message.get("chatHistory", []):
-				var ts := main._format_chat_timestamp(chat_entry.get("createdAt", ""))
+				var ts: String = main._format_chat_timestamp(chat_entry.get("createdAt", ""))
+				var chat_msg: String = str(chat_entry.get("message", ""))
+				# Skip raw JSON data in system messages (e.g. NPC spawn data)
+				if chat_msg.begins_with("{") or chat_msg.begins_with("["):
+					continue
 				if chat_entry.get("avatarId", "") == "system":
-					main._append_chat("[%s] [System] %s" % [ts, chat_entry.get("message", "")])
+					main._append_chat("[%s] [System] %s" % [ts, chat_msg])
 				else:
-					main._append_chat("[%s] %s: %s" % [ts, chat_entry.get("displayName", ""), chat_entry.get("message", "")])
+					main._append_chat("[%s] %s: %s" % [ts, chat_entry.get("displayName", ""), chat_msg])
 		"avatar:joined", "avatar:moved", "avatar:updated":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 			var avatar = message.avatar
@@ -201,7 +211,7 @@ func handle_socket_message(message: Dictionary) -> void:
 			main.avatars.sync_avatars()
 		"chat":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
-			var ts := main._format_chat_timestamp(message.get("createdAt", ""))
+			var ts: String = main._format_chat_timestamp(message.get("createdAt", ""))
 			if message.get("avatarId", "") == "system":
 				main._append_chat("[%s] [System] %s" % [ts, message.message])
 			else:
@@ -212,11 +222,11 @@ func handle_socket_message(message: Dictionary) -> void:
 		"chat:history":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 			for entry in message.get("messages", []):
-				var hist_ts := main._format_chat_timestamp(entry.get("createdAt", ""))
+				var hist_ts: String = main._format_chat_timestamp(entry.get("createdAt", ""))
 				main._append_chat("[%s] %s: %s" % [hist_ts, entry.get("displayName", ""), entry.get("message", "")])
 		"whisper":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
-			var whisper_ts := main._format_chat_timestamp(message.get("createdAt", ""))
+			var whisper_ts: String = main._format_chat_timestamp(message.get("createdAt", ""))
 			var from_id: String = message.get("fromAvatarId", "")
 			var my_avatar_id: String = main.session.get("avatarId", "")
 			if from_id == my_avatar_id:
@@ -344,3 +354,6 @@ func handle_socket_message(message: Dictionary) -> void:
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
 		"event:ended":
 			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+		"npc:positions":
+			main.last_sequence = maxi(main.last_sequence, int(message.get("sequence", 0)))
+			# NPC position updates handled silently (future: render NPC avatars)

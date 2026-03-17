@@ -10,7 +10,6 @@ import {
   createRegionNotice,
   deleteRegionNotice
 } from "../world/store.js";
-import { broadcastRegion, nextRegionSequence } from "../world/region.js";
 
 export default async function regionRoutes(app: FastifyInstance) {
   app.get("/api/regions", async () => ({
@@ -55,8 +54,6 @@ export default async function regionRoutes(app: FastifyInstance) {
     if (!object.object || object.object.regionId !== request.params.regionId) {
       return reply.code(403).send({ error: object.permission.reason ?? "unable to create object in region" });
     }
-
-    broadcastRegion(request.params.regionId, { type: "object:created", sequence: nextRegionSequence(request.params.regionId), object: object.object });
 
     return reply.send({ object: object.object });
   });

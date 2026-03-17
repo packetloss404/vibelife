@@ -7,6 +7,13 @@ import {
   getLeaderboard,
   getAvailableTitles,
   setTitle,
+  onBlockPlaced,
+  onBlockBroken,
+  onEnemyDefeated,
+  onRegionVisited,
+  onFriendAdded,
+  onObjectPlaced,
+  type Achievement,
 } from "../world/achievement-service.js";
 import { getSession } from "../world/store.js";
 
@@ -89,5 +96,31 @@ export async function registerAchievementRoutes(app: FastifyInstance) {
     }
 
     return reply.send({ ok: true, title });
+  });
+
+  // ── Spigot bridge: stat increment by accountId ──────────────────────────
+
+  app.post<{ Body: { accountId?: string; stat?: string; regionId?: string } }>("/api/achievements/increment", async (request, reply) => {
+    const { accountId, stat, regionId } = request.body;
+
+    if (!accountId || !stat) {
+      return reply.code(400).send({ error: "accountId and stat are required" });
+    }
+
+    let unlocked: Achievement[] = [];
+    switch (stat) {
+      case "blocksPlaced": unlocked = onBlockPlaced(accountId); break;
+      case "blocksBroken": unlocked = onBlockBroken(accountId); break;
+      case "enemiesDefeated": unlocked = onEnemyDefeated(accountId); break;
+      case "regionVisited": unlocked = regionId ? onRegionVisited(accountId, regionId) : []; break;
+      case "friendsMade": unlocked = onFriendAdded(accountId); break;
+      case "objectsPlaced": unlocked = onObjectPlaced(accountId); break;
+      default:
+        return reply.code(400).send({ error: "unknown stat: " + stat });
+    }
+
+    return reply.send({
+      unlocked: unlocked.map(a => ({ id: a.id, name: a.name, description: a.description }))
+    });
   });
 }

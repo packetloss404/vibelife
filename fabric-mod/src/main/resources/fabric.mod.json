@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "vibelife",
+  "version": "${version}",
+  "name": "VibeLife",
+  "description": "Social features, economy, marketplace, and more for VibeLife servers",
+  "authors": ["VibeLife"],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.vibelife.fabric.VibeLifeClient"]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
