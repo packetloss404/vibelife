@@ -10,3 +10,17 @@ native-client/godot/.godot/
 **/build/
 **/.gradle/
 *.jar
+
+# Test server runtime (world data, logs, caches)
+test-server/world*/
+test-server/logs/
+test-server/cache/
+test-server/libraries/
+test-server/versions/
+test-server/plugins/.paper-remapped/
+test-server/plugins/bStats/
+test-server/plugins/spark/
+test-server/*.json
+test-server/*.yml
+test-server/*.dat
+test-server/paper.jar

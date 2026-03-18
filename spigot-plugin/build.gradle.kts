@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT") // Compatible with 1.21.x
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
 
     implementation("com.google.code.gson:gson:2.11.0")
