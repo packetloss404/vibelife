@@ -77,7 +77,18 @@
       "Bash(./gradlew.bat build:*)",
       "Bash(./gradlew.bat compileJava)",
       "Bash(./gradlew.bat shadowJar --stacktrace)",
-      "Bash(grep -E \"\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(curl -sL \"https://download.getbukkit.org/spigot/spigot-1.21.4.jar\" -o D:/projects/vibelife/test-server/spigot.jar)",
+      "Bash(curl -sL \"https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds\")",
+      "Bash(./gradlew.bat shadowJar)",
+      "Bash(curl -s \"https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/232\")",
+      "Bash(python3 -c \"import sys,json; b=json.load\\(sys.stdin\\); print\\(''''Channel:'''', b.get\\(''''channel''''\\)\\); print\\(''''Time:'''', b.get\\(''''time''''\\)\\)\")",
+      "Bash(curl -s \"https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds\")",
+      "Bash(curl -sL \"https://api.papermc.io/v2/projects/paper/versions/1.21.4/builds/100/downloads/paper-1.21.4-100.jar\" -o D:/projects/vibelife/test-server/paper.jar)",
+      "Bash(rm -rf versions/ cache/ libraries/ .paper-remapped)",
+      "Bash(rm -rf plugins/.paper-remapped)",
+      "Bash(java -Xms1G -Xmx2G -jar paper.jar --nogui)",
+      "Bash(cd:*)"
     ]
   }
 }
