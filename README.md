@@ -1,14 +1,14 @@
 # VibeLife
 
-A social MMORPG platform built on Minecraft. Uses a Spigot server for core gameplay, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
+A social MMORPG platform built on Minecraft. Uses a Paper server for core gameplay, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
 
 ## Architecture
 
 ```
-┌─────────────┐     Plugin Messages     ┌──────────────┐
-│  Fabric Mod  │◄──────────────────────►│ Spigot Plugin │
-│  (Client UI) │                        │  (MC Server)  │
-└──────┬───────┘                        └──────┬────────┘
+┌─────────────┐     Plugin Messages     ┌───────────────┐
+│  Fabric Mod  │◄──────────────────────►│  Paper Plugin  │
+│  (Client UI) │                        │  (MC Server)   │
+└──────┬───────┘                        └──────┬─────────┘
        │ HTTP (direct)                         │ HTTP (localhost)
        │                                       │
        └──────────►┌──────────────┐◄───────────┘
@@ -18,7 +18,7 @@ A social MMORPG platform built on Minecraft. Uses a Spigot server for core gamep
                    └──────────────┘
 ```
 
-- **Spigot Plugin** (Java 21) — Thin bridge: intercepts MC events, calls sidecar REST API, forwards notifications to Fabric mod via plugin message channel
+- **Paper Plugin** (Java 21) — Thin bridge: intercepts MC events, calls sidecar REST API, forwards notifications to Fabric mod via plugin message channel
 - **Fastify Sidecar** (TypeScript) — All business logic: social, economy, marketplace, achievements, events, parcels, media, and more
 - **Fabric Mod** (Java 21) — Custom GUI screens, HUD overlays, keybinds. Calls sidecar HTTP directly for UI data
 
@@ -45,7 +45,7 @@ A social MMORPG platform built on Minecraft. Uses a Spigot server for core gamep
 
 ### Parcels & Building
 - Parcel-based land ownership with build permissions and collaborators
-- Spigot-side block protection (cached parcel checks + sidecar fallback)
+- Server-side block protection (cached parcel checks + sidecar fallback)
 - In-game commands: `/parcel info|claim|release|list`
 - Periodic parcel sync from sidecar (source of truth)
 
@@ -77,7 +77,7 @@ A social MMORPG platform built on Minecraft. Uses a Spigot server for core gamep
 
 | Component | Technology |
 |-----------|-----------|
-| Game Server | Spigot (Minecraft 1.21.4) |
+| Game Server | Paper (Minecraft 1.21.4) |
 | Client Mod | Fabric API (Minecraft 1.21.4) |
 | Sidecar | TypeScript, Fastify, Node.js |
 | Persistence | In-memory Maps + PostgreSQL (dual-mode) |
@@ -97,7 +97,7 @@ src/                              # Fastify sidecar
   data/
     persistence.ts                — Dual-mode persistence layer
 
-spigot-plugin/                    # Spigot server plugin (Java 21)
+spigot-plugin/                    # Paper server plugin (Java 21, Spigot API)
   src/main/java/com/vibelife/spigot/
     VibeLifePlugin.java           — Main entry, registers all listeners/commands
     bridge/SidecarClient.java     — Async HTTP client for sidecar
@@ -138,7 +138,7 @@ native-client/                    # DEPRECATED (Godot 4.x client, kept for refer
 ### Prerequisites
 - Java 21 (OpenJDK)
 - Node.js 20+
-- Spigot 1.21.4 server
+- Paper 1.21.4 server
 - (Optional) PostgreSQL for persistent storage
 
 ### Build
@@ -148,7 +148,7 @@ native-client/                    # DEPRECATED (Godot 4.x client, kept for refer
 npm install
 npm run dev
 
-# Spigot plugin
+# Paper plugin (builds against Spigot API)
 cd spigot-plugin
 ./gradlew build
 # Output: build/libs/vibelife-spigot-1.0.0-SNAPSHOT.jar
@@ -161,7 +161,7 @@ cd fabric-mod
 
 ### Deploy
 
-1. Copy `vibelife-spigot-*.jar` to your Spigot server's `plugins/` directory
+1. Copy `vibelife-spigot-*.jar` to your Paper server's `plugins/` directory
 2. Start the Fastify sidecar (`npm run dev`) on the same machine
 3. Edit `plugins/VibeLife/config.yml` to set sidecar URL and region mappings
 4. Players install `vibelife-fabric-*.jar` in their Fabric mods folder
@@ -169,7 +169,7 @@ cd fabric-mod
 
 ### Configuration
 
-**Spigot plugin** (`plugins/VibeLife/config.yml`):
+**Plugin config** (`plugins/VibeLife/config.yml`):
 ```yaml
 sidecar:
   url: "http://localhost:3000"
@@ -193,7 +193,7 @@ ADMIN_BOOTSTRAP_TOKEN=...    # For first admin registration
 ## Auth Flow
 
 1. Player joins MC server with their UUID
-2. Spigot plugin calls `POST /api/auth/mc-login` with UUID + username
+2. Plugin calls `POST /api/auth/mc-login` with UUID + username
 3. Sidecar creates or finds linked VibeLife account, returns session token
 4. Token sent to Fabric mod via plugin message channel
 5. Fabric mod uses token for all direct sidecar API calls
