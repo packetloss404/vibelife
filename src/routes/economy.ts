@@ -67,7 +67,7 @@ export default async function economyRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  // ── Spigot bridge endpoints (accountId-based, API key auth) ─────────────
+  // ── Paper bridge endpoints (accountId-based, API key auth) ─────────────
 
   app.get<{ Params: { accountId: string } }>("/api/economy/balance/:accountId", async (request, reply) => {
     const balance = await getBalanceByAccount(request.params.accountId);

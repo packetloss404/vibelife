@@ -4,102 +4,126 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VibeLife — Developer Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0d12;--surface:#12161e;--surface2:#1a1f2e;--surface3:#222838;--border:#2a3040;--text:#d4dce8;--text2:#7a8599;--accent:#60a5fa;--accent2:#3b82f6;--gold:#fbbf24;--red:#f87171;--green:#4ade80;--purple:#a78bfa;--cyan:#22d3ee;--orange:#fb923c;--pink:#f472b6;--teal:#2dd4bf}
+:root{
+--cream:#faf6f0;--paper:#f3ece2;--warm-white:#fefcf8;
+--forest:#1b4332;--forest-light:#2d6a4f;--forest-pale:#d8f3dc;
+--amber:#d4870e;--honey:#f0a830;--amber-pale:#fde6b0;
+--terra:#c05731;--terra-pale:#f4d4c8;
+--navy:#1b2a4a;--navy-light:#2c3e6b;--navy-pale:#d0d8e8;
+--brown:#5c4033;--brown-light:#8b6f47;
+--text:#2c2416;--text2:#6b5d4f;--text3:#9a8b7a;
+--shadow:rgba(44,36,22,.08);--shadow-md:rgba(44,36,22,.12);
+--border:#e0d5c5;--border-light:#ebe3d6;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:72px}
-body{font-family:'JetBrains Mono','Fira Code','Cascadia Code','SF Mono',monospace;background:var(--bg);color:var(--text);line-height:1.75;font-size:14.5px}
-a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;color:var(--cyan)}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);color:var(--text);line-height:1.75;font-size:14.5px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+background:
+  repeating-linear-gradient(0deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  repeating-linear-gradient(90deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  linear-gradient(180deg,rgba(250,246,240,0) 0%,rgba(240,230,215,.3) 100%);
+}
+a{color:var(--forest);text-decoration:none;transition:.2s}a:hover{color:var(--amber)}
+::selection{background:var(--amber-pale);color:var(--brown)}
+h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
 
 /* Top bar */
-.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,13,18,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);z-index:1000;display:flex;align-items:center;padding:0 20px;gap:16px}
-.topbar .brand{font-size:15px;font-weight:700;color:var(--gold);letter-spacing:.5px}
-.topbar .brand em{font-style:normal;color:var(--accent);font-weight:400}
-.topbar .pill{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 10px;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
-.topbar nav{margin-left:auto;display:flex;gap:14px;font-size:12px}
-.topbar nav a{color:var(--text2);font-weight:500}
-.topbar nav a:hover{color:var(--accent);text-decoration:none}
+.topbar{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest);z-index:1000;display:flex;align-items:center;padding:0 24px;gap:16px}
+.topbar .brand{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;letter-spacing:.5px}
+.topbar .brand .vibe{color:var(--forest)}
+.topbar .brand .life{color:var(--amber)}
+.topbar .brand em{font-style:normal;color:var(--text2);font-weight:400;font-family:'Inter',sans-serif;font-size:13px;margin-left:6px}
+.topbar .pill{font-size:10px;background:var(--forest-pale);border:1px solid var(--forest-light);border-radius:10px;padding:2px 10px;color:var(--forest);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.topbar nav{margin-left:auto;display:flex;gap:14px;font-size:12.5px;font-weight:600}
+.topbar nav a{color:var(--text2);padding:4px 0;border-bottom:2px solid transparent}
+.topbar nav a:hover{color:var(--forest);border-bottom-color:var(--forest);text-decoration:none}
 
 /* Sidebar */
-.sidebar{position:fixed;top:56px;left:0;width:270px;bottom:0;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;font-size:12.5px;z-index:100}
+.sidebar{position:fixed;top:60px;left:0;width:270px;bottom:0;overflow-y:auto;background:var(--paper);border-right:1px solid var(--border);padding:16px 0;font-size:12.5px;z-index:100}
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-.sidebar .sec{padding:0 16px;margin:10px 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text2);font-weight:700}
+.sidebar .sec{padding:0 16px;margin:10px 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text3);font-weight:700;font-family:'Sora',sans-serif}
 .sidebar a{display:block;padding:3px 16px;color:var(--text2);transition:.12s}
-.sidebar a:hover{color:var(--cyan);background:rgba(34,211,238,.04);text-decoration:none}
+.sidebar a:hover{color:var(--forest);background:rgba(27,67,50,.04);text-decoration:none}
 .sidebar a.l2{padding-left:30px;font-size:11.5px}
-.sidebar a.l3{padding-left:44px;font-size:11px;color:#5a6577}
-.sidebar .sep{height:1px;background:var(--border);margin:8px 16px}
+.sidebar a.l3{padding-left:44px;font-size:11px;color:var(--text3)}
+.sidebar .sep{height:1px;background:var(--border-light);margin:8px 16px}
 
 /* Main */
-.main{margin-left:270px;padding:76px 44px 120px;max-width:980px}
+.main{margin-left:270px;padding:80px 44px 120px;max-width:980px;position:relative;z-index:1}
 
 /* Typography */
-h1{font-size:36px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,var(--cyan),var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:'Segoe UI',system-ui,sans-serif}
-.tagline{font-size:14px;color:var(--text2);margin-bottom:40px;font-family:'Segoe UI',system-ui,sans-serif}
-h2{font-size:22px;font-weight:700;margin:52px 0 14px;padding-bottom:6px;border-bottom:1px solid var(--border);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
-h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--cyan)}
-h4{font-size:14px;font-weight:600;margin:18px 0 6px;color:var(--purple)}
-h5{font-size:13px;font-weight:600;margin:14px 0 4px;color:var(--orange)}
+h1{font-size:36px;font-weight:800;margin-bottom:6px;color:var(--forest)}
+.tagline{font-size:14px;color:var(--text2);margin-bottom:40px}
+h2{font-size:22px;font-weight:700;margin:52px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--forest-pale);color:var(--forest)}
+h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--navy)}
+h4{font-size:14px;font-weight:600;margin:18px 0 6px;color:var(--terra)}
+h5{font-size:13px;font-weight:600;margin:14px 0 4px;color:var(--amber)}
 p{margin-bottom:12px}
 ul,ol{margin:0 0 14px 20px}
 li{margin-bottom:4px}
 
 /* Code */
-code{background:var(--surface2);padding:1px 6px;border-radius:3px;font-size:13px;color:var(--cyan)}
-pre{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 18px;overflow-x:auto;margin:10px 0 16px;font-size:12.5px;line-height:1.65;position:relative}
+code{background:var(--forest-pale);padding:1px 6px;border-radius:3px;font-size:13px;color:var(--forest);font-family:'JetBrains Mono','Fira Code',monospace}
+pre{background:var(--warm-white);border:1px solid var(--border);border-radius:6px;padding:14px 18px;overflow-x:auto;margin:10px 0 16px;font-size:12.5px;line-height:1.65;position:relative;font-family:'JetBrains Mono','Fira Code',monospace}
 pre code{background:none;padding:0;color:var(--text)}
-pre .line-num{color:var(--text2);user-select:none;margin-right:12px}
-.lang-badge{position:absolute;top:6px;right:10px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);background:var(--surface2);padding:2px 8px;border-radius:3px;font-weight:700}
+.lang-badge{position:absolute;top:6px;right:10px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);background:var(--paper);padding:2px 8px;border-radius:3px;font-weight:700;font-family:'Sora',sans-serif}
 
 /* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin:12px 0}
+.card{background:var(--warm-white);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin:12px 0;box-shadow:0 1px 3px var(--shadow)}
 .card h4{margin-top:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:12px 0}
 .grid .card{margin:0}
 
 /* Tables */
 table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.5px}
-th{background:var(--surface2);color:var(--accent);text-align:left;padding:8px 12px;font-weight:600;border:1px solid var(--border);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+th{background:var(--forest);color:var(--cream);text-align:left;padding:8px 12px;font-weight:600;border:1px solid var(--forest-light);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;font-family:'Sora',sans-serif}
 td{padding:7px 12px;border:1px solid var(--border)}
-tr:nth-child(even) td{background:rgba(18,22,30,.6)}
+tr:nth-child(even) td{background:var(--paper)}
 
 /* Badges */
-.tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:1px 2px}
-.tag-ts{background:#1e3a5f;color:#60a5fa}
-.tag-gd{background:#1a3d2e;color:#4ade80}
-.tag-ws{background:#3d1a3d;color:#f472b6}
-.tag-http{background:#3d2e1a;color:#fb923c}
-.tag-tier{background:var(--surface3);color:var(--gold)}
+.tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:1px 2px;font-family:'Sora',sans-serif}
+.tag-ts{background:var(--navy-pale);color:var(--navy)}
+.tag-java{background:var(--terra-pale);color:var(--terra)}
+.tag-rest{background:var(--amber-pale);color:var(--brown)}
+.tag-http{background:var(--amber-pale);color:var(--brown)}
+.tag-tier{background:var(--paper);color:var(--amber);border:1px solid var(--border)}
 
 /* Callouts */
 .note,.warn,.tip,.arch{border-radius:6px;padding:12px 16px;margin:14px 0;font-size:13px}
-.note{background:rgba(96,165,250,.06);border-left:3px solid var(--accent)}
-.warn{background:rgba(248,113,113,.06);border-left:3px solid var(--red)}
-.tip{background:rgba(74,222,128,.06);border-left:3px solid var(--green)}
-.arch{background:rgba(167,139,250,.06);border-left:3px solid var(--purple)}
-.note strong{color:var(--accent)}.warn strong{color:var(--red)}.tip strong{color:var(--green)}.arch strong{color:var(--purple)}
+.note{background:rgba(27,67,50,.05);border-left:3px solid var(--forest)}
+.warn{background:rgba(192,87,49,.05);border-left:3px solid var(--terra)}
+.tip{background:rgba(212,135,14,.05);border-left:3px solid var(--amber)}
+.arch{background:rgba(27,42,74,.05);border-left:3px solid var(--navy)}
+.note strong{color:var(--forest)}.warn strong{color:var(--terra)}.tip strong{color:var(--amber)}.arch strong{color:var(--navy)}
 
 /* Flow diagrams (ASCII) */
-.flow{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin:12px 0;font-size:12px;line-height:1.5;white-space:pre;overflow-x:auto;color:var(--cyan)}
+.flow{background:var(--warm-white);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin:12px 0;font-size:12px;line-height:1.5;white-space:pre;overflow-x:auto;color:var(--navy);font-family:'JetBrains Mono','Fira Code',monospace}
 
 /* Responsive */
-@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:68px 16px 80px}}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:72px 16px 80px}}
 </style>
 </head>
 <body>
 
 <header class="topbar">
-<div class="brand">VibeLife <em>// dev manual</em></div>
-<span class="pill">v1.0 &mdash; Tiers 1-5</span>
+<div class="brand"><span class="vibe">Vibe</span><span class="life">Life</span> <em>// dev manual</em></div>
+<span class="pill">Minecraft Edition</span>
 <nav>
 <a href="#architecture">Architecture</a>
-<a href="#server">Server</a>
+<a href="#server">Sidecar</a>
 <a href="#services">Services</a>
-<a href="#websocket">WebSocket</a>
+<a href="#plugin">Plugin</a>
 <a href="#persistence">Persistence</a>
-<a href="#client">Client</a>
 <a href="#guides">Guides</a>
 <a href="#api-ref">API Ref</a>
+<a href="plugin.html">Plugin Guide</a>
+<a href="deploy.html">Deploy</a>
+<a href="index.html">Home</a>
 </nav>
 </header>
 
@@ -118,20 +142,18 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <a class="l2" href="#type-system">Type System &amp; Contracts</a>
 <div class="sep"></div>
 
-<div class="sec">Server</div>
+<div class="sec">Sidecar Server</div>
 <a href="#server">Server Entry Point</a>
 <a class="l2" href="#fastify-setup">Fastify Setup</a>
 <a class="l2" href="#middleware">Middleware &amp; Plugins</a>
 <a class="l2" href="#route-registration">Route Registration</a>
-<a class="l2" href="#tick-loops">Tick Loops</a>
 <div class="sep"></div>
 
 <div class="sec">Auth &amp; Sessions</div>
 <a href="#auth">Authentication</a>
-<a class="l2" href="#auth-flow">Auth Flow</a>
+<a class="l2" href="#auth-flow">MC Auth Flow</a>
 <a class="l2" href="#session-mgmt">Session Management</a>
 <a class="l2" href="#token-resolution">Token Resolution</a>
-<a class="l2" href="#password-hashing">Password Hashing</a>
 <div class="sep"></div>
 
 <div class="sec">State &amp; Services</div>
@@ -142,9 +164,6 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <a class="l2" href="#svc-avatar">Avatar Service</a>
 <a class="l2" href="#svc-parcel">Parcel Service</a>
 <a class="l2" href="#svc-object">Object Service</a>
-<a class="l2" href="#svc-voxel">Voxel Service</a>
-<a class="l2" href="#svc-combat">Combat Service</a>
-<a class="l2" href="#svc-enemy">Enemy Service</a>
 <a class="l2" href="#svc-economy">Economy Service</a>
 <a class="l2" href="#svc-marketplace">Marketplace Service</a>
 <a class="l2" href="#svc-social">Social Service</a>
@@ -152,12 +171,16 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <a class="l2" href="#svc-other">Other Services</a>
 <div class="sep"></div>
 
-<div class="sec">WebSocket</div>
-<a href="#websocket">WebSocket Protocol</a>
-<a class="l2" href="#ws-connection">Connection Flow</a>
-<a class="l2" href="#ws-commands">Command Dispatch</a>
-<a class="l2" href="#ws-events">Event Broadcasting</a>
-<a class="l2" href="#ws-sequence">Sequence Tracking</a>
+<div class="sec">Paper Plugin</div>
+<a href="#plugin">Paper Plugin Architecture</a>
+<a class="l2" href="#plugin-listeners">Listeners &amp; Hooks</a>
+<a class="l2" href="#plugin-sidecar-client">SidecarClient</a>
+<a class="l2" href="#plugin-messaging">Plugin Messaging</a>
+<div class="sep"></div>
+
+<div class="sec">Fabric Mod</div>
+<a href="#fabric-mod">Fabric Mod Architecture</a>
+<a class="l2" href="#mod-screens">UI Screens</a>
 <div class="sep"></div>
 
 <div class="sec">Persistence</div>
@@ -167,23 +190,14 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <a class="l2" href="#adding-persistence">Adding New Entities</a>
 <div class="sep"></div>
 
-<div class="sec">Client</div>
-<a href="#client">Godot Client</a>
-<a class="l2" href="#client-arch">Architecture</a>
-<a class="l2" href="#client-main">main.gd Entry Point</a>
-<a class="l2" href="#client-networking">Networking</a>
-<a class="l2" href="#client-modules">Module Index</a>
-<a class="l2" href="#scene-tree">Scene Tree</a>
-<div class="sep"></div>
-
 <div class="sec">Guides</div>
 <a href="#guides">Developer Guides</a>
 <a class="l2" href="#guide-setup">Dev Environment Setup</a>
 <a class="l2" href="#guide-new-service">Adding a New Service</a>
 <a class="l2" href="#guide-new-route">Adding a New Route</a>
-<a class="l2" href="#guide-new-ws-cmd">Adding a WS Command</a>
 <a class="l2" href="#guide-new-event">Adding a Region Event</a>
-<a class="l2" href="#guide-new-client-mod">Adding a Client Module</a>
+<a class="l2" href="#guide-build-plugin">Building the Paper Plugin</a>
+<a class="l2" href="#guide-build-mod">Building the Fabric Mod</a>
 <div class="sep"></div>
 
 <div class="sec">API Reference</div>
@@ -194,11 +208,7 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <a class="l2" href="#api-economy">Economy &amp; Marketplace</a>
 <a class="l2" href="#api-social">Social</a>
 <a class="l2" href="#api-combat">Combat</a>
-<a class="l2" href="#api-voxels">Voxels</a>
 <a class="l2" href="#api-misc">Everything Else</a>
-<a href="#ws-ref">WebSocket Reference</a>
-<a class="l2" href="#ws-commands-ref">Commands (Client &rarr; Server)</a>
-<a class="l2" href="#ws-events-ref">Events (Server &rarr; Client)</a>
 </aside>
 
 <main class="main">
@@ -206,20 +216,24 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <!-- ================================================================ -->
 <section id="intro">
 <h1>VibeLife Developer Manual</h1>
-<p class="tagline">Complete technical reference for building, extending, and understanding the VibeLife platform. Fastify + TypeScript server, Godot 4.6 client, real-time WebSocket protocol.</p>
+<p class="tagline">Complete technical reference for building, extending, and understanding the VibeLife platform &mdash; a Minecraft Paper server plugin system with Fastify sidecar and Fabric client mod.</p>
 
 <div class="grid">
 <div class="card">
-<h4>Backend</h4>
-<p><span class="tag tag-ts">TypeScript</span> Fastify 5.2, Node.js ESM, 50+ services, 40+ route files, dual-mode persistence</p>
+<h4>Sidecar Backend</h4>
+<p><span class="tag tag-ts">TypeScript</span> Fastify 5, Node.js ESM, 50+ services, 40+ route files, dual-mode persistence (PostgreSQL or in-memory)</p>
 </div>
 <div class="card">
-<h4>Client</h4>
-<p><span class="tag tag-gd">GDScript</span> Godot 4.6, 30+ module scripts, procedural rendering, WebSocket + HTTP networking</p>
+<h4>Paper Plugin</h4>
+<p><span class="tag tag-java">Java 21</span> Paper server plugin (Gradle). Bridges Minecraft server events to the sidecar via HTTP/REST. Handles auth, parcels, chat, achievements, economy.</p>
 </div>
 <div class="card">
-<h4>Protocol</h4>
-<p><span class="tag tag-ws">WebSocket</span> JSON messages, sequence-tracked events, region-scoped broadcasting, command/event unions</p>
+<h4>Fabric Mod</h4>
+<p><span class="tag tag-java">Java 21</span> Fabric client mod (Fabric Loom). Renders UI overlay screens for economy, social, marketplace, achievements, and events.</p>
+</div>
+<div class="card">
+<h4>Communication</h4>
+<p><span class="tag tag-rest">REST</span> Plugin &rarr; Sidecar via HTTP/REST. Mod &rarr; Sidecar via HTTP/REST. Plugin &rarr; Mod via plugin messaging channel (<code>vibelife:main</code>).</p>
 </div>
 </div>
 </section>
@@ -229,14 +243,16 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <h2>Tech Stack</h2>
 <table>
 <tr><th>Layer</th><th>Technology</th><th>Key Files</th></tr>
-<tr><td>Server</td><td>Fastify 5.2.1 + TypeScript + Node.js (ESM)</td><td><code>src/server.ts</code></td></tr>
+<tr><td>Sidecar Server</td><td>Fastify 5 + TypeScript + Node.js (ESM)</td><td><code>src/server.ts</code></td></tr>
 <tr><td>Contracts</td><td>TypeScript type unions + validators</td><td><code>src/contracts.ts</code></td></tr>
 <tr><td>Services</td><td>Pure TS functions, in-memory Maps</td><td><code>src/world/*.ts</code></td></tr>
 <tr><td>Routes</td><td>Fastify route handlers</td><td><code>src/routes/*.ts</code></td></tr>
-<tr><td>Persistence</td><td>Dual-mode: in-memory Maps + PostgreSQL stubs</td><td><code>src/data/persistence.ts</code></td></tr>
-<tr><td>Client</td><td>Godot 4.6 + GDScript</td><td><code>native-client/godot/</code></td></tr>
-<tr><td>Realtime</td><td>@fastify/websocket + JSON protocol</td><td><code>src/server.ts</code> WS handler</td></tr>
-<tr><td>Auth</td><td>scrypt password hashing, UUID session tokens</td><td><code>src/world/auth-service.ts</code></td></tr>
+<tr><td>Persistence</td><td>Dual-mode: in-memory Maps + PostgreSQL</td><td><code>src/data/persistence.ts</code></td></tr>
+<tr><td>Paper Plugin</td><td>Paper API (Java 21, Gradle, shadowJar)</td><td><code>paper-plugin/</code></td></tr>
+<tr><td>Fabric Mod</td><td>Fabric API (Java 21, Fabric Loom)</td><td><code>fabric-mod/</code></td></tr>
+<tr><td>Plugin &harr; Sidecar</td><td>HTTP/REST (OkHttp / Java HttpClient)</td><td><code>SidecarClient.java</code></td></tr>
+<tr><td>Plugin &harr; Mod</td><td>Plugin messaging channel (<code>vibelife:main</code>)</td><td><code>PluginMessageHandler.java</code></td></tr>
+<tr><td>Auth</td><td>MC UUID-based, session tokens from sidecar</td><td><code>src/world/auth-service.ts</code></td></tr>
 </table>
 </section>
 
@@ -244,48 +260,55 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <section id="project-structure">
 <h2>Project Structure</h2>
 <pre><code>vibelife/
-├── src/                              <span style="color:var(--text2)"># TypeScript backend</span>
-│   ├── server.ts                     <span style="color:var(--text2)"># Fastify app, WS handler, tick loops</span>
-│   ├── contracts.ts                  <span style="color:var(--text2)"># ALL shared types & unions</span>
-│   ├── data/
-│   │   └── persistence.ts            <span style="color:var(--text2)"># Dual-mode persistence layer</span>
-│   ├── world/                        <span style="color:var(--text2)"># Domain services</span>
-│   │   ├── _shared-state.ts          <span style="color:var(--text2)"># Mutable state, sessions, permissions</span>
-│   │   ├── store.ts                  <span style="color:var(--text2)"># Barrel re-exports</span>
-│   │   ├── region.ts                 <span style="color:var(--text2)"># WS peer mgmt & broadcastRegion()</span>
-│   │   ├── auth-service.ts
-│   │   ├── avatar-service.ts
-│   │   ├── parcel-service.ts
-│   │   ├── object-service.ts
-│   │   ├── chat-service.ts
-│   │   ├── economy-service.ts
-│   │   ├── marketplace-service.ts
-│   │   ├── social-service.ts
-│   │   ├── achievement-service.ts
-│   │   ├── voxel-service.ts
-│   │   ├── combat-service.ts
-│   │   ├── enemy-service.ts
-│   │   ├── voxel-shop-service.ts
-│   │   └── ... (50+ total services)
-│   └── routes/                       <span style="color:var(--text2)"># HTTP endpoint handlers</span>
-│       ├── auth.ts
-│       ├── regions.ts
-│       ├── objects.ts
-│       ├── parcels.ts
-│       ├── economy.ts
-│       ├── marketplace.ts
-│       └── ... (40+ route files)
-├── native-client/godot/              <span style="color:var(--text2)"># Godot 4.6 client</span>
-│   ├── project.godot
-│   ├── scenes/
-│   │   └── main.tscn                 <span style="color:var(--text2)"># Main scene tree</span>
-│   └── scripts/
-│       ├── main.gd                   <span style="color:var(--text2)"># Client entry point</span>
-│       ├── world/                    <span style="color:var(--text2)"># 3D world modules</span>
-│       └── ui/                       <span style="color:var(--text2)"># UI controllers</span>
-├── public/                           <span style="color:var(--text2)"># Static served files</span>
-├── package.json
-└── tsconfig.json</code></pre>
+&#x251C;&#x2500;&#x2500; src/                              <span style="color:var(--text3)"># TypeScript sidecar (Fastify)</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; server.ts                     <span style="color:var(--text3)"># Fastify app, route registration</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; contracts.ts                  <span style="color:var(--text3)"># ALL shared types &amp; unions</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; data/
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; persistence.ts            <span style="color:var(--text3)"># Dual-mode persistence layer</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; world/                        <span style="color:var(--text3)"># Domain services</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; _shared-state.ts          <span style="color:var(--text3)"># Mutable state, sessions, permissions</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; store.ts                  <span style="color:var(--text3)"># Barrel re-exports</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; auth-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; avatar-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; parcel-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; object-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; chat-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; economy-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; marketplace-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; social-service.ts
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; achievement-service.ts
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; ... (50+ total services)
+&#x2502;   &#x2514;&#x2500;&#x2500; routes/                       <span style="color:var(--text3)"># HTTP endpoint handlers</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; auth.ts
+&#x2502;       &#x251C;&#x2500;&#x2500; regions.ts
+&#x2502;       &#x251C;&#x2500;&#x2500; parcels.ts
+&#x2502;       &#x251C;&#x2500;&#x2500; economy.ts
+&#x2502;       &#x251C;&#x2500;&#x2500; marketplace.ts
+&#x2502;       &#x2514;&#x2500;&#x2500; ... (40+ route files)
+&#x251C;&#x2500;&#x2500; paper-plugin/                     <span style="color:var(--text3)"># Paper server plugin (Java 21, Gradle)</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; build.gradle.kts
+&#x2502;   &#x2514;&#x2500;&#x2500; src/main/java/
+&#x2502;       &#x2514;&#x2500;&#x2500; life/vibe/plugin/
+&#x2502;           &#x251C;&#x2500;&#x2500; VibeLifePlugin.java   <span style="color:var(--text3)"># Plugin entry point</span>
+&#x2502;           &#x251C;&#x2500;&#x2500; SidecarClient.java    <span style="color:var(--text3)"># HTTP client to sidecar</span>
+&#x2502;           &#x251C;&#x2500;&#x2500; PluginMessageHandler.java
+&#x2502;           &#x251C;&#x2500;&#x2500; LoginListener.java
+&#x2502;           &#x251C;&#x2500;&#x2500; ParcelListener.java
+&#x2502;           &#x251C;&#x2500;&#x2500; ChatListener.java
+&#x2502;           &#x251C;&#x2500;&#x2500; AchievementHook.java
+&#x2502;           &#x2514;&#x2500;&#x2500; VaultProvider.java
+&#x251C;&#x2500;&#x2500; fabric-mod/                       <span style="color:var(--text3)"># Fabric client mod (Java 21, Fabric Loom)</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; build.gradle
+&#x2502;   &#x2514;&#x2500;&#x2500; src/main/java/
+&#x2502;       &#x2514;&#x2500;&#x2500; life/vibe/mod/
+&#x2502;           &#x251C;&#x2500;&#x2500; VibeLifeMod.java      <span style="color:var(--text3)"># Mod entry point</span>
+&#x2502;           &#x251C;&#x2500;&#x2500; SidecarApi.java       <span style="color:var(--text3)"># REST client to sidecar</span>
+&#x2502;           &#x251C;&#x2500;&#x2500; screens/              <span style="color:var(--text3)"># UI overlay screens</span>
+&#x2502;           &#x2514;&#x2500;&#x2500; PluginMessageReceiver.java
+&#x251C;&#x2500;&#x2500; paper-server/                     <span style="color:var(--text3)"># Test Paper server setup</span>
+&#x251C;&#x2500;&#x2500; public/                           <span style="color:var(--text3)"># Static served files</span>
+&#x251C;&#x2500;&#x2500; package.json
+&#x2514;&#x2500;&#x2500; tsconfig.json</code></pre>
 </section>
 
 <!-- ================================================================ -->
@@ -293,14 +316,14 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <h2>Naming Conventions</h2>
 <table>
 <tr><th>Item</th><th>Convention</th><th>Example</th></tr>
-<tr><td>Service files</td><td><code>kebab-case-service.ts</code></td><td><code>combat-service.ts</code></td></tr>
-<tr><td>Route files</td><td><code>kebab-case.ts</code></td><td><code>marketplace.ts</code></td></tr>
+<tr><td>Service files (TS)</td><td><code>kebab-case-service.ts</code></td><td><code>economy-service.ts</code></td></tr>
+<tr><td>Route files (TS)</td><td><code>kebab-case.ts</code></td><td><code>marketplace.ts</code></td></tr>
 <tr><td>Contract types</td><td><code>PascalCaseContract</code></td><td><code>AvatarContract</code></td></tr>
-<tr><td>Service functions</td><td><code>camelCase</code> verbs</td><td><code>moveAvatar()</code>, <code>claimParcel()</code></td></tr>
+<tr><td>Service functions</td><td><code>camelCase</code> verbs</td><td><code>claimParcel()</code>, <code>sendCurrency()</code></td></tr>
 <tr><td>State Maps</td><td><code>camelCase</code> plurals</td><td><code>sessions</code>, <code>avatarsByRegion</code></td></tr>
-<tr><td>WS events</td><td><code>namespace:action</code></td><td><code>combat:damage</code>, <code>voxel:block_placed</code></td></tr>
-<tr><td>WS commands</td><td><code>namespace:action</code> or single word</td><td><code>combat:attack</code>, <code>move</code>, <code>chat</code></td></tr>
-<tr><td>Client scripts</td><td><code>snake_case.gd</code></td><td><code>voxel_manager.gd</code></td></tr>
+<tr><td>Plugin classes (Java)</td><td><code>PascalCase</code></td><td><code>LoginListener</code>, <code>SidecarClient</code></td></tr>
+<tr><td>Mod screens (Java)</td><td><code>PascalCaseScreen</code></td><td><code>EconomyScreen</code>, <code>MarketplaceScreen</code></td></tr>
+<tr><td>Plugin channel</td><td><code>namespace:channel</code></td><td><code>vibelife:main</code></td></tr>
 </table>
 </section>
 
@@ -310,39 +333,49 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 
 <h3 id="data-flow">Data Flow</h3>
 <div class="flow">
-┌─────────────────────────────────────────────────────────────────┐
-│                        GODOT CLIENT                             │
-│  main.gd ──► HTTP requests ──► REST API endpoints               │
-│  main.gd ──► WebSocket ──────► WS handler in server.ts          │
-└──────────────────────┬──────────────────────┬───────────────────┘
-                       │ HTTP                  │ WebSocket
-                       ▼                       ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      src/server.ts                               │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
-│  │ Fastify App  │  │ Route Files  │  │ WS Command Dispatcher  │  │
-│  │ CORS, Rate   │  │ src/routes/* │  │ switch(cmd.type)       │  │
-│  │ Limit, Static│  │              │  │   case "move"          │  │
-│  └──────┬───────┘  └──────┬───────┘  │   case "chat"          │  │
-│         │                  │          │   case "combat:attack"  │  │
-│         └──────────────────┤          └────────────┬───────────┘  │
-│                            ▼                       ▼              │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │              src/world/store.ts (barrel)                     │ │
-│  │  Re-exports from all services + shared state                │ │
-│  └──────────────────────────┬──────────────────────────────────┘ │
-│                              ▼                                   │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │           src/world/_shared-state.ts                         │ │
-│  │  sessions Map, avatarsByRegion Map, regions[], persistence  │ │
-│  │  getBuildPermission(), getVoxelPermission(), resolveToken() │ │
-│  └──────────────────────────┬──────────────────────────────────┘ │
-│                              ▼                                   │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │           src/data/persistence.ts                            │ │
-│  │  In-Memory Maps (dev) ──or──► PostgreSQL (production)       │ │
-│  └──────────────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘</div>
++----------------------------------------------------------------------+
+|                     MINECRAFT CLIENT + FABRIC MOD                    |
+|  Fabric Mod --&gt; HTTP/REST --&gt; Sidecar API (economy, social, etc.)   |
+|  Fabric Mod &lt;-- Plugin Msg &lt;-- Paper Plugin (token, notifications)  |
++----------------------------+-----------------------------------------+
+                             | Minecraft Protocol
+                             v
++----------------------------------------------------------------------+
+|                     PAPER SERVER + PAPER PLUGIN                      |
+|  LoginListener --&gt; POST /api/auth/mc-login --&gt; Sidecar              |
+|  ChatListener  --&gt; POST /api/chat --&gt; Sidecar                       |
+|  ParcelListener --&gt; POST /api/parcels/* --&gt; Sidecar                 |
+|  AchievementHook --&gt; POST /api/achievements/* --&gt; Sidecar           |
+|  VaultProvider  --&gt; GET/POST /api/currency/* --&gt; Sidecar            |
+|  PluginMessageHandler --&gt; vibelife:main --&gt; Fabric Mod              |
++----------------------------+-----------------------------------------+
+                             | HTTP/REST
+                             v
++----------------------------------------------------------------------+
+|                      SIDECAR (src/server.ts)                         |
+|  +--------------+  +---------------+                                 |
+|  | Fastify App  |  | Route Files   |                                 |
+|  | CORS, Rate   |  | src/routes/*  |                                 |
+|  | Limit, Static|  |               |                                 |
+|  +------+-------+  +-------+-------+                                 |
+|         +-------------------+                                        |
+|                             v                                        |
+|  +------------------------------------------------------------------+|
+|  |              src/world/store.ts (barrel)                         ||
+|  |  Re-exports from all services + shared state                    ||
+|  +------------------------------+-----------------------------------+|
+|                                 v                                    |
+|  +------------------------------------------------------------------+|
+|  |           src/world/_shared-state.ts                             ||
+|  |  sessions Map, avatarsByRegion Map, regions[], persistence      ||
+|  |  getBuildPermission(), resolveToken()                            ||
+|  +------------------------------+-----------------------------------+|
+|                                 v                                    |
+|  +------------------------------------------------------------------+|
+|  |           src/data/persistence.ts                                ||
+|  |  In-Memory Maps (dev) --or--&gt; PostgreSQL (production)           ||
+|  +------------------------------------------------------------------+|
++----------------------------------------------------------------------+</div>
 
 <h3 id="tier-system">Tier System</h3>
 <p>Features are organized into tiers registered in order in <code>server.ts</code>:</p>
@@ -350,66 +383,27 @@ tr:nth-child(even) td{background:rgba(18,22,30,.6)}
 <tr><th>Tier</th><th>Features</th><th>Key Services</th></tr>
 <tr><td><span class="tag tag-tier">Tier 1-2</span></td><td>Auth, regions, avatars, objects, parcels, chat, economy, marketplace, inventory, achievements, social, groups, radio, emotes</td><td>auth, avatar, parcel, object, chat, economy, marketplace, social, achievement, emote, radio</td></tr>
 <tr><td><span class="tag tag-tier">Tier 3</span></td><td>Scripts, interactives, voice, pets, photos, media, seasonal</td><td>script, voice, pet, photo, media, seasonal</td></tr>
-<tr><td><span class="tag tag-tier">Tier 4</span></td><td>Mobile companion, creator tools, federation, NPCs, VR</td><td>mobile, creator-tools, federation, npc, vr</td></tr>
-<tr><td><span class="tag tag-tier">Tier 5</span></td><td>Voxel engine, RPG combat, enemies, voxel shop</td><td>voxel, combat, enemy, voxel-shop</td></tr>
+<tr><td><span class="tag tag-tier">Tier 4</span></td><td>Mobile companion, creator tools, federation, NPCs</td><td>mobile, creator-tools, federation, npc</td></tr>
 </table>
 
+<div class="note"><strong>Note:</strong> Combat and voxel systems from the old Tier 5 are no longer needed &mdash; Minecraft provides these natively. The Paper plugin hooks into Minecraft's combat events (EntityDeathEvent, etc.) to track stats, XP, and loot through the sidecar.</div>
+
 <h3 id="type-system">Type System &amp; Contracts</h3>
-<p><strong>File:</strong> <code>src/contracts.ts</code> — the single source of truth for all shared types.</p>
-
-<h4>Key Union Types</h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-// RegionEvent — Server → Client (broadcast to region)
-export type RegionEvent =
-  | { type: "snapshot"; sequence: number; avatars: AvatarContract[]; ... }
-  | { type: "avatar:joined"; sequence: number; avatar: AvatarContract }
-  | { type: "avatar:moved"; sequence: number; avatarId: string; x: number; y?: number; z: number }
-  | { type: "avatar:left"; sequence: number; avatarId: string }
-  | { type: "chat"; sequence: number; avatarId: string; displayName: string; message: string; ... }
-  | { type: "object:created"; sequence: number; object: RegionObjectContract }
-  | { type: "combat:damage"; sequence: number; attackerId: string; targetId: string; damage: number; ... }
-  | { type: "enemy:moved"; sequence: number; enemies: EnemyStateContract[] }
-  | { type: "voxel:block_placed"; sequence: number; x: number; y: number; z: number; ... }
-  // ... 30+ event types total
-
-// RegionCommand — Client → Server (WebSocket messages)
-export type RegionCommand =
-  | { type: "move"; x: number; y?: number; z: number }
-  | { type: "chat"; message: string }
-  | { type: "whisper"; targetDisplayName: string; message: string }
-  | { type: "emote"; emoteName: string }
-  | { type: "sit"; objectId: string }
-  | { type: "stand" }
-  | { type: "typing"; typing: boolean }
-  | { type: "combat:attack"; targetId: string; attackStyle: "melee" | "magic" }
-  | { type: "voxel:place_block"; x: number; y: number; z: number; blockTypeId: number }
-  | { type: "voxel:break_block"; x: number; y: number; z: number }
-  | { type: "radio:tune"; stationId: string }
-  | { type: "radio:skip" }
-  | { type: "group_chat"; groupId: string; message: string }
-
-// Validator function
-export function isRegionCommand(data: unknown): data is RegionCommand { ... }</code></pre>
+<p><strong>File:</strong> <code>src/contracts.ts</code> &mdash; the single source of truth for all shared types.</p>
 
 <h4>Key Contract Types</h4>
 <pre><code><span class="lang-badge">TypeScript</span>
 // Session contract
 type Session = {
   token: string; accountId: string; avatarId: string;
-  displayName: string; regionId: string;
+  displayName: string; mcUuid: string;
   role: "resident" | "admin"; expiresAt: number;
 }
 
-// Avatar in a region
+// Avatar profile
 type AvatarContract = {
   avatarId: string; accountId: string; displayName: string;
-  x: number; y: number; z: number; appearance: AvatarAppearance;
-}
-
-// Appearance customization
-type AvatarAppearance = {
-  bodyColor: string; accentColor: string; headColor: string;
-  hairColor: string; outfit: string; accessory: string;
+  mcUuid: string; appearance: AvatarAppearance;
 }
 
 // Parcel land unit
@@ -420,10 +414,9 @@ type Parcel = {
   ownerAccountId: string | null; collaboratorAccountIds: string[];
 }
 
-// Combat stats
+// Combat stats (tracked by sidecar, driven by MC events)
 type CombatStats = {
-  accountId: string; level: number; hp: number; maxHp: number;
-  mana: number; maxMana: number; strength: number; defense: number;
+  accountId: string; level: number;
   xp: number; xpToNext: number; kills: number; deaths: number;
 }
 
@@ -434,8 +427,8 @@ type CurrencyTransactionType = "gift" | "purchase" | "sale" | "bonus"
 
 <!-- ================================================================ -->
 <section id="server">
-<h2>Server Entry Point</h2>
-<p><strong>File:</strong> <code>src/server.ts</code> — the main entry point that wires everything together.</p>
+<h2>Sidecar Server Entry Point</h2>
+<p><strong>File:</strong> <code>src/server.ts</code> &mdash; the Fastify sidecar that all services run through. Both the Paper plugin and Fabric mod communicate with this server via REST.</p>
 
 <h3 id="fastify-setup">Fastify Setup</h3>
 <pre><code><span class="lang-badge">TypeScript</span>
@@ -444,17 +437,14 @@ const app = Fastify({ logger: true });
 // Plugin registration order:
 await app.register(cors, { origin: dynamicOriginCallback });
 await app.register(rateLimit, { max: 60, timeWindow: "1 minute" });
-await app.register(websocket);
-await app.register(fastifyStatic, { root: "./public", prefix: "/" });
-await app.register(fastifyStatic, { root: "node_modules/three", prefix: "/vendor/three/", decorateReply: false });</code></pre>
+await app.register(fastifyStatic, { root: "./public", prefix: "/" });</code></pre>
 
 <h3 id="middleware">Middleware &amp; Plugins</h3>
 <table>
 <tr><th>Plugin</th><th>Purpose</th><th>Configuration</th></tr>
 <tr><td><code>@fastify/cors</code></td><td>Cross-origin requests</td><td><code>CORS_ORIGINS</code> env var, comma-separated, defaults to localhost:3000</td></tr>
 <tr><td><code>@fastify/rate-limit</code></td><td>Request throttling</td><td>60 req/min global, per-route overrides available</td></tr>
-<tr><td><code>@fastify/websocket</code></td><td>WebSocket upgrade</td><td>Used for <code>/ws/regions/:regionId</code></td></tr>
-<tr><td><code>@fastify/static</code></td><td>Static file serving</td><td><code>./public</code> + Three.js vendor</td></tr>
+<tr><td><code>@fastify/static</code></td><td>Static file serving</td><td><code>./public</code> directory</td></tr>
 </table>
 
 <h3 id="route-registration">Route Registration Order</h3>
@@ -473,6 +463,7 @@ registerSocialRoutes(app);      // /api/friends/*, /api/groups/*
 registerGuildRoutes(app);       // /api/groups/:id/treasury, emblem, etc.
 registerRadioRoutes(app);       // /api/radio/*
 registerEmoteRoutes(app);       // /api/emotes/*
+registerCombatRoutes(app);      // /api/combat/* (stat tracking)
 
 // Tier 3
 registerScriptRoutes(app);      // /api/scripts/*
@@ -487,67 +478,39 @@ registerMobileRoutes(app);      // /api/mobile/*
 registerCreatorToolsRoutes(app);// /api/creator/*
 registerFederationRoutes(app);  // /api/federation/*
 registerNpcRoutes(app);         // /api/npcs/*
-registerVrRoutes(app);          // /api/vr/*
-registerAdminRoutes(app);       // /api/admin/*
-
-// Tier 5: Voxel MMORPG
-registerVoxelRoutes(app);       // /api/regions/:id/chunks, /api/voxels/*
-registerCombatRoutes(app);      // /api/combat/*
-registerVoxelShopRoutes(app);   // /api/voxel-shop/*</code></pre>
-
-<h3 id="tick-loops">Tick Loops</h3>
-<p>The server runs several interval-based loops:</p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Enemy AI loop — 1 second interval
-startEnemyTickLoop();    // Updates AI states, movement, attacks for all enemies
-
-// NPC AI loop — 2 second interval
-startNpcTickLoop();      // Updates NPC behavior, patrol, dialogue
-
-// Combat regen — 1 second interval
-setInterval(() => {
-  for (const [, regionAvatars] of avatarsByRegion) {
-    for (const avatar of regionAvatars.values()) {
-      regenTick(avatar.accountId);  // 2% HP/s, 3% Mana/s
-    }
-  }
-}, 1000);
-
-// Session cleanup — 60 second interval
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, session] of sessions) {
-    if (session.expiresAt < now) sessions.delete(token);
-  }
-}, 60000);
-
-// Presence auto-away — 60 second interval
-setInterval(() => checkAutoAway(), 60000);  // Mark inactive > 10min as away</code></pre>
+registerAdminRoutes(app);       // /api/admin/*</code></pre>
 </section>
 
 <!-- ================================================================ -->
 <section id="auth">
 <h2>Authentication &amp; Sessions</h2>
 
-<h3 id="auth-flow">Auth Flow</h3>
+<h3 id="auth-flow">MC Auth Flow</h3>
+<p>Authentication is driven by Minecraft UUIDs. When a player joins the Paper server, the plugin calls the sidecar to create or resume a session.</p>
 <div class="flow">
-Client                          Server
-  │                                │
-  ├─POST /api/auth/register───────►│  hashPassword(scrypt)
-  │  {displayName, password}       │  createAccount()
-  │                                │  createSession(8h TTL)
-  │◄──────────{token, session}─────┤  createAuditLog("register")
-  │                                │
-  ├─POST /api/auth/login──────────►│  verifyPassword(timing-safe)
-  │  {displayName, password}       │  createSession(8h TTL)
-  │◄──────────{token, session}─────┤
-  │                                │
-  ├─GET /api/regions───────────────►│  (no auth required)
-  │◄──────────{regions[]}──────────┤
-  │                                │
-  ├─WS /ws/regions/:id?token=X────►│  resolveToken(token)
-  │  &lastSequence=0               │  addPeer(), snapshot event
-  │◄──────────{type:"snapshot"}────┤</div>
+Player joins MC Server
+       |
+       v
+Paper Plugin (LoginListener)
+       |
+       +-- POST /api/auth/mc-login -----------&gt; Sidecar
+       |   { mcUuid, username }                 | Lookup or create account
+       |                                        | Create session (8h TTL)
+       |&lt;------ { token, session } -------------+
+       |
+       +-- Send token to Fabric Mod via
+       |   plugin messaging (vibelife:main)
+       |
+       v
+Fabric Mod receives token
+       |
+       +-- Uses token for all REST calls
+       |   GET /api/currency/balance?token=X
+       |   GET /api/friends?token=X
+       |   etc.
+       v</div>
+
+<div class="note"><strong>Note:</strong> There is no guest/register/login flow from a sidebar UI. The Minecraft server authenticates the player, and the Paper plugin bridges that identity to the sidecar. The sidecar trusts the plugin's mc-login call because it comes from the server process.</div>
 
 <h3 id="session-mgmt">Session Management</h3>
 <pre><code><span class="lang-badge">TypeScript</span>
@@ -560,7 +523,7 @@ type Session = {
   accountId: string;      // UUID v4
   avatarId: string;       // UUID v4
   displayName: string;
-  regionId: string;
+  mcUuid: string;         // Minecraft UUID
   role: "resident" | "admin";
   expiresAt: number;      // Date.now() + TTL
 };
@@ -572,7 +535,7 @@ const sessions = new Map&lt;string, Session&gt;();
 export function resolveToken(token: string): Session | null {
   const session = sessions.get(token);
   if (!session) return null;
-  if (session.expiresAt < Date.now()) {
+  if (session.expiresAt &lt; Date.now()) {
     sessions.delete(token);
     return null;
   }
@@ -590,30 +553,12 @@ const token = request.body?.token
 
 const session = resolveToken(token);
 if (!session) return reply.status(401).send({ error: "Invalid or expired token" });</code></pre>
-
-<h3 id="password-hashing">Password Hashing</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-
-// Hash: scrypt with 16-byte salt, 64-byte key
-async function hashPassword(password: string): Promise&lt;string&gt; {
-  const salt = randomBytes(16).toString("hex");
-  const key = await scryptAsync(password, salt, 64);
-  return salt + ":" + key.toString("hex");
-}
-
-// Verify: timing-safe comparison
-async function verifyPassword(password: string, stored: string): Promise&lt;boolean&gt; {
-  const [salt, hash] = stored.split(":");
-  const key = await scryptAsync(password, salt, 64);
-  return timingSafeEqual(Buffer.from(hash, "hex"), key);
-}</code></pre>
 </section>
 
 <!-- ================================================================ -->
 <section id="shared-state">
 <h2>Shared State</h2>
-<p><strong>File:</strong> <code>src/world/_shared-state.ts</code> — central mutable state and permission helpers.</p>
+<p><strong>File:</strong> <code>src/world/_shared-state.ts</code> &mdash; central mutable state and permission helpers.</p>
 
 <h3 id="state-maps">Core State Maps</h3>
 <pre><code><span class="lang-badge">TypeScript</span>
@@ -624,7 +569,7 @@ export const avatarsByRegion = new Map&lt;string, Map&lt;string, AvatarState&gt;
 export const chatHistoryByRegion = new Map&lt;string, ChatHistoryEntry[]&gt;();
 export const objectGroups = new Map&lt;string, ObjectGroupContract&gt;();</code></pre>
 
-<div class="arch"><strong>Architecture note:</strong> All services import from <code>_shared-state.ts</code> and operate on these Maps directly. This enables zero-latency reads but means the server is single-process. The barrel file <code>store.ts</code> re-exports everything from all services for convenient imports.</div>
+<div class="arch"><strong>Architecture note:</strong> All services import from <code>_shared-state.ts</code> and operate on these Maps directly. This enables zero-latency reads but means the sidecar is single-process. The barrel file <code>store.ts</code> re-exports everything from all services for convenient imports.</div>
 
 <h3 id="permissions">Permission System</h3>
 
@@ -650,20 +595,7 @@ export function getBuildPermission(
     return { allowed: true, parcel };
   if (!parcel.ownerAccountId)
     return { allowed: false, parcel, reason: "Claim this parcel first" };
-  return { allowed: false, parcel, reason: `Owned by ${ownerName}` };
-}</code></pre>
-
-<h4>Voxel Permission</h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-export function getVoxelPermission(
-  regionId: string, accountId: string, x: number, z: number
-): { allowed: boolean; reason?: string } {
-  const parcel = findParcelAt(regionId, x, z);
-  if (!parcel) return { allowed: true };               // Wilderness: open
-  if (parcel.tier === "public") return { allowed: true };
-  if (parcel.ownerAccountId === accountId) return { allowed: true };
-  if (parcel.collaboratorAccountIds.includes(accountId)) return { allowed: true };
-  return { allowed: false, reason: "Not your parcel" };
+  return { allowed: false, parcel, reason: "Owned by another player" };
 }</code></pre>
 </section>
 
@@ -672,185 +604,60 @@ export function getVoxelPermission(
 <h2>Service Layer</h2>
 <p>Services are pure TypeScript modules in <code>src/world/</code>. They import shared state, implement business logic, and are re-exported through <code>store.ts</code>.</p>
 
-<div class="tip"><strong>Pattern:</strong> Every service follows the same structure: import shared state → validate session → check permissions → mutate state → broadcast event → return result.</div>
+<div class="tip"><strong>Pattern:</strong> Every service follows the same structure: import shared state &rarr; validate session &rarr; check permissions &rarr; mutate state &rarr; persist &rarr; return result.</div>
 
 <h3 id="svc-avatar">Avatar Service</h3>
 <p><strong>File:</strong> <code>src/world/avatar-service.ts</code></p>
 <pre><code><span class="lang-badge">TypeScript</span>
-// Movement — called from WS "move" command
-moveAvatar(session, x, y, z)
-  → Clamps to [-28, 28] bounds
-  → Updates avatarsByRegion Map
-  → Persists position
-  → Broadcasts "avatar:moved" event
-
-// Teleport between regions
-teleportToRegion(session, targetRegionId)
-  → Saves current position
-  → Removes from old region
-  → Adds to new region
-  → Updates profile stats (worldVisits++)
-  → Sends snapshot to client
+// Profile management -- called from REST endpoints
+getAvatar(session)
+  -&gt; Returns avatar profile, appearance, stats
 
 // Appearance update
 updateAppearance(session, appearance)
-  → Updates in-memory + persistence
-  → Broadcasts "avatar:updated"
+  -&gt; Updates in-memory + persistence
+  -&gt; Returns updated avatar
 
-// Sitting
-handleSit(session, objectId) / handleStand(session)
-  → Validates object exists and is sittable
-  → Snaps avatar to object position
-  → Broadcasts "avatar:sit" / "avatar:stand"</code></pre>
+// Teleport between regions (tracked by sidecar)
+teleportToRegion(session, targetRegionId)
+  -&gt; Saves current position
+  -&gt; Removes from old region
+  -&gt; Adds to new region
+  -&gt; Updates profile stats (worldVisits++)</code></pre>
 
 <h3 id="svc-parcel">Parcel Service</h3>
 <p><strong>File:</strong> <code>src/world/parcel-service.ts</code></p>
 <pre><code><span class="lang-badge">TypeScript</span>
 claimParcel(session, parcelId)
-  → Validates parcel unclaimed & correct region
-  → Sets ownerAccountId
-  → Broadcasts "parcel:updated"
+  -&gt; Validates parcel unclaimed &amp; correct region
+  -&gt; Sets ownerAccountId
 
 releaseParcel(session, parcelId)
-  → Validates ownership
-  → Clears ownerAccountId & collaborators
-  → Broadcasts "parcel:updated"
+  -&gt; Validates ownership
+  -&gt; Clears ownerAccountId &amp; collaborators
 
 addCollaborator(session, parcelId, collaboratorAccountId)
-  → Validates ownership
-  → Pushes to collaboratorAccountIds[]</code></pre>
+  -&gt; Validates ownership
+  -&gt; Pushes to collaboratorAccountIds[]</code></pre>
 
 <h3 id="svc-object">Object Service</h3>
 <p><strong>File:</strong> <code>src/world/object-service.ts</code></p>
 <pre><code><span class="lang-badge">TypeScript</span>
 createRegionObject(session, asset, x, y, z, rotationY, scale)
-  → getBuildPermission() check
-  → Creates object with UUID
-  → Stores in persistence
-  → Broadcasts "object:created"
+  -&gt; getBuildPermission() check
+  -&gt; Creates object with UUID
+  -&gt; Stores in persistence
 
 updateRegionObject(session, objectId, updates)
-  → Permission check (owner or parcel rights)
-  → Updates position/rotation/scale
-  → Broadcasts "object:updated"
+  -&gt; Permission check (owner or parcel rights)
+  -&gt; Updates position/rotation/scale
 
 deleteRegionObject(session, objectId)
-  → Permission check
-  → Removes from persistence
-  → Broadcasts "object:deleted"
+  -&gt; Permission check
+  -&gt; Removes from persistence
 
 handleGroupObjects(session, objectIds, groupName)
 handleDuplicateGroup(session, groupName, offsetX, offsetY, offsetZ)</code></pre>
-
-<h3 id="svc-voxel">Voxel Service</h3>
-<p><strong>File:</strong> <code>src/world/voxel-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Chunk: 16 x 64 x 16 = 16,384 blocks (Uint8Array)
-const CHUNK_W = 16, CHUNK_H = 64, CHUNK_D = 16;
-
-// Chunk coordinate from world position
-chunkX = Math.floor(x / 16);  chunkZ = Math.floor(z / 16);
-
-// Block index within chunk
-index = localX + localZ * CHUNK_W + localY * CHUNK_W * CHUNK_D;
-
-// Terrain generation: layered sin/cos waves
-generateChunk(regionId, cx, cz) → Uint8Array
-  → Heightmap from sin(x*0.05) + cos(z*0.07) + sin((x+z)*0.12)
-  → Height range 10-16
-  → Layers: stone (bottom), dirt (mid), grass (top)
-  → Water at y=4
-
-// RLE Compression for network
-compressChunk(data: Uint8Array): number[]    // [blockId, count, ...]
-decompressChunk(rle: number[]): Uint8Array
-
-// Block operations
-getBlock(regionId, x, y, z): BlockType
-setBlock(regionId, x, y, z, blockTypeId): void</code></pre>
-
-<h4>Block Type Registry</h4>
-<table>
-<tr><th>ID</th><th>Name</th><th>Hardness</th><th>Transparent</th></tr>
-<tr><td>0</td><td>air</td><td>0</td><td>yes</td></tr>
-<tr><td>1</td><td>stone</td><td>4</td><td>no</td></tr>
-<tr><td>2</td><td>dirt</td><td>1</td><td>no</td></tr>
-<tr><td>3</td><td>grass</td><td>1</td><td>no</td></tr>
-<tr><td>4</td><td>wood</td><td>2</td><td>no</td></tr>
-<tr><td>5</td><td>sand</td><td>0.5</td><td>no</td></tr>
-<tr><td>6</td><td>water</td><td>0</td><td>yes</td></tr>
-<tr><td>7-9</td><td>ore_iron/gold/crystal</td><td>5-6</td><td>no</td></tr>
-<tr><td>10</td><td>leaves</td><td>0.3</td><td>yes</td></tr>
-<tr><td>11</td><td>glass</td><td>0.2</td><td>yes</td></tr>
-<tr><td>12</td><td>brick</td><td>3</td><td>no</td></tr>
-<tr><td>128+</td><td>Custom blocks</td><td>varies</td><td>varies</td></tr>
-</table>
-
-<h3 id="svc-combat">Combat Service</h3>
-<p><strong>File:</strong> <code>src/world/combat-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Stat formulas (per level)
-maxHp     = 100 + level * 20
-maxMana   = 50  + level * 10
-strength  = 10  + level * 2
-defense   = 5   + level * 2
-xpToNext  = level * 100
-
-// Damage calculation
-computeDamage(attacker, defenderDef, style):
-  melee:  damage = max(1, strength * 1.0 - defenderDef)
-  magic:  damage = max(1, strength * 1.5 - defenderDef), costs 20 mana
-  critical: 10% chance → damage * 2
-
-// Death handling
-handlePlayerDeath(accountId):
-  → Deduct 5% currency as "death_penalty" transaction
-  → Reset HP/Mana to max
-  → Increment deaths counter
-  → Respawn at first parcel center
-  → Broadcast "combat:respawn"
-
-// Regen tick (called every 1s)
-regenTick(accountId):
-  hp  += floor(maxHp * 0.02)    // 2% per second
-  mana += floor(maxMana * 0.03)  // 3% per second
-
-// XP & leveling
-awardXp(accountId, amount):
-  → Add XP, check threshold
-  → If xp >= xpToNext: level++, recalculate stats, restore HP/Mana
-  → Broadcast "combat:level_up"
-  → Max level: 100</code></pre>
-
-<h3 id="svc-enemy">Enemy Service</h3>
-<p><strong>File:</strong> <code>src/world/enemy-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Enemy variants with base stats
-const ENEMY_VARIANTS = {
-  slime:    { hp: 50,  str: 5,  def: 2  },
-  skeleton: { hp: 80,  str: 10, def: 5  },
-  golem:    { hp: 200, str: 15, def: 15 },
-  shadow:   { hp: 100, str: 20, def: 3  },
-  drake:    { hp: 500, str: 25, def: 20 }
-};
-
-// Stat scaling: hp * (1 + (level-1) * 0.25), str/def * (1 + (level-1) * 0.2)
-
-// AI State Machine: idle → patrol → aggro → chase → attack → dead
-// Tick interval: 1 second
-// Aggro radius: ~8 units, Chase breaks at 15 units from spawn
-// Attack range: 3 units, cooldown: 1.5 seconds
-// Death: respawnAt = Date.now() + 30000
-
-// Spawning: 3-5 per region, edges (x/z: [-25,-15] or [15,25])
-initRegionEnemies(regionId): void
-
-// Loot tables
-slime:    { currency: [5,15] }
-skeleton: { currency: [10,25], items: [{name:"bone", chance:0.3}] }
-golem:    { currency: [20,50], items: [{name:"stone_core", chance:0.2}] }
-shadow:   { currency: [15,40], items: [{name:"shadow_essence", chance:0.15}] }
-drake:    { currency: [50,150], items: [{name:"drake_scale", chance:0.1}] }</code></pre>
 
 <h3 id="svc-economy">Economy Service</h3>
 <p><strong>File:</strong> <code>src/world/economy-service.ts</code></p>
@@ -858,14 +665,14 @@ drake:    { currency: [50,150], items: [{name:"drake_scale", chance:0.1}] }</cod
 getBalance(accountId): number              // Default: 1000
 sendCurrency(fromId, toId, amount, type)   // Transfer + log transaction
 listCurrencyTransactions(accountId, limit) // Audit trail (max 100)</code></pre>
+<div class="note"><strong>Vault integration:</strong> The Paper plugin's <code>VaultProvider</code> class exposes the sidecar economy through the Vault API, so other MC plugins (shops, etc.) can check balances and transfer currency using standard Vault calls.</div>
 
 <h3 id="svc-marketplace">Marketplace Service</h3>
 <p><strong>File:</strong> <code>src/world/marketplace-service.ts</code></p>
 <pre><code><span class="lang-badge">TypeScript</span>
 // Listing types: "fixed" | "auction"
 // Statuses: "active" | "sold" | "expired" | "cancelled"
-// Valid kinds: outfit, accessory, tool, pet, decoration, consumable,
-//              voxel_blueprint, custom_block
+// Valid kinds: outfit, accessory, tool, pet, decoration, consumable
 
 createListing(accountId, itemId, price, type, auctionEndTime?)
 buyListing(accountId, listingId)           // Fixed price purchase
@@ -909,14 +716,16 @@ getProfile(accountId) / updateProfile(accountId, {bio, imageUrl})</code></pre>
 // History buffer: 50 messages per region
 // Channels: "region" | "whisper" | "global" | "group"
 
-handleChat(session, message)     → Broadcast "chat" to region
-handleWhisper(session, target, msg) → Send "whisper" to target
-getChatHistory(regionId)         → Last 50 messages</code></pre>
+handleChat(session, message)        -&gt; Store in history
+handleWhisper(session, target, msg) -&gt; Store + return
+getChatHistory(regionId)            -&gt; Last 50 messages</code></pre>
+<div class="note"><strong>MC integration:</strong> The Paper plugin's <code>ChatListener</code> hooks into <code>AsyncChatEvent</code> and forwards messages to the sidecar. Chat history is available via the Fabric mod's UI or through REST.</div>
 
 <h3 id="svc-other">Other Services</h3>
 <table>
 <tr><th>Service</th><th>File</th><th>Key Functions</th></tr>
 <tr><td>Achievement</td><td><code>achievement-service.ts</code></td><td>33 achievements, 5 categories, XP leveling, titles, daily/weekly challenges</td></tr>
+<tr><td>Combat Stats</td><td><code>combat-service.ts</code></td><td>Stat tracking (kills, deaths, XP, level). Driven by Paper plugin's EntityDeathEvent hook.</td></tr>
 <tr><td>Emote</td><td><code>emote-service.ts</code></td><td>14 emotes, 4 categories, combo detection (3s window, 3 unit range)</td></tr>
 <tr><td>Radio</td><td><code>radio-service.ts</code></td><td>Stations, playlists, tune/skip commands</td></tr>
 <tr><td>Voice</td><td><code>voice-service.ts</code></td><td>Join/leave channel (max 32), mute/deafen, spatial audio (30 unit range)</td></tr>
@@ -932,113 +741,138 @@ getChatHistory(regionId)         → Last 50 messages</code></pre>
 <tr><td>Script</td><td><code>script-service.ts</code></td><td>Visual node editor, trigger zones (sphere/box), persistent state</td></tr>
 <tr><td>NPC</td><td><code>npc-service.ts</code></td><td>5 types (ambient/shopkeeper/quest-giver/tour-guide/enemy), dialogue trees, quests</td></tr>
 <tr><td>Mobile</td><td><code>mobile-service.ts</code></td><td>Mobile sessions, push notifications, dashboard, quick actions</td></tr>
-<tr><td>VR</td><td><code>vr-service.ts</code></td><td>XR session, comfort prefs, hand tracking, gestures, calibration</td></tr>
 <tr><td>Federation</td><td><code>federation-service.ts</code></td><td>Server registry, identity tokens, cross-server teleport, federated marketplace</td></tr>
 <tr><td>Creator Tools</td><td><code>creator-tools-service.ts</code></td><td>Asset pipeline, review queue, analytics, revenue splits, API keys, webhooks</td></tr>
-<tr><td>Voxel Shop</td><td><code>voxel-shop-service.ts</code></td><td>Custom blocks (ID 128+), voxel blueprints, sell on marketplace</td></tr>
 <tr><td>Guild</td><td><code>guild-service.ts</code></td><td>Treasury, emblem, banner, parcel assignment, alliances</td></tr>
 </table>
 </section>
 
 <!-- ================================================================ -->
-<section id="websocket">
-<h2>WebSocket Protocol</h2>
+<section id="plugin">
+<h2>Paper Plugin Architecture</h2>
+<p><strong>Directory:</strong> <code>paper-plugin/</code> &mdash; a Paper server plugin (Java 21, built with Gradle + shadowJar) that bridges Minecraft server events to the VibeLife sidecar.</p>
 
-<h3 id="ws-connection">Connection Flow</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Endpoint: GET /ws/regions/:regionId?token=TOKEN&lastSequence=SEQ
-app.get("/ws/regions/:regionId", { websocket: true }, (socket, req) => {
-  const { regionId } = req.params;
-  const token = req.query.token;
-  const lastSequence = parseInt(req.query.lastSequence ?? "0");
+<h3 id="plugin-listeners">Listeners &amp; Hooks</h3>
+<table>
+<tr><th>Class</th><th>MC Event</th><th>Sidecar Endpoint</th><th>Purpose</th></tr>
+<tr><td><code>LoginListener</code></td><td><code>PlayerJoinEvent</code></td><td><code>POST /api/auth/mc-login</code></td><td>Authenticates player by MC UUID, receives session token, sends token to Fabric mod via plugin message</td></tr>
+<tr><td><code>ParcelListener</code></td><td><code>PlayerMoveEvent</code></td><td><code>POST /api/parcels/*</code></td><td>Detects parcel entry/exit, enforces build permissions via sidecar permission checks</td></tr>
+<tr><td><code>ChatListener</code></td><td><code>AsyncChatEvent</code></td><td><code>POST /api/regions/:id/chat</code></td><td>Forwards chat messages to sidecar for history and cross-platform delivery</td></tr>
+<tr><td><code>AchievementHook</code></td><td><code>PlayerAdvancementDoneEvent</code>, <code>EntityDeathEvent</code>, custom triggers</td><td><code>POST /api/achievements/*</code></td><td>Maps MC events to VibeLife achievements; tracks kills, deaths, exploration</td></tr>
+<tr><td><code>VaultProvider</code></td><td>Vault API calls</td><td><code>GET/POST /api/currency/*</code></td><td>Exposes sidecar economy as a Vault economy so other plugins (shops, etc.) can use VibeLife currency</td></tr>
+</table>
 
-  const session = resolveToken(token);
-  if (!session) { socket.close(4001, "Unauthorized"); return; }
+<h3 id="plugin-sidecar-client">SidecarClient</h3>
+<p><strong>File:</strong> <code>paper-plugin/src/main/java/life/vibe/plugin/SidecarClient.java</code></p>
+<pre><code><span class="lang-badge">Java</span>
+/**
+ * HTTP client that communicates with the VibeLife sidecar.
+ * All calls are async (CompletableFuture) to avoid blocking the server thread.
+ */
+public class SidecarClient {
+    private final String baseUrl;  // e.g. "http://localhost:3000"
+    private final HttpClient http;
 
-  // Register peer for broadcasting
-  addPeer(regionId, session.accountId, socket);
+    // Auth
+    public CompletableFuture&lt;McLoginResponse&gt; mcLogin(UUID mcUuid, String username);
 
-  // Send full state snapshot
-  socket.send(JSON.stringify(buildSnapshot(regionId, lastSequence)));
+    // Economy (called by VaultProvider)
+    public CompletableFuture&lt;Double&gt; getBalance(String accountId);
+    public CompletableFuture&lt;Void&gt; sendCurrency(String from, String to, double amount, String type);
 
-  // Message handler
-  socket.on("message", (raw) => {
-    const cmd = JSON.parse(raw.toString());
-    if (!isRegionCommand(cmd)) return;
-    handleCommand(session, regionId, cmd, socket);
-  });
+    // Combat stats
+    public CompletableFuture&lt;Void&gt; reportKill(String accountId, String entityType, int xp);
+    public CompletableFuture&lt;Void&gt; reportDeath(String accountId);
 
-  socket.on("close", () => {
-    removePeer(regionId, session.accountId);
-    broadcastRegion(regionId, { type: "avatar:left", ... });
-  });
-});</code></pre>
+    // Achievements
+    public CompletableFuture&lt;Void&gt; grantAchievement(String accountId, String achievementId);
 
-<h3 id="ws-commands">Command Dispatch</h3>
-<p>The <code>handleCommand()</code> function in <code>server.ts</code> uses a switch on <code>cmd.type</code>:</p>
-<pre><code><span class="lang-badge">TypeScript</span>
-switch (cmd.type) {
-  case "move":
-    moveAvatar(session, cmd.x, cmd.y, cmd.z);
-    broadcastRegion(regionId, { type: "avatar:moved", ... });
-    break;
+    // Chat
+    public CompletableFuture&lt;Void&gt; forwardChat(String accountId, String regionId, String message);
 
-  case "chat":
-    if (cmd.message.length > 180) return;
-    handleChat(session, cmd.message);
-    broadcastRegion(regionId, { type: "chat", ... });
-    break;
-
-  case "whisper":
-    handleWhisper(session, cmd.targetDisplayName, cmd.message);
-    break;
-
-  case "emote":
-    broadcastRegion(regionId, { type: "avatar:emote", emoteName: cmd.emoteName, ... });
-    checkEmoteCombo(regionId, session, cmd.emoteName);
-    break;
-
-  case "combat:attack":
-    const result = attackEnemy(session, cmd.targetId, cmd.attackStyle);
-    broadcastRegion(regionId, { type: "combat:damage", ... });
-    if (result.killed) { /* loot, XP, achievements */ }
-    break;
-
-  case "voxel:place_block":
-    const perm = getVoxelPermission(regionId, session.accountId, cmd.x, cmd.z);
-    if (!perm.allowed) { socket.send(error); return; }
-    setBlock(regionId, cmd.x, cmd.y, cmd.z, cmd.blockTypeId);
-    broadcastRegion(regionId, { type: "voxel:block_placed", ... });
-    onBlockPlaced(session.accountId);  // Achievement tracking
-    break;
-
-  // ... radio:tune, radio:skip, sit, stand, typing, group_chat, voxel:break_block
+    // Parcels
+    public CompletableFuture&lt;BuildPermission&gt; checkBuildPermission(
+        String regionId, String accountId, int x, int z);
 }</code></pre>
 
-<h3 id="ws-events">Event Broadcasting</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// src/world/region.ts
-const peers = new Map&lt;string, Map&lt;string, WebSocket&gt;&gt;();  // regionId → (accountId → ws)
-let regionSequences = new Map&lt;string, number&gt;();
+<h3 id="plugin-messaging">Plugin Messaging Channel</h3>
+<p>The Paper plugin and Fabric mod communicate through the <code>vibelife:main</code> plugin messaging channel. This is used for:</p>
+<ul>
+<li><strong>Token handoff:</strong> After mc-login, the plugin sends the session token to the Fabric mod so it can make authenticated REST calls.</li>
+<li><strong>Notifications:</strong> The plugin can push real-time notifications (achievement unlocked, currency received, friend request) to the mod for UI display.</li>
+<li><strong>Sidecar URL:</strong> The plugin sends the configured sidecar base URL so the mod knows where to make REST calls.</li>
+</ul>
+<pre><code><span class="lang-badge">Java</span>
+// PluginMessageHandler.java (Paper side)
+public class PluginMessageHandler implements PluginMessageListener {
+    public static final String CHANNEL = "vibelife:main";
 
-export function broadcastRegion(regionId: string, event: RegionEvent): void {
-  const regionPeers = peers.get(regionId);
-  if (!regionPeers) return;
-  event.sequence = nextRegionSequence(regionId);
-  const payload = JSON.stringify(event);
-  for (const ws of regionPeers.values()) {
-    if (ws.readyState === WebSocket.OPEN) ws.send(payload);
-  }
-}
+    public void sendToken(Player player, String token, String sidecarUrl) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("TOKEN");
+        out.writeUTF(token);
+        out.writeUTF(sidecarUrl);
+        player.sendPluginMessage(plugin, CHANNEL, out.toByteArray());
+    }
 
-export function nextRegionSequence(regionId: string): number {
-  const seq = (regionSequences.get(regionId) ?? 0) + 1;
-  regionSequences.set(regionId, seq);
-  return seq;
+    public void sendNotification(Player player, String type, String json) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("NOTIFY");
+        out.writeUTF(type);
+        out.writeUTF(json);
+        player.sendPluginMessage(plugin, CHANNEL, out.toByteArray());
+    }
 }</code></pre>
+</section>
 
-<h3 id="ws-sequence">Sequence Tracking</h3>
-<p>Every region event includes a monotonically increasing <code>sequence</code> number. Clients pass <code>lastSequence</code> when connecting to detect missed events. The snapshot includes the current sequence so the client knows where it stands.</p>
+<!-- ================================================================ -->
+<section id="fabric-mod">
+<h2>Fabric Mod Architecture</h2>
+<p><strong>Directory:</strong> <code>fabric-mod/</code> &mdash; a Fabric client mod (Java 21, Fabric Loom) that provides UI overlay screens for VibeLife features inside the Minecraft client.</p>
+
+<h3 id="mod-screens">UI Screens</h3>
+<p>The mod renders overlay screens using Minecraft's GUI system. Each screen fetches data from the sidecar via REST using the session token received from the plugin messaging channel.</p>
+<table>
+<tr><th>Screen</th><th>Description</th><th>Sidecar Endpoints Used</th></tr>
+<tr><td><code>EconomyScreen</code></td><td>Balance display, send currency, transaction history</td><td><code>/api/currency/*</code></td></tr>
+<tr><td><code>MarketplaceScreen</code></td><td>Browse/buy/sell listings, auction bidding, price history</td><td><code>/api/marketplace/*</code></td></tr>
+<tr><td><code>SocialScreen</code></td><td>Friends list, friend requests, groups, offline messages</td><td><code>/api/friends/*</code>, <code>/api/groups/*</code>, <code>/api/messages/*</code></td></tr>
+<tr><td><code>AchievementScreen</code></td><td>Achievement progress, titles, daily/weekly challenges</td><td><code>/api/achievements/*</code>, <code>/api/progress/*</code></td></tr>
+<tr><td><code>EventScreen</code></td><td>Upcoming events, RSVP, leaderboards</td><td><code>/api/events/*</code></td></tr>
+<tr><td><code>ProfileScreen</code></td><td>Player profile, bio, presence status</td><td><code>/api/avatar/profile</code>, <code>/api/presence/*</code></td></tr>
+<tr><td><code>ParcelScreen</code></td><td>Parcel management, collaborator settings</td><td><code>/api/parcels/*</code></td></tr>
+</table>
+
+<pre><code><span class="lang-badge">Java</span>
+// VibeLifeMod.java -- Fabric mod entry point
+public class VibeLifeMod implements ClientModInitializer {
+    private String sessionToken;
+    private String sidecarUrl;
+    private SidecarApi api;
+
+    @Override
+    public void onInitializeClient() {
+        // Register plugin messaging channel receiver
+        ClientPlayNetworking.registerGlobalReceiver(
+            new Identifier("vibelife", "main"),
+            (client, handler, buf, responseSender) -&gt; {
+                String msgType = buf.readString();
+                if ("TOKEN".equals(msgType)) {
+                    sessionToken = buf.readString();
+                    sidecarUrl = buf.readString();
+                    api = new SidecarApi(sidecarUrl, sessionToken);
+                }
+            }
+        );
+
+        // Register keybinds for opening screens
+        KeyBinding economyKey = new KeyBinding("key.vibelife.economy",
+            GLFW.GLFW_KEY_U, "VibeLife");
+        KeyBinding socialKey = new KeyBinding("key.vibelife.social",
+            GLFW.GLFW_KEY_O, "VibeLife");
+        // ... more keybinds
+    }
+}</code></pre>
 </section>
 
 <!-- ================================================================ -->
@@ -1052,6 +886,7 @@ export type PersistenceLayer = {
   // Accounts
   createAccount(account: Account): Promise&lt;void&gt;;
   getAccount(accountId: string): Promise&lt;Account | null&gt;;
+  getAccountByMcUuid(uuid: string): Promise&lt;Account | null&gt;;
   getAccountByDisplayName(name: string): Promise&lt;Account | null&gt;;
 
   // Avatar positions (per region)
@@ -1115,9 +950,9 @@ const balances = new Map&lt;string, number&gt;();         // default: 1000
 <pre><code><span class="lang-badge">TypeScript</span>
 export function createPersistence(mode: "memory" | "postgres"): PersistenceLayer {
   if (mode === "postgres") {
-    return createPostgresPersistence();  // Real DB (stubs for now)
+    return createPostgresPersistence();  // PostgreSQL (production)
   }
-  return createMemoryPersistence();       // In-memory Maps (default)
+  return createMemoryPersistence();       // In-memory Maps (dev)
 }</code></pre>
 
 <h3 id="adding-persistence">Adding New Entities</h3>
@@ -1130,153 +965,48 @@ export function createPersistence(mode: "memory" | "postgres"): PersistenceLayer
 </section>
 
 <!-- ================================================================ -->
-<section id="client">
-<h2>Godot Client Architecture</h2>
-
-<h3 id="client-arch">Overview</h3>
-<p>The client is a Godot 4.6 project written in GDScript. All modules are initialized in <code>main.gd</code> and communicate through direct references and Godot signals.</p>
-
-<h3 id="client-main">main.gd Entry Point</h3>
-<pre><code><span class="lang-badge">GDScript</span>
-# Module initialization order in _ready():
-1. CameraController     # Third-person orbital camera
-2. AvatarManager        # Remote player rendering
-3. ObjectManager        # 3D object CRUD
-4. ParcelManager        # Land visualization
-5. BuildController      # Build mode gizmos
-6. RadioController      # Music stations
-7. ChatController       # Chat input/output
-8. EmotePanel           # Emote UI
-9. VoicePanel           # Voice controls
-10. SocialManager       # Friends, presence
-11. GuildManager        # Group/guild UI
-12. EventManager        # Events
-13. AchievementManager  # Achievements
-14. NpcManager          # NPC interaction
-15. VoxelManager        # Chunk loading/rendering
-16. EnemyRenderer       # Enemy mesh generation
-17. CombatHUD           # HP/MP/XP bars
-18. DayNightCycle       # Lighting
-19. SkyManager          # Procedural sky
-20. WeatherSystem       # Fog/weather
-21. BiomeManager        # Region biomes
-22. PostProcessing      # SSAO, bloom
-23. AmbientParticles    # Floating particles
-24. SpatialAudio        # 3D audio
-25. MaterialLibrary     # PBR materials</code></pre>
-
-<h3 id="client-networking">Networking</h3>
-<pre><code><span class="lang-badge">GDScript</span>
-# HTTP requests — uses HTTPRequest node
-func _http_request(url: String, method: int, body: Dictionary, callback: Callable):
-    var http = HTTPRequest.new()
-    add_child(http)
-    http.request(backend_url + url, headers, method, JSON.stringify(body))
-
-# WebSocket connection
-var ws = WebSocketPeer.new()
-ws.connect_to_url(ws_url)  # /ws/regions/{id}?token={token}&lastSequence={seq}
-
-# Message handling in _process():
-while ws.get_available_packet_count() > 0:
-    var msg = JSON.parse_string(ws.get_packet().get_string_from_utf8())
-    match msg.type:
-        "snapshot": _handle_snapshot(msg)
-        "avatar:joined": avatar_manager.add_avatar(msg.avatar)
-        "avatar:moved": avatar_manager.move_avatar(msg.avatarId, msg.x, msg.y, msg.z)
-        "avatar:left": avatar_manager.remove_avatar(msg.avatarId)
-        "chat": chat_controller.add_message(msg)
-        "object:created": object_manager.add_object(msg.object)
-        "combat:damage": combat_hud.show_damage(msg)
-        "enemy:moved": enemy_renderer.update_enemies(msg.enemies)
-        "voxel:block_placed": voxel_manager.on_block_placed(msg)
-        # ... 25+ event handlers</code></pre>
-
-<h3 id="client-modules">Module Index</h3>
-<table>
-<tr><th>Category</th><th>Module</th><th>File</th></tr>
-<tr><td rowspan="7">World</td><td>VoxelManager</td><td><code>scripts/world/voxel_manager.gd</code></td></tr>
-<tr><td>VoxelChunkRenderer</td><td><code>scripts/world/voxel_chunk_renderer.gd</code></td></tr>
-<tr><td>EnemyRenderer</td><td><code>scripts/world/enemy_renderer.gd</code></td></tr>
-<tr><td>AvatarManager</td><td><code>scripts/world/avatar_manager.gd</code></td></tr>
-<tr><td>ObjectManager</td><td><code>scripts/world/object_manager.gd</code></td></tr>
-<tr><td>ParcelManager</td><td><code>scripts/world/parcel_manager.gd</code></td></tr>
-<tr><td>BuildController</td><td><code>scripts/world/build_controller.gd</code></td></tr>
-<tr><td rowspan="5">Environment</td><td>CameraController</td><td><code>scripts/world/camera_controller.gd</code></td></tr>
-<tr><td>DayNightCycle</td><td><code>scripts/world/day_night_cycle.gd</code></td></tr>
-<tr><td>SkyManager</td><td><code>scripts/world/sky_manager.gd</code></td></tr>
-<tr><td>WeatherSystem</td><td><code>scripts/world/weather_system.gd</code></td></tr>
-<tr><td>BiomeManager</td><td><code>scripts/world/biome_manager.gd</code></td></tr>
-<tr><td rowspan="10">UI</td><td>ChatController</td><td><code>scripts/ui/chat_controller.gd</code></td></tr>
-<tr><td>CombatHUD</td><td><code>scripts/ui/combat_hud.gd</code></td></tr>
-<tr><td>EmotePanel</td><td><code>scripts/ui/emote_panel.gd</code></td></tr>
-<tr><td>VoicePanel</td><td><code>scripts/ui/voice_panel.gd</code></td></tr>
-<tr><td>SocialManager</td><td><code>scripts/ui/social_manager.gd</code></td></tr>
-<tr><td>GuildManager</td><td><code>scripts/ui/guild_manager.gd</code></td></tr>
-<tr><td>EventManager</td><td><code>scripts/ui/event_manager.gd</code></td></tr>
-<tr><td>AchievementManager</td><td><code>scripts/ui/achievement_manager.gd</code></td></tr>
-<tr><td>NpcManager</td><td><code>scripts/ui/npc_manager.gd</code></td></tr>
-<tr><td>RadioController</td><td><code>scripts/ui/radio_controller.gd</code></td></tr>
-</table>
-
-<h3 id="scene-tree">Scene Tree (<code>main.tscn</code>)</h3>
-<pre><code><span class="lang-badge">Godot</span>
-Main (Node3D) ← main.gd
-├── WorldEnvironment         # Ambient lighting, fog, tonemap
-├── Sun (DirectionalLight3D) # Day/night cycle light
-├── CameraRig (Node3D)       # Orbital camera parent
-│   └── Camera3D
-├── VoxelsRoot (Node3D)      # Voxel chunk meshes
-├── EnemiesRoot (Node3D)     # Enemy entity nodes
-├── StaticWorld (Node3D)     # Pre-placed scene objects
-├── DynamicWorld (Node3D)    # Player-placed objects
-├── Avatars (Node3D)         # Remote avatar meshes
-├── Gizmos (Node3D)          # Build mode selection visuals
-├── Parcels (Node3D)         # Parcel boundary visualizations
-└── CanvasLayer
-    └── UI (Control)         # All 2D UI panels
-        ├── TopBar
-        ├── LeftSidebar      # Settings, auth, config
-        ├── BuildPanel       # Build tools
-        ├── RightDock        # Inventory, chat
-        └── Overlays         # Death screen, notifications</code></pre>
-</section>
-
-<!-- ================================================================ -->
 <section id="guides">
 <h2>Developer Guides</h2>
 
 <h3 id="guide-setup">Development Environment Setup</h3>
 <pre><code><span class="lang-badge">Shell</span>
 # 1. Clone the repo
-git clone &lt;repo-url&gt; vibelife && cd vibelife
+git clone &lt;repo-url&gt; vibelife &amp;&amp; cd vibelife
 
-# 2. Install server dependencies
+# 2. Install sidecar dependencies and start
 npm install
-
-# 3. Start the server (TypeScript with ESM)
 npm run dev    # or: npx tsx src/server.ts
+# Sidecar runs on http://localhost:3000
 
-# 4. Open the Godot project
-# Launch Godot 4.6 → Import → select native-client/godot/project.godot
+# 3. Build the Paper plugin
+cd paper-plugin
+./gradlew shadowJar
+# Output: build/libs/vibelife-plugin-*.jar
+# Copy to paper-server/plugins/
 
-# 5. Configure client
-# In the Godot editor sidebar, set Backend URL to http://127.0.0.1:3000
+# 4. Build the Fabric mod
+cd fabric-mod
+./gradlew build
+# Output: build/libs/vibelife-mod-*.jar
+# Copy to ~/.minecraft/mods/
 
-# 6. Run
-# Press F5 in Godot to launch the client</code></pre>
+# 5. Start the test Paper server
+cd paper-server
+java -jar paper-*.jar
+# Server uses plugins/vibelife-plugin-*.jar
+
+# 6. Launch Minecraft with Fabric + the mod installed
+# Connect to localhost:25565</code></pre>
 
 <h4>Environment Variables</h4>
 <table>
 <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>PORT</code></td><td>3000</td><td>Server listen port</td></tr>
-<tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Server bind address</td></tr>
+<tr><td><code>PORT</code></td><td>3000</td><td>Sidecar listen port</td></tr>
+<tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Sidecar bind address</td></tr>
 <tr><td><code>CORS_ORIGINS</code></td><td>localhost:3000</td><td>Comma-separated allowed origins</td></tr>
 <tr><td><code>PERSISTENCE_MODE</code></td><td>memory</td><td><code>memory</code> or <code>postgres</code></td></tr>
-<tr><td><code>ADMIN_BOOTSTRAP_TOKEN</code></td><td>—</td><td>Token for creating admin accounts</td></tr>
-<tr><td><code>TURN_SERVER</code></td><td>—</td><td>TURN server URL for voice</td></tr>
-<tr><td><code>TURN_USERNAME</code></td><td>—</td><td>TURN credentials</td></tr>
-<tr><td><code>TURN_PASSWORD</code></td><td>—</td><td>TURN credentials</td></tr>
+<tr><td><code>ADMIN_BOOTSTRAP_TOKEN</code></td><td>&mdash;</td><td>Token for creating admin accounts</td></tr>
+<tr><td><code>SIDECAR_URL</code></td><td>http://localhost:3000</td><td>URL the Paper plugin uses to reach the sidecar</td></tr>
 </table>
 
 <h3 id="guide-new-service">Adding a New Service</h3>
@@ -1284,8 +1014,7 @@ npm run dev    # or: npx tsx src/server.ts
 <h4>Step-by-Step: Creating <code>fishing-service.ts</code></h4>
 <pre><code><span class="lang-badge">TypeScript</span>
 // 1. Create src/world/fishing-service.ts
-import { sessions, avatarsByRegion, persistence } from "./_shared-state.js";
-import { broadcastRegion, nextRegionSequence } from "./region.js";
+import { sessions, persistence } from "./_shared-state.js";
 
 const fishingSpots = new Map&lt;string, FishingSpot[]&gt;();
 
@@ -1293,22 +1022,13 @@ export function castLine(token: string, regionId: string, x: number, z: number) 
   const session = sessions.get(token);
   if (!session) return { error: "unauthorized" };
   // ... business logic
-  broadcastRegion(regionId, {
-    type: "fishing:cast",
-    sequence: nextRegionSequence(regionId),
-    avatarId: session.avatarId, x, z
-  });
-  return { success: true };
+  return { success: true, fish: "Golden Trout" };
 }
 
 // 2. Add to src/world/store.ts
 export * from "./fishing-service.js";
 
 // 3. Add types to src/contracts.ts
-// Add to RegionEvent union:
-| { type: "fishing:cast"; sequence: number; avatarId: string; x: number; z: number }
-// Add to RegionCommand union:
-| { type: "fishing:cast"; x: number; z: number }
 
 // 4. Create src/routes/fishing.ts (see guide below)
 
@@ -1327,13 +1047,13 @@ import { castLine, getFishingSpots } from "../world/store.js";
 export function registerFishingRoutes(app: FastifyInstance) {
 
   // GET /api/fishing/spots?regionId=X
-  app.get("/api/fishing/spots", async (request, reply) => {
+  app.get("/api/fishing/spots", async (request, reply) =&gt; {
     const { regionId } = request.query as { regionId: string };
     return getFishingSpots(regionId);
   });
 
   // POST /api/fishing/cast
-  app.post("/api/fishing/cast", async (request, reply) => {
+  app.post("/api/fishing/cast", async (request, reply) =&gt; {
     const { token, x, z } = request.body as { token: string; x: number; z: number };
     const session = resolveToken(token);
     if (!session) return reply.status(401).send({ error: "Unauthorized" });
@@ -1343,78 +1063,74 @@ export function registerFishingRoutes(app: FastifyInstance) {
   });
 }</code></pre>
 
-<h3 id="guide-new-ws-cmd">Adding a WebSocket Command</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// 1. Add to RegionCommand union in contracts.ts:
-| { type: "fishing:cast"; x: number; z: number }
-
-// 2. Add case in server.ts handleCommand switch:
-case "fishing:cast":
-  const fishResult = castLine(session.token, regionId, cmd.x, cmd.z);
-  if (fishResult.error) {
-    socket.send(JSON.stringify({ type: "error", message: fishResult.error }));
-  }
-  // broadcastRegion is called inside castLine()
-  break;
-
-// 3. Update isRegionCommand validator if needed</code></pre>
-
 <h3 id="guide-new-event">Adding a Region Event</h3>
+<p>Region events are now delivered through the Paper plugin to the Fabric mod via the <code>vibelife:main</code> plugin messaging channel, or polled via REST.</p>
 <pre><code><span class="lang-badge">TypeScript</span>
-// 1. Add to RegionEvent union in contracts.ts:
-| { type: "fishing:catch"; sequence: number; avatarId: string; fishName: string; weight: number }
+// 1. Add the endpoint in the sidecar
+app.get("/api/fishing/recent-catches", async (request, reply) =&gt; {
+  const { regionId } = request.query as { regionId: string };
+  return getRecentCatches(regionId);
+});
 
-// 2. Broadcast from service:
-broadcastRegion(regionId, {
-  type: "fishing:catch",
-  sequence: nextRegionSequence(regionId),
-  avatarId: session.avatarId,
-  fishName: "Golden Trout",
-  weight: 3.5
-});</code></pre>
+// 2. The Paper plugin can push notifications:
+// pluginMessageHandler.sendNotification(player, "fishing:catch", jsonData);
 
-<h3 id="guide-new-client-mod">Adding a Client Module</h3>
-<pre><code><span class="lang-badge">GDScript</span>
-# 1. Create native-client/godot/scripts/ui/fishing_manager.gd
-extends Node
+// 3. The Fabric mod shows it in the UI or as a toast notification.</code></pre>
 
-var main  # Reference to main.gd
+<h3 id="guide-build-plugin">Building the Paper Plugin</h3>
+<div class="card">
+<h4>Paper Plugin Build &amp; Deploy</h4>
+<pre><code><span class="lang-badge">Shell</span>
+cd paper-plugin
 
-func initialize(main_ref):
-    main = main_ref
+# Build the fat JAR (includes all dependencies)
+./gradlew shadowJar
 
-func on_fishing_cast(data: Dictionary):
-    # Handle incoming fishing:cast event
-    print("Player cast at ", data.x, ", ", data.z)
+# Output location
+ls build/libs/vibelife-plugin-*-all.jar
 
-func on_fishing_catch(data: Dictionary):
-    # Show catch notification
-    print(data.avatarId, " caught ", data.fishName)
+# Deploy to Paper server
+cp build/libs/vibelife-plugin-*-all.jar ../paper-server/plugins/
 
-# 2. In main.gd _ready(), instantiate:
-var fishing_manager = preload("res://scripts/ui/fishing_manager.gd").new()
-fishing_manager.initialize(self)
+# Restart or reload the Paper server
+# /reload confirm  (in MC console)</code></pre>
+<p>The plugin's <code>build.gradle.kts</code> uses the <code>com.github.johnrengelman.shadow</code> plugin to produce a fat JAR. Java 21 is required. The plugin targets Paper API 1.21+.</p>
+</div>
 
-# 3. In main.gd WebSocket handler, add cases:
-"fishing:cast": fishing_manager.on_fishing_cast(msg)
-"fishing:catch": fishing_manager.on_fishing_catch(msg)
+<h3 id="guide-build-mod">Building the Fabric Mod</h3>
+<div class="card">
+<h4>Fabric Mod Build &amp; Install</h4>
+<pre><code><span class="lang-badge">Shell</span>
+cd fabric-mod
 
-# 4. To send commands from client:
-var cmd = {"type": "fishing:cast", "x": player_pos.x, "z": player_pos.z}
-ws.send_text(JSON.stringify(cmd))</code></pre>
+# Build the mod JAR
+./gradlew build
+
+# Output location
+ls build/libs/vibelife-mod-*.jar
+
+# Install to Minecraft
+cp build/libs/vibelife-mod-*.jar ~/.minecraft/mods/
+
+# Requires:
+# - Fabric Loader (latest)
+# - Fabric API mod
+# - Java 21</code></pre>
+<p>The mod's <code>build.gradle</code> uses Fabric Loom. It depends on Fabric API for networking (plugin messaging) and rendering (GUI screens).</p>
+</div>
 </section>
 
 <!-- ================================================================ -->
 <section id="api-ref">
 <h2>HTTP API Reference</h2>
+<p>All endpoints are served by the sidecar (Fastify). Both the Paper plugin and Fabric mod call these endpoints.</p>
 
 <h3 id="api-auth">Authentication</h3>
 <table>
 <tr><th>Method</th><th>Endpoint</th><th>Body</th><th>Response</th></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/auth/guest</code></td><td><code>{displayName?, regionId}</code></td><td>Session + avatar + inventory</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/auth/register</code></td><td><code>{displayName, password, regionId}</code></td><td>Session + avatar + inventory</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/auth/login</code></td><td><code>{displayName, password, regionId}</code></td><td>Session + avatar + inventory</td></tr>
+<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/auth/mc-login</code></td><td><code>{mcUuid, username}</code></td><td>Session token + account + avatar</td></tr>
 </table>
+<div class="note"><strong>Note:</strong> The <code>mc-login</code> endpoint is called by the Paper plugin when a player joins. It creates the account if it does not exist, or resumes the existing session. No password is needed &mdash; the Minecraft server has already authenticated the player.</div>
 
 <h3 id="api-regions">Regions &amp; Objects</h3>
 <table>
@@ -1425,7 +1141,6 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 <tr><td><span class="tag tag-http">PATCH</span></td><td><code>/api/regions/:id/objects/:objId</code></td><td>Token</td><td>Update object transform</td></tr>
 <tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/regions/:id/objects/:objId</code></td><td>Token</td><td>Delete object</td></tr>
 <tr><td><span class="tag tag-http">GET</span></td><td><code>/api/regions/:id/chat-history</code></td><td>No</td><td>Last 50 chat messages</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/scenes/:regionId.json</code></td><td>No</td><td>Static scene assets for region</td></tr>
 </table>
 
 <h3 id="api-parcels">Parcels</h3>
@@ -1435,6 +1150,7 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/parcels/release</code></td><td><code>{token, parcelId}</code></td><td>Release owned parcel</td></tr>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/parcels/collaborator</code></td><td><code>{token, parcelId, accountId}</code></td><td>Add collaborator</td></tr>
 <tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/parcels/collaborator</code></td><td><code>{token, parcelId, accountId}</code></td><td>Remove collaborator</td></tr>
+<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/parcels/permission?regionId=&amp;accountId=&amp;x=&amp;z=</code></td><td>&mdash;</td><td>Check build permission at coordinates</td></tr>
 </table>
 
 <h3 id="api-economy">Economy &amp; Marketplace</h3>
@@ -1442,9 +1158,9 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
 <tr><td><span class="tag tag-http">GET</span></td><td><code>/api/currency/balance?token=</code></td><td>Get balance</td></tr>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/currency/send</code></td><td>Transfer currency</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/currency/transactions?token=&limit=</code></td><td>Transaction history</td></tr>
+<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/currency/transactions?token=&amp;limit=</code></td><td>Transaction history</td></tr>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/list</code></td><td>Create listing</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/marketplace?kind=&minPrice=&maxPrice=&sort=</code></td><td>Browse listings</td></tr>
+<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/marketplace?kind=&amp;minPrice=&amp;maxPrice=&amp;sort=</code></td><td>Browse listings</td></tr>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/:id/buy</code></td><td>Buy fixed-price item</td></tr>
 <tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/:id/bid</code></td><td>Place auction bid</td></tr>
 <tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/marketplace/:id</code></td><td>Cancel listing</td></tr>
@@ -1473,24 +1189,13 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 <tr><td><span class="tag tag-http">GET</span></td><td><code>/api/presence/friends?token=</code></td><td>Friends presence</td></tr>
 </table>
 
-<h3 id="api-combat">Combat</h3>
+<h3 id="api-combat">Combat Stats</h3>
 <table>
 <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/stats?token=</code></td><td>Player combat stats</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/enemies?regionId=</code></td><td>List enemies in region</td></tr>
+<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/stats?token=</code></td><td>Player combat stats (kills, deaths, level, XP)</td></tr>
+<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/combat/report-kill</code></td><td>Report an entity kill (called by Paper plugin)</td></tr>
+<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/combat/report-death</code></td><td>Report a player death (called by Paper plugin)</td></tr>
 <tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/leaderboard?limit=</code></td><td>Top players by level/kills</td></tr>
-</table>
-
-<h3 id="api-voxels">Voxels</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/regions/:id/chunks?token=&cx=&cz=&radius=</code></td><td>Load chunk data (palette + RLE)</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/voxel-shop/custom-block</code></td><td>Register custom block type</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/voxel-shop/custom-blocks</code></td><td>List custom blocks</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/voxel-shop/blueprint</code></td><td>Save voxel blueprint</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/voxel-shop/blueprints</code></td><td>List blueprints</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/voxel-shop/blueprints/:id/place</code></td><td>Place blueprint in region</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/voxel-shop/blueprints/:id/sell</code></td><td>List blueprint for sale</td></tr>
 </table>
 
 <h3 id="api-misc">Everything Else</h3>
@@ -1508,7 +1213,6 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 <tr><td>Scripts</td><td><code>/api/scripts</code></td><td>POST create, PATCH update, DELETE, POST /trigger-zones</td></tr>
 <tr><td>NPCs</td><td><code>/api/npcs</code></td><td>GET list, POST /interact, GET/POST /quests, POST /quests/:id/complete</td></tr>
 <tr><td>Mobile</td><td><code>/api/mobile</code></td><td>POST /session, GET /dashboard, /feed, /world, /friends, /inventory</td></tr>
-<tr><td>VR</td><td><code>/api/vr</code></td><td>POST /session, /comfort, /hands, /interaction, /calibration</td></tr>
 <tr><td>Federation</td><td><code>/api/federation</code></td><td>GET /servers, POST /register, /teleport, GET /marketplace/search</td></tr>
 <tr><td>Creator</td><td><code>/api/creator</code></td><td>POST /submit, GET /analytics, POST /payout, /api-keys, /webhooks</td></tr>
 <tr><td>Admin</td><td><code>/api/admin</code></td><td>GET /audit-logs, POST /ban, DELETE /ban, POST /parcels/assign, /objects/delete</td></tr>
@@ -1519,101 +1223,38 @@ ws.send_text(JSON.stringify(cmd))</code></pre>
 </section>
 
 <!-- ================================================================ -->
-<section id="ws-ref">
-<h2>WebSocket Reference</h2>
-
-<h3 id="ws-commands-ref">Commands (Client &rarr; Server)</h3>
-<table>
-<tr><th>Type</th><th>Fields</th><th>Description</th></tr>
-<tr><td><code>move</code></td><td><code>x, y?, z</code></td><td>Move avatar</td></tr>
-<tr><td><code>chat</code></td><td><code>message</code></td><td>Region chat (180 char max)</td></tr>
-<tr><td><code>whisper</code></td><td><code>targetDisplayName, message</code></td><td>Private message</td></tr>
-<tr><td><code>group_chat</code></td><td><code>groupId, message</code></td><td>Guild chat</td></tr>
-<tr><td><code>emote</code></td><td><code>emoteName</code></td><td>Play emote</td></tr>
-<tr><td><code>sit</code></td><td><code>objectId</code></td><td>Sit on furniture</td></tr>
-<tr><td><code>stand</code></td><td>—</td><td>Stand up</td></tr>
-<tr><td><code>typing</code></td><td><code>typing: boolean</code></td><td>Typing indicator</td></tr>
-<tr><td><code>combat:attack</code></td><td><code>targetId, attackStyle</code></td><td>Attack enemy (melee/magic)</td></tr>
-<tr><td><code>voxel:place_block</code></td><td><code>x, y, z, blockTypeId</code></td><td>Place voxel block</td></tr>
-<tr><td><code>voxel:break_block</code></td><td><code>x, y, z</code></td><td>Break voxel block</td></tr>
-<tr><td><code>radio:tune</code></td><td><code>stationId</code></td><td>Switch radio station</td></tr>
-<tr><td><code>radio:skip</code></td><td>—</td><td>Skip track</td></tr>
-</table>
-
-<h3 id="ws-events-ref">Events (Server &rarr; Client)</h3>
-<table>
-<tr><th>Type</th><th>Key Fields</th><th>Trigger</th></tr>
-<tr><td><code>snapshot</code></td><td>avatars[], objects[], parcels[], enemies[], combatStats, chatHistory[]</td><td>On WS connect</td></tr>
-<tr><td><code>avatar:joined</code></td><td>avatar: AvatarContract</td><td>Player enters region</td></tr>
-<tr><td><code>avatar:moved</code></td><td>avatarId, x, y, z</td><td>Player moves</td></tr>
-<tr><td><code>avatar:updated</code></td><td>avatarId, appearance</td><td>Appearance change</td></tr>
-<tr><td><code>avatar:left</code></td><td>avatarId</td><td>Player disconnects</td></tr>
-<tr><td><code>avatar:emote</code></td><td>avatarId, emoteName, duration_ms</td><td>Emote performed</td></tr>
-<tr><td><code>avatar:sit</code></td><td>avatarId, objectId</td><td>Sat on object</td></tr>
-<tr><td><code>avatar:stand</code></td><td>avatarId</td><td>Stood up</td></tr>
-<tr><td><code>emote:combo</code></td><td>comboName, avatarIds[], position</td><td>Two players combo</td></tr>
-<tr><td><code>chat</code></td><td>avatarId, displayName, message, channel</td><td>Chat message sent</td></tr>
-<tr><td><code>whisper</code></td><td>fromAvatarId, toAvatarId, message</td><td>Private message</td></tr>
-<tr><td><code>group:chat</code></td><td>groupId, avatarId, displayName, message</td><td>Guild message</td></tr>
-<tr><td><code>object:created</code></td><td>object: RegionObjectContract</td><td>Object placed</td></tr>
-<tr><td><code>object:updated</code></td><td>object: RegionObjectContract</td><td>Object moved/scaled</td></tr>
-<tr><td><code>object:deleted</code></td><td>objectId</td><td>Object removed</td></tr>
-<tr><td><code>parcel:updated</code></td><td>parcel: Parcel</td><td>Ownership change</td></tr>
-<tr><td><code>combat:damage</code></td><td>attackerId, targetId, damage, critical, targetHp, attackStyle</td><td>Attack lands</td></tr>
-<tr><td><code>combat:death</code></td><td>accountId</td><td>Player dies</td></tr>
-<tr><td><code>combat:respawn</code></td><td>accountId, x, y, z</td><td>Player respawns</td></tr>
-<tr><td><code>combat:loot</code></td><td>accountId, enemyId, currency, items[]</td><td>Enemy defeated</td></tr>
-<tr><td><code>combat:level_up</code></td><td>accountId, newLevel</td><td>Player levels up</td></tr>
-<tr><td><code>enemy:spawned</code></td><td>enemy: {id, variant, level, hp, maxHp, x, y, z}</td><td>Enemy spawns</td></tr>
-<tr><td><code>enemy:moved</code></td><td>enemies: [{id, x, y, z, state, hp}]</td><td>AI tick (1s batch)</td></tr>
-<tr><td><code>enemy:despawned</code></td><td>enemyId</td><td>Enemy defeated</td></tr>
-<tr><td><code>voxel:block_placed</code></td><td>x, y, z, blockTypeId, accountId</td><td>Block placed</td></tr>
-<tr><td><code>voxel:block_broken</code></td><td>x, y, z, accountId</td><td>Block broken</td></tr>
-<tr><td><code>radio:changed</code></td><td>stationId, name, track, currentTrack</td><td>Station/track change</td></tr>
-<tr><td><code>pet:summoned</code></td><td>accountId, pet data</td><td>Pet appears</td></tr>
-<tr><td><code>pet:dismissed</code></td><td>accountId</td><td>Pet dismissed</td></tr>
-<tr><td><code>voice:participant_joined</code></td><td>participant data</td><td>Voice join</td></tr>
-<tr><td><code>voice:participant_left</code></td><td>accountId</td><td>Voice leave</td></tr>
-<tr><td><code>voice:speaking_changed</code></td><td>accountId, speaking</td><td>Voice activity</td></tr>
-<tr><td><code>home:doorbell</code></td><td>visitorId</td><td>Visitor arrives</td></tr>
-<tr><td><code>event:started</code></td><td>event data</td><td>Event begins</td></tr>
-<tr><td><code>event:ended</code></td><td>eventId</td><td>Event ends</td></tr>
-</table>
-</section>
-
-<!-- ================================================================ -->
 <section>
 <h2>Architecture Patterns Summary</h2>
 <div class="grid">
 <div class="card">
-<h4>Single-Process In-Memory</h4>
-<p>All state lives in Maps. Zero-latency reads, single server process. Scale-out requires sharding by region.</p>
+<h4>Sidecar + Plugin Model</h4>
+<p>The sidecar (Fastify/TS) owns all business logic and state. The Paper plugin bridges MC events to the sidecar via REST. The Fabric mod provides UI overlays.</p>
 </div>
 <div class="card">
 <h4>Barrel Re-exports</h4>
 <p><code>store.ts</code> re-exports all services. Routes import from <code>store.js</code> or <code>_shared-state.js</code> only.</p>
 </div>
 <div class="card">
-<h4>Region-Scoped Broadcast</h4>
-<p>All WS events are scoped to a region. <code>broadcastRegion(regionId, event)</code> sends to all peers in that region.</p>
+<h4>REST-Only Communication</h4>
+<p>No WebSockets. The Paper plugin and Fabric mod both communicate with the sidecar via HTTP/REST. Plugin messaging channel handles token handoff and notifications between plugin and mod.</p>
 </div>
 <div class="card">
 <h4>Dual Persistence</h4>
-<p>Same interface for memory and postgres. Switch via env var. Memory mode for dev, postgres for production.</p>
+<p>Same interface for memory and PostgreSQL. Switch via env var. Memory mode for dev, PostgreSQL for production.</p>
 </div>
 <div class="card">
 <h4>Permission Layering</h4>
-<p>Build and voxel permissions checked at service level before mutation. Public parcels are always open.</p>
+<p>Build permissions checked at service level before mutation. Public parcels are always open. The Paper plugin calls the sidecar to check permissions before allowing block placement.</p>
 </div>
 <div class="card">
 <h4>Contract-First Types</h4>
-<p>All types defined in <code>contracts.ts</code>. RegionEvent/RegionCommand unions are the protocol spec.</p>
+<p>All types defined in <code>contracts.ts</code>. This is the single source of truth for the API contract between sidecar, plugin, and mod.</p>
 </div>
 </div>
 </section>
 
-<footer style="margin-top:64px;padding:20px 0;border-top:1px solid var(--border);color:var(--text2);font-size:11px;text-align:center">
-VibeLife Developer Manual &bull; Generated March 2026 &bull; Covers Tiers 1&ndash;5 &bull; Fastify + TypeScript + Godot 4.6
+<footer style="margin-top:64px;padding:20px 0;border-top:2px solid var(--forest-pale);color:var(--text2);font-size:11px;text-align:center;font-family:'Sora',sans-serif">
+VibeLife Developer Manual &bull; March 2026 &bull; Minecraft Paper Plugin System &bull; Fastify Sidecar + Paper Plugin + Fabric Mod
 </footer>
 
 </main>

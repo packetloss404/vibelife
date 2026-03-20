@@ -186,7 +186,7 @@ export async function getBuildPermission(session: Session, x: number, z: number)
 }
 
 /**
- * Check build permission using accountId + regionId directly (for Spigot plugin calls).
+ * Check build permission using accountId + regionId directly (for Paper plugin calls).
  * Same logic as getBuildPermission but doesn't require a session.
  */
 export async function checkBuildPermissionByAccount(accountId: string, regionId: string, x: number, z: number): Promise<BuildPermission> {

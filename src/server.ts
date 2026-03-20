@@ -92,7 +92,7 @@ await app.register(fastifyStatic, {
 app.get("/api/health", async () => ({
   ok: true,
   now: new Date().toISOString(),
-  stack: "Fastify sidecar for Spigot + Fabric",
+  stack: "Fastify sidecar for Paper + Fabric",
   persistence: getPersistenceMode()
 }));
 

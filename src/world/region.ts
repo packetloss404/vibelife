@@ -1,5 +1,5 @@
 // ── Region broadcasting stubs ────────────────────────────────────────────────
-// These are no-ops now that Spigot handles real-time broadcasting.
+// These are no-ops now that Paper handles real-time broadcasting.
 // Kept as stubs so deferred services (interactives, NPCs) still compile.
 
 const regionSequences = new Map<string, number>();

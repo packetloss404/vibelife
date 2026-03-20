@@ -80,7 +80,7 @@ export default async function authRoutes(app: FastifyInstance) {
     });
   });
 
-  // ── Minecraft auth (Spigot plugin calls these) ────────────────────────────
+  // ── Minecraft auth (Paper plugin calls these) ────────────────────────────
 
   app.post<{ Body: { mcUuid?: string; mcUsername?: string; regionId?: string } }>("/api/auth/mc-login", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (request, reply) => {
     const mcUuid = (request.body.mcUuid ?? "").trim();

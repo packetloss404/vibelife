@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeLife Deployment Guide — Server Admin Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+--cream:#faf6f0;--paper:#f3ece2;--warm-white:#fefcf8;
+--forest:#1b4332;--forest-light:#2d6a4f;--forest-pale:#d8f3dc;
+--amber:#d4870e;--honey:#f0a830;--amber-pale:#fde6b0;
+--terra:#c05731;--terra-pale:#f4d4c8;
+--navy:#1b2a4a;--navy-light:#2c3e6b;--navy-pale:#d0d8e8;
+--brown:#5c4033;--brown-light:#8b6f47;
+--text:#2c2416;--text2:#6b5d4f;--text3:#9a8b7a;
+--shadow:rgba(44,36,22,.08);--shadow-md:rgba(44,36,22,.12);
+--border:#e0d5c5;--border-light:#ebe3d6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+background:
+  repeating-linear-gradient(0deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  repeating-linear-gradient(90deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  linear-gradient(180deg,rgba(250,246,240,0) 0%,rgba(240,230,215,.3) 100%);
+}
+a{color:var(--forest);text-decoration:none;transition:.2s}
+a:hover{color:var(--amber)}
+::selection{background:var(--amber-pale);color:var(--brown)}
+h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
+
+/* ===== NAV ===== */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest)}
+nav .logo-sm{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px}
+nav .logo-sm .vibe{color:var(--forest)}
+nav .logo-sm .life{color:var(--amber)}
+nav .logo-sm .cube{display:inline-flex;gap:2px;flex-wrap:wrap;width:20px;margin-right:4px}
+nav .logo-sm .cube span{display:block;width:8px;height:8px}
+nav .logo-sm .cube .c1{background:var(--forest)}
+nav .logo-sm .cube .c2{background:var(--amber)}
+nav .logo-sm .cube .c3{background:var(--terra)}
+nav .logo-sm .cube .c4{background:var(--navy)}
+nav .links{margin-left:auto;display:flex;gap:20px;font-size:13px;font-weight:600;align-items:center}
+nav .links a{color:var(--text2);padding:4px 0;border-bottom:2px solid transparent}
+nav .links a:hover{color:var(--forest);border-bottom-color:var(--forest)}
+.cta-sm{padding:7px 18px;background:var(--forest);color:var(--cream);font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;border:none;box-shadow:3px 3px 0 var(--navy)}
+.cta-sm:hover{color:var(--cream);background:var(--forest-light);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--navy)}
+
+/* ===== HERO ===== */
+.hero{min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 60px;
+background:linear-gradient(180deg,var(--warm-white) 0%,var(--paper) 50%,var(--cream) 100%);position:relative;overflow:hidden}
+.hero .pixel-row{display:flex;gap:4px;justify-content:center;margin-bottom:24px}
+.hero .pixel-row span{display:block;width:10px;height:10px;opacity:.6}
+.hero h1{font-size:clamp(32px,6vw,56px);font-weight:800;color:var(--navy);margin-bottom:12px}
+.hero h1 .accent{color:var(--amber)}
+.hero .subtitle{font-size:clamp(15px,2vw,18px);color:var(--text2);max-width:520px;line-height:1.7}
+
+/* ===== CONTENT LAYOUT ===== */
+.content{max-width:860px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* ===== SECTION ===== */
+.section{padding:60px 0;border-bottom:2px solid var(--border-light)}
+.section:last-of-type{border-bottom:none}
+.section-icon{font-size:36px;margin-bottom:12px;display:block}
+.section h2{font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.section h2 .sq{display:inline-block;width:8px;height:100%;min-height:28px;background:var(--forest);flex-shrink:0}
+.section > p,.section > .intro-text{font-size:15px;color:var(--text2);line-height:1.8;margin-bottom:20px;max-width:720px}
+
+/* ===== INFO CARDS ===== */
+.info-card{background:var(--warm-white);border:2px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.info-card::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
+.info-card::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
+.info-card h3{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:10px}
+.info-card p{font-size:14px;color:var(--text2);line-height:1.8}
+.info-card ul{margin:12px 0 0 20px;font-size:14px;color:var(--text2);line-height:2}
+.info-card ul li::marker{color:var(--amber)}
+
+/* ===== HIGHLIGHT BOX ===== */
+.highlight-box{background:var(--amber-pale);border:2px solid var(--amber);padding:18px 22px;margin:16px 0;font-size:14px;color:var(--brown);line-height:1.7;box-shadow:3px 3px 0 var(--border)}
+.highlight-box strong{color:var(--amber)}
+
+/* ===== REQUIREMENTS GRID ===== */
+.req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:16px}
+.req-card{background:var(--warm-white);border:2px solid var(--border);padding:24px 18px;text-align:center;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.req-card:hover{transform:translateY(-3px);border-color:var(--amber);box-shadow:3px 5px 0 var(--border-light)}
+.req-card .req-icon{font-size:32px;display:block;margin-bottom:10px}
+.req-card .req-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.req-card .req-detail{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* ===== STEP CARDS ===== */
+.step{background:var(--warm-white);border:2px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.step::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
+.step::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
+.step-number{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--navy);color:var(--warm-white);font-family:'Sora',sans-serif;font-weight:800;font-size:16px;margin-bottom:12px;box-shadow:2px 2px 0 var(--border)}
+.step h3{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:10px}
+.step p{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:12px}
+
+/* ===== CODE BLOCKS ===== */
+.code-block{background:var(--navy);color:var(--forest-pale);padding:16px 20px;font-family:'Courier New',monospace;font-size:13px;line-height:1.7;overflow-x:auto;margin:12px 0;border:2px solid var(--navy-light);box-shadow:3px 3px 0 var(--border)}
+.code-block .comment{color:var(--text3)}
+
+/* ===== WARNING BOX ===== */
+.warn-box{background:var(--terra-pale);border:2px solid var(--terra);padding:18px 22px;margin:16px 0;font-size:14px;color:var(--brown);line-height:1.7;box-shadow:3px 3px 0 var(--border)}
+.warn-box strong{color:var(--terra)}
+
+/* ===== CONFIG TABLE ===== */
+.config-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.config-table th{background:var(--forest);color:var(--cream);padding:10px 14px;text-align:left;font-family:'Sora',sans-serif;font-weight:600;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+.config-table td{padding:10px 14px;border-bottom:1px solid var(--border-light);vertical-align:top}
+.config-table tr:nth-child(even){background:var(--warm-white)}
+.config-table tr:hover{background:var(--forest-pale)}
+.config-table code{font-family:'Courier New',monospace;font-size:12px;background:var(--forest-pale);padding:2px 6px;color:var(--forest);border:1px solid rgba(27,67,50,.15)}
+
+/* ===== ARCH DIAGRAM ===== */
+.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:24px 0;padding:24px;background:var(--warm-white);border:2px solid var(--border);box-shadow:3px 3px 0 var(--border-light)}
+.arch-box{padding:16px 24px;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;text-align:center;box-shadow:3px 3px 0 var(--border)}
+.arch-box.sidecar{background:var(--forest-pale);border:2px solid var(--forest);color:var(--forest)}
+.arch-box.plugin{background:var(--amber-pale);border:2px solid var(--amber);color:var(--brown)}
+.arch-box.mod{background:var(--navy-pale);border:2px solid var(--navy);color:var(--navy)}
+.arch-arrow{font-size:24px;color:var(--text3);font-weight:700}
+
+/* ===== CHECKLIST ===== */
+.checklist{list-style:none;margin:16px 0;padding:0}
+.checklist li{padding:10px 14px;font-size:14px;color:var(--text2);line-height:1.6;border-bottom:1px solid var(--border-light);display:flex;align-items:baseline;gap:10px}
+.checklist li:last-child{border-bottom:none}
+.check-box{display:inline-block;width:18px;height:18px;border:2px solid var(--forest);flex-shrink:0;position:relative;top:2px}
+
+/* ===== KEYBIND CARDS (reused for Fabric mod) ===== */
+.keybind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-top:16px}
+.keybind-card{background:var(--warm-white);border:2px solid var(--border);padding:20px;text-align:center;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.keybind-card:hover{border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--border-light)}
+.keybind-key{display:inline-block;font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--warm-white);background:var(--navy);width:44px;height:44px;line-height:44px;text-align:center;margin-bottom:10px;box-shadow:2px 2px 0 var(--border)}
+.keybind-name{font-family:'Sora',sans-serif;font-weight:700;font-size:12px;color:var(--navy)}
+
+/* ===== FOOTER ===== */
+footer{border-top:3px solid var(--forest);padding:32px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:12px;background:var(--navy);margin-top:60px}
+footer div{color:rgba(255,255,255,.5)}
+footer .foot-links{display:flex;gap:20px}
+footer a{color:rgba(255,255,255,.5)}footer a:hover{color:var(--honey)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:700px){
+nav .links{display:none}
+.req-grid{grid-template-columns:1fr 1fr}
+.arch-flow{flex-direction:column}
+.keybind-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+.req-grid{grid-template-columns:1fr}
+.keybind-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- =============== NAV =============== -->
+<nav>
+<a href="index.html" class="logo-sm">
+<span class="cube"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></span>
+<span><span class="vibe">Vibe</span><span class="life">Life</span></span>
+</a>
+<div class="links">
+<a href="index.html">Home</a>
+<a href="plugin.html">Plugin Guide</a>
+<a href="manual/">Game Manual</a>
+<a href="devmanual/">Dev Manual</a>
+<a href="deploy.html" class="cta-sm">Deploy</a>
+</div>
+</nav>
+
+<!-- =============== HERO =============== -->
+<section class="hero">
+<div class="pixel-row">
+<span style="background:var(--forest)"></span>
+<span style="background:var(--amber)"></span>
+<span style="background:var(--terra)"></span>
+<span style="background:var(--navy)"></span>
+<span style="background:var(--honey)"></span>
+<span style="background:var(--forest-light)"></span>
+<span style="background:var(--brown-light)"></span>
+</div>
+<h1>VibeLife <span class="accent">Deployment Guide</span></h1>
+<p class="subtitle">Everything you need to run VibeLife on your Paper server</p>
+</section>
+
+<!-- =============== MAIN CONTENT =============== -->
+<div class="content">
+
+<!-- REQUIREMENTS -->
+<div class="section" id="requirements">
+<span class="section-icon">&#128220;</span>
+<h2><span class="sq"></span>Requirements</h2>
+<p>Before you begin, make sure your server meets these prerequisites.</p>
+<div class="req-grid">
+<div class="req-card">
+<span class="req-icon">&#9749;</span>
+<div class="req-name">Java 21+</div>
+<div class="req-detail">Required by Paper 1.21.x. Use Eclipse Temurin or GraalVM.</div>
+</div>
+<div class="req-card">
+<span class="req-icon">&#128196;</span>
+<div class="req-name">Paper 1.21.1+</div>
+<div class="req-detail">VibeLife targets the Paper API. Spigot and Bukkit are not supported.</div>
+</div>
+<div class="req-card">
+<span class="req-icon">&#127760;</span>
+<div class="req-name">Node.js 20+</div>
+<div class="req-detail">Powers the Fastify sidecar service. Install via nvm or your package manager.</div>
+</div>
+<div class="req-card">
+<span class="req-icon">&#128451;</span>
+<div class="req-name">PostgreSQL</div>
+<div class="req-detail">Recommended for production. An in-memory store is available for testing only.</div>
+</div>
+</div>
+</div>
+
+<!-- QUICK START -->
+<div class="section" id="quickstart">
+<span class="section-icon">&#128640;</span>
+<h2><span class="sq"></span>Quick Start</h2>
+<p>Follow these four steps to go from zero to a running VibeLife server.</p>
+
+<div class="step">
+<div class="step-number">1</div>
+<h3>Set up PostgreSQL</h3>
+<p>Create a dedicated database and user for VibeLife. Adjust the password for production environments.</p>
+<div class="code-block">sudo -u postgres psql -c "CREATE USER vibelife WITH PASSWORD 'vibelife';"
+sudo -u postgres psql -c "CREATE DATABASE vibelife OWNER vibelife;"</div>
+</div>
+
+<div class="step">
+<div class="step-number">2</div>
+<h3>Start the Sidecar</h3>
+<p>The Fastify sidecar provides the REST API that the plugin communicates with. Point it at your database.</p>
+<div class="code-block">cd /opt/packetcraft
+DATABASE_URL=postgres://vibelife:vibelife@127.0.0.1:5432/vibelife npm run dev</div>
+<div class="warn-box">
+<strong>Warning:</strong> After starting, check <code>http://localhost:3000/api/health</code> &mdash; it must show <code>"persistence":"postgres"</code>. If it shows <code>"memory"</code>, the database connection failed silently and you are running on the in-memory store. Your data will be lost on restart.
+</div>
+</div>
+
+<div class="step">
+<div class="step-number">3</div>
+<h3>Build the Plugin</h3>
+<p>Compile the Paper plugin using Gradle. The shadow JAR bundles all dependencies.</p>
+<div class="code-block">cd paper-plugin
+./gradlew shadowJar</div>
+<p>The output JAR will be at <code>paper-plugin/build/libs/vibelife-paper-*.jar</code>.</p>
+</div>
+
+<div class="step">
+<div class="step-number">4</div>
+<h3>Install &amp; Start Paper</h3>
+<p>Copy the plugin JAR into your Paper server's plugins directory and launch the server.</p>
+<div class="code-block">cp paper-plugin/build/libs/vibelife-paper-*.jar paper-server/plugins/
+cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
+<p>On first boot, VibeLife will generate its default configuration at <code>plugins/VibeLife/config.yml</code>.</p>
+</div>
+</div>
+
+<!-- CONFIGURATION -->
+<div class="section" id="configuration">
+<span class="section-icon">&#9881;</span>
+<h2><span class="sq"></span>Configuration</h2>
+<p>VibeLife is configured through two places: the plugin config file and sidecar environment variables.</p>
+
+<div class="info-card">
+<h3>Plugin Config &mdash; plugins/VibeLife/config.yml</h3>
+<table class="config-table">
+<thead>
+<tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sidecar.url</code></td>
+<td><code>http://localhost:3000</code></td>
+<td>Base URL of the Fastify sidecar API. Change this if the sidecar runs on a different host or port.</td>
+</tr>
+<tr>
+<td><code>sidecar.api-key</code></td>
+<td><code>changeme</code></td>
+<td>Shared secret between the plugin and sidecar. <strong style="color:var(--terra)">You must change this in production.</strong></td>
+</tr>
+<tr>
+<td><code>sidecar.timeout-ms</code></td>
+<td><code>5000</code></td>
+<td>HTTP request timeout in milliseconds. Increase if your sidecar is on a remote host.</td>
+</tr>
+<tr>
+<td><code>channel</code></td>
+<td><code>vibelife:main</code></td>
+<td>Plugin messaging channel used to communicate with the Fabric client mod.</td>
+</tr>
+<tr>
+<td><code>regions</code></td>
+<td>&mdash;</td>
+<td>Maps Minecraft world names to VibeLife region IDs. Example: <code>world: region-overworld</code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="info-card">
+<h3>Sidecar Environment Variables</h3>
+<table class="config-table">
+<thead>
+<tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PORT</code></td>
+<td><code>3000</code></td>
+<td>The port the Fastify sidecar listens on.</td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>&mdash;</td>
+<td>PostgreSQL connection string. If unset, falls back to in-memory storage.</td>
+</tr>
+<tr>
+<td><code>CORS_ORIGINS</code></td>
+<td><code>*</code></td>
+<td>Comma-separated list of allowed CORS origins. Restrict this in production.</td>
+</tr>
+<tr>
+<td><code>ADMIN_BOOTSTRAP_TOKEN</code></td>
+<td>&mdash;</td>
+<td>If set, allows bootstrapping the first admin account via the API.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="section" id="architecture">
+<span class="section-icon">&#127959;</span>
+<h2><span class="sq"></span>Architecture Overview</h2>
+<p>VibeLife is composed of three main components that work together.</p>
+
+<div class="arch-flow">
+<div class="arch-box sidecar">Fastify Sidecar<br><span style="font-size:11px;font-weight:400">REST API + Database</span></div>
+<span class="arch-arrow">&larr;&rarr;</span>
+<div class="arch-box plugin">Paper Plugin<br><span style="font-size:11px;font-weight:400">Server-side logic</span></div>
+<span class="arch-arrow">&larr;&rarr;</span>
+<div class="arch-box mod">Fabric Mod<br><span style="font-size:11px;font-weight:400">Client-side UI</span></div>
+</div>
+
+<div class="info-card">
+<h3>Communication Flow</h3>
+<p>When a player joins the server, the following happens:</p>
+<ul>
+<li>The Paper plugin detects the join event and calls the sidecar at <code>/api/auth/mc-login</code></li>
+<li>The sidecar authenticates the player and returns a session token</li>
+<li>The plugin sends the token to the player's Fabric mod via the <code>vibelife:main</code> plugin messaging channel</li>
+<li>The Fabric mod can now make authenticated requests directly to the sidecar for UI data</li>
+</ul>
+</div>
+</div>
+
+<!-- DATABASE -->
+<div class="section" id="database">
+<span class="section-icon">&#128451;</span>
+<h2><span class="sq"></span>Database</h2>
+<p>The sidecar manages all database operations. There are no manual migrations to run.</p>
+
+<div class="info-card">
+<h3>Auto-Created Tables</h3>
+<p>On first startup with a valid <code>DATABASE_URL</code>, the sidecar automatically creates all required tables. No migration commands are needed &mdash; just point it at an empty database and go.</p>
+</div>
+
+<div class="info-card">
+<h3>Backups</h3>
+<p>Use standard PostgreSQL tools to back up your data:</p>
+<div class="code-block">pg_dump -U vibelife -h 127.0.0.1 vibelife &gt; vibelife-backup-$(date +%Y%m%d).sql</div>
+<p>Schedule this with cron for regular automated backups.</p>
+</div>
+
+<div class="warn-box">
+<strong>Silent Fallback Warning:</strong> If the <code>DATABASE_URL</code> is missing or the connection fails, the sidecar silently falls back to an in-memory store. Everything will appear to work, but all data is lost on restart. Always verify persistence via the <code>/api/health</code> endpoint.
+</div>
+</div>
+
+<!-- PARCEL CACHE -->
+<div class="section" id="parcel-cache">
+<span class="section-icon">&#128506;</span>
+<h2><span class="sq"></span>Parcel Cache</h2>
+<p>The plugin maintains a local cache of parcel data to minimize API calls and keep protection checks fast.</p>
+
+<div class="info-card">
+<h3>How It Works</h3>
+<ul>
+<li>On startup, the plugin performs an initial sync <strong>2 seconds after enable</strong> to let the sidecar finish booting</li>
+<li>After that, parcel data is re-synced from the sidecar <strong>every 5 minutes</strong></li>
+<li>Protection checks (block place/break, interact) are resolved against the local cache, so they are instant</li>
+<li>When a player claims or modifies a parcel, the cache is updated immediately in addition to the API call</li>
+</ul>
+</div>
+</div>
+
+<!-- VAULT ECONOMY -->
+<div class="section" id="vault">
+<span class="section-icon">&#128176;</span>
+<h2><span class="sq"></span>Vault Economy Integration</h2>
+<p>VibeLife registers as a Vault economy provider, making it compatible with any plugin that uses the Vault API.</p>
+
+<div class="info-card">
+<h3>Details</h3>
+<ul>
+<li><strong>Soft dependency:</strong> Vault is not required. If Vault is not installed, the economy still works through VibeLife commands</li>
+<li><strong>Currency:</strong> Vibes (integer-based, no decimals)</li>
+<li><strong>Standard Vault API:</strong> Other plugins can call <code>getBalance()</code>, <code>depositPlayer()</code>, <code>withdrawPlayer()</code>, etc.</li>
+<li>Balances are stored in the sidecar database, not in Vault's config</li>
+</ul>
+</div>
+</div>
+
+<!-- PERMISSIONS -->
+<div class="section" id="permissions">
+<span class="section-icon">&#128272;</span>
+<h2><span class="sq"></span>Permissions</h2>
+
+<div class="info-card">
+<h3>vibelife.admin</h3>
+<p>Grants the ability to bypass parcel protection. Players with this permission can build and break blocks in any parcel, regardless of ownership.</p>
+<p style="margin-top:8px"><strong>Default:</strong> <code>op</code> &mdash; only server operators have this permission by default. Assign it via your permissions plugin (e.g., LuckPerms) as needed.</p>
+</div>
+</div>
+
+<!-- FABRIC MOD -->
+<div class="section" id="fabric-mod">
+<span class="section-icon">&#127912;</span>
+<h2><span class="sq"></span>Optional: Fabric Mod</h2>
+<p>The Fabric client mod gives players a rich in-game UI. It is optional &mdash; the server works fine without it.</p>
+
+<div class="info-card">
+<h3>Build &amp; Distribute</h3>
+<div class="code-block">cd fabric-mod
+./gradlew build</div>
+<p style="margin-top:12px">Distribute the resulting JAR to your players. They place it in their <code>.minecraft/mods/</code> folder alongside Fabric Loader.</p>
+</div>
+
+<div class="info-card">
+<h3>Connection</h3>
+<p>The mod connects to <code>localhost:3000</code> by default (the sidecar). On a real server, the player's mod receives its auth token from the plugin via plugin messaging &mdash; no manual configuration is needed on the client side.</p>
+</div>
+
+<div class="info-card">
+<h3>Keybinds</h3>
+<div class="keybind-grid">
+<div class="keybind-card">
+<div class="keybind-key">V</div>
+<div class="keybind-name">VibeLife Menu</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">N</div>
+<div class="keybind-name">Social Panel</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">M</div>
+<div class="keybind-name">Map View</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">J</div>
+<div class="keybind-name">Journal</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">K</div>
+<div class="keybind-name">Skills</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MONITORING -->
+<div class="section" id="monitoring">
+<span class="section-icon">&#128200;</span>
+<h2><span class="sq"></span>Monitoring &amp; Health</h2>
+<p>Keep an eye on your VibeLife deployment with these built-in tools.</p>
+
+<div class="info-card">
+<h3>Health Endpoint</h3>
+<p>The sidecar exposes <code>GET /api/health</code> which returns the current status, including:</p>
+<ul>
+<li><code>status</code> &mdash; should be <code>"ok"</code></li>
+<li><code>persistence</code> &mdash; should be <code>"postgres"</code> in production</li>
+<li><code>uptime</code> &mdash; seconds since sidecar start</li>
+</ul>
+<div class="code-block">curl -s http://localhost:3000/api/health | jq .</div>
+</div>
+
+<div class="info-card">
+<h3>Plugin Logs</h3>
+<p>All plugin log messages are prefixed with <code>[VibeLife]</code>. Look for these in your Paper server console or <code>logs/latest.log</code>.</p>
+<ul>
+<li><strong>Startup:</strong> Confirms sidecar connection, parcel sync count, Vault hook</li>
+<li><strong>Warnings:</strong> Sidecar unreachable, API errors, fallback behavior</li>
+<li><strong>Errors:</strong> Authentication failures, database issues relayed from the sidecar</li>
+</ul>
+</div>
+</div>
+
+<!-- PRODUCTION CHECKLIST -->
+<div class="section" id="checklist">
+<span class="section-icon">&#9989;</span>
+<h2><span class="sq"></span>Production Checklist</h2>
+<p>Before going live, make sure you have addressed every item on this list.</p>
+
+<div class="info-card">
+<h3>Pre-Launch Checklist</h3>
+<ul class="checklist">
+<li><span class="check-box"></span>Change <code>sidecar.api-key</code> from the default <code>changeme</code> to a strong, random secret</li>
+<li><span class="check-box"></span>Set a strong PostgreSQL password (not <code>vibelife</code>)</li>
+<li><span class="check-box"></span>Verify <code>/api/health</code> shows <code>"persistence":"postgres"</code></li>
+<li><span class="check-box"></span>Configure <code>CORS_ORIGINS</code> to only allow your domain(s)</li>
+<li><span class="check-box"></span>Set up automated database backups with <code>pg_dump</code> and cron</li>
+<li><span class="check-box"></span>Monitor server logs for <code>[VibeLife]</code> warnings and errors</li>
+<li><span class="check-box"></span>Configure <code>regions</code> in <code>config.yml</code> to map your world names to region IDs</li>
+<li><span class="check-box"></span>Test Vault integration if you use other economy plugins</li>
+<li><span class="check-box"></span>Run the sidecar behind a process manager (systemd, pm2) for auto-restart</li>
+</ul>
+</div>
+</div>
+
+</div><!-- /content -->
+
+<!-- =============== FOOTER =============== -->
+<footer>
+<div>VibeLife &mdash; Open Source Voxel MMORPG &bull; 2026</div>
+<div class="foot-links">
+<a href="index.html">Main Site</a>
+<a href="plugin.html">Plugin Guide</a>
+<a href="manual/">Game Manual</a>
+<a href="devmanual/">Dev Manual</a>
+</div>
+</footer>
+
+</body>
+</html>

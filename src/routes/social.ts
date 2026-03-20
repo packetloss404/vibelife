@@ -211,7 +211,7 @@ export default async function socialRoutes(app: FastifyInstance) {
     return reply.send({ ok: marked });
   });
 
-  // ── Spigot bridge: chat persistence ─────────────────────────────────────
+  // ── Paper bridge: chat persistence ─────────────────────────────────────
 
   app.post<{ Body: { accountId?: string; displayName?: string; regionId?: string; message?: string } }>("/api/chat/persist", async (request, reply) => {
     const { accountId, displayName, regionId, message } = request.body;

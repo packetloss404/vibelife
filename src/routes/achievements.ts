@@ -98,7 +98,7 @@ export async function registerAchievementRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, title });
   });
 
-  // ── Spigot bridge: stat increment by accountId ──────────────────────────
+  // ── Paper bridge: stat increment by accountId ──────────────────────────
 
   app.post<{ Body: { accountId?: string; stat?: string; regionId?: string } }>("/api/achievements/increment", async (request, reply) => {
     const { accountId, stat, regionId } = request.body;

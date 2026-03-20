@@ -1436,6 +1436,7 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       kind TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'resident',
       password_hash TEXT,
+      mc_uuid TEXT,
       created_at TIMESTAMPTZ NOT NULL
     )
   `);

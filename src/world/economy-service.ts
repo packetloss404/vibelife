@@ -43,7 +43,7 @@ export async function deleteAsset(token: string, assetId: string): Promise<boole
   return persistence.deleteAsset(assetId, session.accountId);
 }
 
-// ── Account-ID based methods (for Spigot Vault provider) ────────────────
+// ── Account-ID based methods (for Paper Vault provider) ────────────────
 
 export async function getBalanceByAccount(accountId: string): Promise<number> {
   return persistence.getCurrencyBalance(accountId);

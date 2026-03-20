@@ -14,7 +14,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
- * Handles incoming plugin messages from the Spigot plugin via custom payload.
+ * Handles incoming plugin messages from the Paper plugin via custom payload.
  *
  * Message types (encoded as DataOutputStream UTF strings):
  *   - "session" + token -> store session token for API calls

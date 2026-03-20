@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeLife Plugin Guide — Everything You Can Do</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+--cream:#faf6f0;--paper:#f3ece2;--warm-white:#fefcf8;
+--forest:#1b4332;--forest-light:#2d6a4f;--forest-pale:#d8f3dc;
+--amber:#d4870e;--honey:#f0a830;--amber-pale:#fde6b0;
+--terra:#c05731;--terra-pale:#f4d4c8;
+--navy:#1b2a4a;--navy-light:#2c3e6b;--navy-pale:#d0d8e8;
+--brown:#5c4033;--brown-light:#8b6f47;
+--text:#2c2416;--text2:#6b5d4f;--text3:#9a8b7a;
+--shadow:rgba(44,36,22,.08);--shadow-md:rgba(44,36,22,.12);
+--border:#e0d5c5;--border-light:#ebe3d6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+background:
+  repeating-linear-gradient(0deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  repeating-linear-gradient(90deg,transparent,transparent 49px,rgba(180,160,130,.06) 49px,rgba(180,160,130,.06) 50px),
+  linear-gradient(180deg,rgba(250,246,240,0) 0%,rgba(240,230,215,.3) 100%);
+}
+a{color:var(--forest);text-decoration:none;transition:.2s}
+a:hover{color:var(--amber)}
+::selection{background:var(--amber-pale);color:var(--brown)}
+h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
+
+/* ===== NAV ===== */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest)}
+nav .logo-sm{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px}
+nav .logo-sm .vibe{color:var(--forest)}
+nav .logo-sm .life{color:var(--amber)}
+nav .logo-sm .cube{display:inline-flex;gap:2px;flex-wrap:wrap;width:20px;margin-right:4px}
+nav .logo-sm .cube span{display:block;width:8px;height:8px}
+nav .logo-sm .cube .c1{background:var(--forest)}
+nav .logo-sm .cube .c2{background:var(--amber)}
+nav .logo-sm .cube .c3{background:var(--terra)}
+nav .logo-sm .cube .c4{background:var(--navy)}
+nav .links{margin-left:auto;display:flex;gap:20px;font-size:13px;font-weight:600;align-items:center}
+nav .links a{color:var(--text2);padding:4px 0;border-bottom:2px solid transparent}
+nav .links a:hover{color:var(--forest);border-bottom-color:var(--forest)}
+.cta-sm{padding:7px 18px;background:var(--forest);color:var(--cream);font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;border:none;box-shadow:3px 3px 0 var(--navy)}
+.cta-sm:hover{color:var(--cream);background:var(--forest-light);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--navy)}
+
+/* ===== HERO ===== */
+.hero{min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 60px;
+background:linear-gradient(180deg,var(--warm-white) 0%,var(--paper) 50%,var(--cream) 100%);position:relative;overflow:hidden}
+.hero .pixel-row{display:flex;gap:4px;justify-content:center;margin-bottom:24px}
+.hero .pixel-row span{display:block;width:10px;height:10px;opacity:.6}
+.hero h1{font-size:clamp(32px,6vw,56px);font-weight:800;color:var(--navy);margin-bottom:12px}
+.hero h1 .accent{color:var(--amber)}
+.hero .subtitle{font-size:clamp(15px,2vw,18px);color:var(--text2);max-width:520px;line-height:1.7}
+
+/* ===== CONTENT LAYOUT ===== */
+.content{max-width:860px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* ===== SECTION ===== */
+.section{padding:60px 0;border-bottom:2px solid var(--border-light)}
+.section:last-of-type{border-bottom:none}
+.section-icon{font-size:36px;margin-bottom:12px;display:block}
+.section h2{font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.section h2 .sq{display:inline-block;width:8px;height:100%;min-height:28px;background:var(--forest);flex-shrink:0}
+.section > p,.section > .intro-text{font-size:15px;color:var(--text2);line-height:1.8;margin-bottom:20px;max-width:720px}
+
+/* ===== COMMAND CARDS ===== */
+.cmd-group{margin-bottom:28px}
+.cmd-group h3{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.cmd-group h3::before{content:'';width:14px;height:3px;background:var(--amber);display:block}
+.cmd-card{display:flex;gap:16px;align-items:baseline;padding:14px 18px;background:var(--warm-white);border:2px solid var(--border);margin-bottom:6px;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.cmd-card:hover{border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--border-light)}
+.cmd-code{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--forest);white-space:nowrap;min-width:200px;background:var(--forest-pale);padding:4px 10px;border:1px solid rgba(27,67,50,.15)}
+.cmd-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.cmd-alias{font-size:11px;color:var(--text3);margin-top:3px;font-style:italic}
+
+/* ===== KEYBIND CARDS ===== */
+.keybind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:16px}
+.keybind-card{background:var(--warm-white);border:2px solid var(--border);padding:20px;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.keybind-card:hover{border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--border-light)}
+.keybind-key{display:inline-block;font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--warm-white);background:var(--navy);width:44px;height:44px;line-height:44px;text-align:center;margin-bottom:10px;box-shadow:2px 2px 0 var(--border)}
+.keybind-name{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--navy);margin-bottom:4px}
+.keybind-desc{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ===== INFO CARDS ===== */
+.info-card{background:var(--warm-white);border:2px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.info-card::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
+.info-card::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
+.info-card h3{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:10px}
+.info-card p{font-size:14px;color:var(--text2);line-height:1.8}
+.info-card ul{margin:12px 0 0 20px;font-size:14px;color:var(--text2);line-height:2}
+.info-card ul li::marker{color:var(--amber)}
+
+/* ===== HIGHLIGHT BOX ===== */
+.highlight-box{background:var(--amber-pale);border:2px solid var(--amber);padding:18px 22px;margin:16px 0;font-size:14px;color:var(--brown);line-height:1.7;box-shadow:3px 3px 0 var(--border)}
+.highlight-box strong{color:var(--amber)}
+
+/* ===== PET GRID ===== */
+.pet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:16px}
+.pet-card{background:var(--warm-white);border:2px solid var(--border);padding:16px 10px;text-align:center;box-shadow:2px 2px 0 var(--border-light);transition:.2s}
+.pet-card:hover{transform:translateY(-3px);border-color:var(--amber);box-shadow:3px 5px 0 var(--border-light)}
+.pet-card .pet-icon{font-size:32px;display:block;margin-bottom:6px}
+.pet-card .pet-name{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--navy)}
+
+/* ===== SEASON STRIP ===== */
+.season-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.season-card{padding:20px 14px;text-align:center;border:2px solid var(--border);background:var(--warm-white);box-shadow:3px 3px 0 var(--border-light)}
+.season-card .season-emoji{font-size:28px;display:block;margin-bottom:8px}
+.season-card .season-name{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;margin-bottom:8px}
+.season-card.spring .season-name{color:var(--terra)}
+.season-card.summer .season-name{color:var(--amber)}
+.season-card.autumn .season-name{color:var(--brown)}
+.season-card.winter .season-name{color:var(--navy)}
+.season-card ul{list-style:none;font-size:12px;color:var(--text3);line-height:2}
+
+/* ===== FOOTER ===== */
+footer{border-top:3px solid var(--forest);padding:32px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:12px;background:var(--navy);margin-top:60px}
+footer div{color:rgba(255,255,255,.5)}
+footer .foot-links{display:flex;gap:20px}
+footer a{color:rgba(255,255,255,.5)}footer a:hover{color:var(--honey)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:700px){
+nav .links{display:none}
+.cmd-card{flex-direction:column;gap:6px}
+.cmd-code{min-width:auto}
+.keybind-grid{grid-template-columns:1fr 1fr}
+.season-strip{grid-template-columns:1fr 1fr}
+.pet-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:480px){
+.keybind-grid{grid-template-columns:1fr}
+.season-strip{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- =============== NAV =============== -->
+<nav>
+<a href="index.html" class="logo-sm">
+<span class="cube"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></span>
+<span><span class="vibe">Vibe</span><span class="life">Life</span></span>
+</a>
+<div class="links">
+<a href="index.html">Home</a>
+<a href="index.html#world">World</a>
+<a href="index.html#combat">Combat</a>
+<a href="index.html#social">Social</a>
+<a href="manual/">Game Manual</a>
+<a href="devmanual/" class="cta-sm">Dev Docs</a>
+</div>
+</nav>
+
+<!-- =============== HERO =============== -->
+<section class="hero">
+<div class="pixel-row">
+<span style="background:var(--forest)"></span>
+<span style="background:var(--amber)"></span>
+<span style="background:var(--terra)"></span>
+<span style="background:var(--navy)"></span>
+<span style="background:var(--honey)"></span>
+<span style="background:var(--forest-light)"></span>
+<span style="background:var(--brown-light)"></span>
+</div>
+<h1>VibeLife <span class="accent">Plugin Guide</span></h1>
+<p class="subtitle">Everything you can do on a VibeLife server. Commands, keybinds, features, and all the fun stuff waiting for you.</p>
+</section>
+
+<!-- =============== MAIN CONTENT =============== -->
+<div class="content">
+
+<!-- WHAT IS VIBELIFE -->
+<div class="section" id="what">
+<span class="section-icon">&#127918;</span>
+<h2><span class="sq"></span>What is VibeLife?</h2>
+<p>VibeLife adds social features, an economy, land ownership, achievements, pets, seasons, and much more to your Minecraft experience. It turns a regular server into a living world with things to do, stuff to earn, and people to meet.</p>
+<div class="highlight-box">
+When you join a VibeLife server, <strong>you're automatically set up</strong> &mdash; no registration needed. Just hop in and start playing. Your balance, friends, parcels, and achievements are all tracked from the moment you arrive.
+</div>
+</div>
+
+<!-- COMMANDS -->
+<div class="section" id="commands">
+<span class="section-icon">&#128221;</span>
+<h2><span class="sq"></span>Commands</h2>
+<p>These are all the commands available to you as a player. Type them in chat to use them.</p>
+
+<div class="cmd-group">
+<h3>Land &amp; Parcels</h3>
+<div class="cmd-card">
+<span class="cmd-code">/parcel info</span>
+<div><span class="cmd-desc">See info about the land you're standing on &mdash; who owns it, whether it's public, and who can build.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel claim</span>
+<div><span class="cmd-desc">Claim the unclaimed land you're standing on as yours. You become the owner and can control who builds there.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel release</span>
+<div><span class="cmd-desc">Give up your claimed land. It becomes unclaimed and available for someone else.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel list</span>
+<div>
+<span class="cmd-desc">See all parcels in the current region &mdash; who owns what and where.</span>
+<div class="cmd-alias">Aliases: /plot, /land</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-group">
+<h3>Friends &amp; Social</h3>
+<div class="cmd-card">
+<span class="cmd-code">/friends list</span>
+<div><span class="cmd-desc">See your current friends and any pending friend requests waiting for you.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends add &lt;player&gt;</span>
+<div><span class="cmd-desc">Send a friend request to another player. They'll get a notification.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends remove &lt;player&gt;</span>
+<div><span class="cmd-desc">Remove someone from your friends list.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends messages</span>
+<div>
+<span class="cmd-desc">Read messages people sent you while you were offline.</span>
+<div class="cmd-alias">Alias: /friends msg</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-group">
+<h3>Economy</h3>
+<div class="cmd-card">
+<span class="cmd-code">/balance</span>
+<div><span class="cmd-desc">Check how many Vibes (currency) you currently have.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/pay &lt;player&gt; &lt;amount&gt;</span>
+<div><span class="cmd-desc">Send Vibes to another player. Great for buying items or tipping builders.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/market</span>
+<div><span class="cmd-desc">Browse what other players are selling on the marketplace.</span></div>
+</div>
+</div>
+</div>
+
+<!-- KEYBINDS -->
+<div class="section" id="keybinds">
+<span class="section-icon">&#9000;&#65039;</span>
+<h2><span class="sq"></span>Fabric Mod Keybinds</h2>
+<p>If you have the VibeLife Fabric mod installed, these keys open full feature screens right in-game. No commands needed.</p>
+
+<div class="keybind-grid">
+<div class="keybind-card">
+<div class="keybind-key">V</div>
+<div class="keybind-name">Economy</div>
+<div class="keybind-desc">Check your balance, view recent transactions, send Vibes to other players</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">N</div>
+<div class="keybind-name">Social</div>
+<div class="keybind-desc">Friends list, groups, direct messages, player profiles and online status</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">M</div>
+<div class="keybind-name">Marketplace</div>
+<div class="keybind-desc">Buy and sell items, place bids on auctions, manage your storefront</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">J</div>
+<div class="keybind-name">Achievements</div>
+<div class="keybind-desc">View your progress, browse challenges, check leaderboards, equip titles</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">K</div>
+<div class="keybind-name">Events</div>
+<div class="keybind-desc">See upcoming events, RSVP, view event leaderboards and rewards</div>
+</div>
+</div>
+</div>
+
+<!-- ECONOMY -->
+<div class="section" id="economy">
+<span class="section-icon">&#128176;</span>
+<h2><span class="sq"></span>Economy</h2>
+<p>The VibeLife economy runs on <strong>Vibes</strong> &mdash; the universal currency across the entire platform.</p>
+<div class="info-card">
+<h3>How Vibes Work</h3>
+<p>You earn Vibes by playing &mdash; completing achievements, participating in events, selling items on the marketplace, and more. You can spend them just as easily:</p>
+<ul>
+<li>Pay other players directly with <strong>/pay</strong></li>
+<li>Buy items, blueprints, and resources on the marketplace</li>
+<li>Bid on auctions for rare and seasonal items</li>
+<li>Tip builders whose work you admire</li>
+</ul>
+<p style="margin-top:12px">Vibes are shared across all VibeLife servers, so your wealth travels with you.</p>
+</div>
+</div>
+
+<!-- YOUR LAND -->
+<div class="section" id="land">
+<span class="section-icon">&#127968;</span>
+<h2><span class="sq"></span>Your Land</h2>
+<p>The world is divided into parcels. Here's how land ownership works from your perspective as a player.</p>
+<div class="info-card">
+<h3>Claiming Land</h3>
+<p>Walk around and find a spot you like. Use <strong>/parcel info</strong> to check if it's unclaimed. If it is, use <strong>/parcel claim</strong> to make it yours. That's it &mdash; you now own that land.</p>
+<ul>
+<li>Only you and collaborators you invite can build on your parcel</li>
+<li>Public parcels exist where anyone can build</li>
+<li>You cannot build outside of parcels &mdash; find one to claim or use a public one</li>
+<li>Use <strong>/parcel release</strong> if you want to give up your land</li>
+<li>Use <strong>/parcel list</strong> to see all parcels in your region</li>
+</ul>
+</div>
+</div>
+
+<!-- FRIENDS & SOCIAL -->
+<div class="section" id="social">
+<span class="section-icon">&#128102;</span>
+<h2><span class="sq"></span>Friends &amp; Social</h2>
+<p>VibeLife has a built-in social system so you can connect with people you meet in-game.</p>
+<div class="info-card">
+<h3>Staying Connected</h3>
+<ul>
+<li>Send friend requests with <strong>/friends add &lt;player&gt;</strong></li>
+<li>See who's online from your friends list</li>
+<li>Send offline messages that players receive next time they log in</li>
+<li>Join groups to organize with larger teams</li>
+<li>Your online status is visible to your friends so they know when you're around</li>
+</ul>
+</div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="section" id="achievements">
+<span class="section-icon">&#127942;</span>
+<h2><span class="sq"></span>Achievements</h2>
+<p>Just play the game and achievements unlock automatically. No need to activate or track them &mdash; the system watches what you do.</p>
+<div class="info-card">
+<h3>Things That Earn Achievements</h3>
+<ul>
+<li><strong>Building</strong> &mdash; Place blocks, complete structures, use blueprints</li>
+<li><strong>Mining</strong> &mdash; Break blocks, find ores, dig deep</li>
+<li><strong>Combat</strong> &mdash; Kill mobs, defeat bosses, survive close calls</li>
+<li><strong>Exploration</strong> &mdash; Visit new regions, discover landmarks, travel far</li>
+<li><strong>Social</strong> &mdash; Chat with players, make friends, join guilds</li>
+</ul>
+<p style="margin-top:12px">When you unlock an achievement, you'll get a notification on screen. Some achievements grant titles you can equip, and your progress shows on leaderboards.</p>
+</div>
+</div>
+
+<!-- SEASONS & EVENTS -->
+<div class="section" id="seasons">
+<span class="section-icon">&#127808;</span>
+<h2><span class="sq"></span>Seasons &amp; Events</h2>
+<p>The world changes with the seasons. Each one brings unique items, achievements, and vibes.</p>
+
+<div class="season-strip">
+<div class="season-card spring">
+<span class="season-emoji">&#127800;</span>
+<div class="season-name">Spring</div>
+<ul>
+<li>Cherry Blossom Crown</li>
+<li>Spring Lantern</li>
+<li>Blossom Particles</li>
+</ul>
+</div>
+<div class="season-card summer">
+<span class="season-emoji">&#9728;&#65039;</span>
+<div class="season-name">Summer</div>
+<ul>
+<li>Surfboard</li>
+<li>Beach Ball Emote</li>
+<li>Tiki Torch</li>
+<li>Fireflies</li>
+</ul>
+</div>
+<div class="season-card autumn">
+<span class="season-emoji">&#127810;</span>
+<div class="season-name">Autumn</div>
+<ul>
+<li>Witch Hat</li>
+<li>Ghost Pet</li>
+<li>Jack-o-Lantern</li>
+<li>Falling Leaves</li>
+</ul>
+</div>
+<div class="season-card winter">
+<span class="season-emoji">&#10052;&#65039;</span>
+<div class="season-name">Winter</div>
+<ul>
+<li>Snowflake Crown</li>
+<li>Ice Crystal Pet</li>
+<li>Holiday Sweater</li>
+<li>Snowflakes</li>
+</ul>
+</div>
+</div>
+
+<div class="info-card" style="margin-top:20px">
+<h3>Events</h3>
+<p>Throughout the year, servers host special events that anyone can join:</p>
+<ul>
+<li><strong>Build Competitions</strong> &mdash; Themed building challenges with prizes</li>
+<li><strong>Dance Parties</strong> &mdash; Emote sync events with bonus XP</li>
+<li><strong>Concerts</strong> &mdash; In-world music events at special venues</li>
+<li><strong>Market Days</strong> &mdash; Boosted marketplace activity with special deals</li>
+</ul>
+<p style="margin-top:12px">Check the events screen (press <strong>K</strong> with the Fabric mod) to see what's coming up and RSVP.</p>
+</div>
+</div>
+
+<!-- PETS -->
+<div class="section" id="pets">
+<span class="section-icon">&#128062;</span>
+<h2><span class="sq"></span>Pets</h2>
+<p>Adopt a companion that follows you around the world. There are 8 species to choose from, each with their own personality.</p>
+
+<div class="pet-grid">
+<div class="pet-card"><span class="pet-icon">&#128049;</span><span class="pet-name">Cat</span></div>
+<div class="pet-card"><span class="pet-icon">&#128054;</span><span class="pet-name">Dog</span></div>
+<div class="pet-card"><span class="pet-icon">&#128048;</span><span class="pet-name">Bunny</span></div>
+<div class="pet-card"><span class="pet-icon">&#129417;</span><span class="pet-name">Owl</span></div>
+<div class="pet-card"><span class="pet-icon">&#128038;</span><span class="pet-name">Parrot</span></div>
+<div class="pet-card"><span class="pet-icon">&#128012;</span><span class="pet-name">Snail</span></div>
+<div class="pet-card"><span class="pet-icon">&#129418;</span><span class="pet-name">Fox</span></div>
+<div class="pet-card"><span class="pet-icon">&#128034;</span><span class="pet-name">Turtle</span></div>
+</div>
+
+<div class="info-card" style="margin-top:20px">
+<h3>Taking Care of Your Pet</h3>
+<ul>
+<li><strong>Feed them</strong> to keep them happy and active</li>
+<li><strong>Play with them</strong> to build your bond level</li>
+<li><strong>Teach them tricks</strong> as they level up</li>
+<li><strong>Customize their look</strong> with accessories and color variations</li>
+<li>Your pet follows you everywhere &mdash; through regions, into buildings, on adventures</li>
+</ul>
+</div>
+</div>
+
+</div><!-- /content -->
+
+<!-- =============== FOOTER =============== -->
+<footer>
+<div>VibeLife &mdash; Open Source Voxel MMORPG &bull; 2026</div>
+<div class="foot-links">
+<a href="index.html">Main Site</a>
+<a href="manual/">Game Manual</a>
+<a href="devmanual/">Dev Manual</a>
+<a href="https://github.com">GitHub</a>
+</div>
+</footer>
+
+</body>
+</html>

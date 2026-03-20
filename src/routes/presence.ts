@@ -61,7 +61,7 @@ export async function registerPresenceRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Spigot bridge endpoints (accountId-based) ──────────────────────────
+  // ── Paper bridge endpoints (accountId-based) ──────────────────────────
 
   app.post<{ Body: { accountId?: string; displayName?: string; regionId?: string } }>(
     "/api/presence/online",

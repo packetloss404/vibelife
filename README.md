@@ -1,6 +1,6 @@
 # VibeLife
 
-A social MMORPG platform built on Minecraft. Uses a Paper server for core gameplay, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
+A social MMORPG platform built on Minecraft. Uses a Paper server plugin for gameplay integration, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
 
 ## Architecture
 
@@ -13,13 +13,13 @@ A social MMORPG platform built on Minecraft. Uses a Paper server for core gamepl
        │                                       │
        └──────────►┌──────────────┐◄───────────┘
                    │   Fastify    │
-                   │  (Sidecar)   │
+                   │  (Sidecar)   │───► PostgreSQL
                    │  :3000       │
                    └──────────────┘
 ```
 
 - **Paper Plugin** (Java 21) — Thin bridge: intercepts MC events, calls sidecar REST API, forwards notifications to Fabric mod via plugin message channel
-- **Fastify Sidecar** (TypeScript) — All business logic: social, economy, marketplace, achievements, events, parcels, media, and more
+- **Fastify Sidecar** (TypeScript) — All business logic: social, economy, marketplace, achievements, events, parcels, and more
 - **Fabric Mod** (Java 21) — Custom GUI screens, HUD overlays, keybinds. Calls sidecar HTTP directly for UI data
 
 ## Features
@@ -77,32 +77,31 @@ A social MMORPG platform built on Minecraft. Uses a Paper server for core gamepl
 
 | Component | Technology |
 |-----------|-----------|
-| Game Server | Paper (Minecraft 1.21.4) |
-| Client Mod | Fabric API (Minecraft 1.21.4) |
-| Sidecar | TypeScript, Fastify, Node.js |
-| Persistence | In-memory Maps + PostgreSQL (dual-mode) |
-| Auth | MC UUID linking + guest/register/login flows |
-| Build | Gradle 8.12 (Java), npm (TypeScript) |
+| Game Server | Paper 1.21.11 |
+| Client Mod | Fabric (Minecraft 1.21.11) |
+| Sidecar | TypeScript, Fastify 5, Node.js 20+ |
+| Persistence | PostgreSQL (production) / In-memory (dev) |
+| Auth | MC UUID auto-linking on join |
+| Build | Gradle 8.12 (Java 21), npm (TypeScript) |
 
 ## Project Structure
 
 ```
 src/                              # Fastify sidecar
   server.ts                       — Route registration, event system
-  contracts.ts                    — Shared types
-  routes/                         — 32 Fastify route plugins
-  world/                          — 25+ service modules
+  routes/                         — 33 Fastify route plugins
+  world/                          — 35+ service modules
     store.ts                      — Barrel re-exports
     _shared-state.ts              — Sessions, regions, permissions
   data/
     persistence.ts                — Dual-mode persistence layer
 
-spigot-plugin/                    # Paper server plugin (Java 21, Spigot API)
-  src/main/java/com/vibelife/spigot/
+paper-plugin/                     # Paper server plugin (Java 21, Paper API)
+  src/main/java/com/vibelife/paper/
     VibeLifePlugin.java           — Main entry, registers all listeners/commands
     bridge/SidecarClient.java     — Async HTTP client for sidecar
     auth/LoginListener.java       — MC UUID → VibeLife account linking
-    parcels/ParcelManager.java    — Parcel cache + WorldGuard sync
+    parcels/ParcelManager.java    — Parcel cache + sync
     parcels/ParcelListener.java   — Block protection via parcel permissions
     economy/VaultProvider.java    — Vault Economy backed by sidecar
     achievements/AchievementHook.java — MC events → achievement stat tracking
@@ -120,7 +119,12 @@ fabric-mod/                       # Fabric client mod (Java 21)
     hud/AchievementToast.java     — Achievement unlock notifications
     keybind/KeybindManager.java   — V/N/M/J/K keybinds
 
-native-client/                    # DEPRECATED (Godot 4.x client, kept for reference)
+docs/                             # Documentation site
+  index.html                      — Landing page
+  plugin.html                     — Player guide
+  deploy.html                     — Server admin deployment guide
+  manual/                         — Full game manual
+  devmanual/                      — Developer manual
 ```
 
 ## Keybinds (Fabric Mod)
@@ -133,39 +137,35 @@ native-client/                    # DEPRECATED (Godot 4.x client, kept for refer
 | J | Achievements (progress, challenges, leaderboard) |
 | K | Events (calendar, RSVP) |
 
-## Setup
+## Quick Start
 
 ### Prerequisites
-- Java 21 (OpenJDK)
+- Java 21
 - Node.js 20+
-- Paper 1.21.4 server
-- (Optional) PostgreSQL for persistent storage
+- Paper 1.21.11
+- PostgreSQL (recommended for production)
 
-### Build
+### Build & Run
 
 ```bash
 # Sidecar
 npm install
-npm run dev
+DATABASE_URL=postgres://vibelife:vibelife@127.0.0.1:5432/vibelife npm run dev
 
-# Paper plugin (builds against Spigot API)
-cd spigot-plugin
-./gradlew build
-# Output: build/libs/vibelife-spigot-1.0.0-SNAPSHOT.jar
+# Paper plugin
+cd paper-plugin
+./gradlew shadowJar
+cp build/libs/vibelife-paper-*.jar ../paper-server/plugins/
 
 # Fabric mod
 cd fabric-mod
 ./gradlew build
-# Output: build/libs/vibelife-fabric-1.0.0-SNAPSHOT.jar
+# Output: build/libs/vibelife-*.jar → player's mods/ folder
+
+# Start Paper
+cd paper-server
+java -Xms1G -Xmx2G -jar paper.jar --nogui
 ```
-
-### Deploy
-
-1. Copy `vibelife-spigot-*.jar` to your Paper server's `plugins/` directory
-2. Start the Fastify sidecar (`npm run dev`) on the same machine
-3. Edit `plugins/VibeLife/config.yml` to set sidecar URL and region mappings
-4. Players install `vibelife-fabric-*.jar` in their Fabric mods folder
-5. Connect to the MC server — account is auto-created on first join
 
 ### Configuration
 
@@ -175,7 +175,7 @@ sidecar:
   url: "http://localhost:3000"
   api-key: "change-me-in-production"
   timeout-ms: 5000
-
+channel: "vibelife:main"
 regions:
   world: "aurora-docks"
   world_nether: "nether-realm"
@@ -185,31 +185,39 @@ regions:
 **Sidecar environment**:
 ```bash
 PORT=3000                    # Sidecar port
-DATABASE_URL=postgres://...  # Optional, falls back to in-memory
+DATABASE_URL=postgres://...  # Omit for in-memory mode
 CORS_ORIGINS=http://...      # Allowed origins
-ADMIN_BOOTSTRAP_TOKEN=...    # For first admin registration
+ADMIN_BOOTSTRAP_TOKEN=...    # Bootstrap admin access
 ```
 
 ## Auth Flow
 
-1. Player joins MC server with their UUID
-2. Plugin calls `POST /api/auth/mc-login` with UUID + username
-3. Sidecar creates or finds linked VibeLife account, returns session token
-4. Token sent to Fabric mod via plugin message channel
+1. Player joins MC server
+2. Plugin calls `POST /api/auth/mc-login` with MC UUID + username
+3. Sidecar creates or finds linked account, returns session token
+4. Token sent to Fabric mod via `vibelife:main` plugin message channel
 5. Fabric mod uses token for all direct sidecar API calls
-6. Existing accounts can link via `/vibelife link <displayName> <password>`
 
 ## Development
 
 ```bash
 npm run dev          # Sidecar with hot reload
-npm run check        # TypeScript type checking
-npm test             # Run test suite
+npm run build        # TypeScript compilation
+npm run test         # Vitest test suite
+npm run check        # Build + test + validation
+npx vitest run src/__tests__/auth.test.ts  # Single test file
 ```
 
-### Optional Plugins
-- **Vault** — Required for economy integration with other plugins
-- **WorldGuard** — Optional, parcels sync to WG regions for native protection
+### Optional Server Plugins
+- **Vault** — Economy integration with other plugins
+- **WorldGuard** — Optional parcel-to-WG region sync
+
+## Documentation
+
+- [Plugin Guide](docs/plugin.html) — Player-facing feature guide
+- [Deployment Guide](docs/deploy.html) — Server admin setup
+- [Game Manual](docs/manual/) — Complete game manual
+- [Developer Manual](docs/devmanual/) — Technical documentation
 
 ## License
 

@@ -106,7 +106,7 @@ export default async function parcelRoutes(app: FastifyInstance) {
     return reply.send({ parcel });
   });
 
-  // ── Spigot bridge endpoints ─────────────────────────────────────────────
+  // ── Paper bridge endpoints ─────────────────────────────────────────────
 
   app.get<{ Params: { regionId: string } }>("/api/parcels/by-region/:regionId", async (request, reply) => {
     const parcels = await listParcels(request.params.regionId);
