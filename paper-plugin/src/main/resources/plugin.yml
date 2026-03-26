@@ -1,16 +1,16 @@
-name: VibeLife
+name: PacketCraft
 version: '${version}'
-main: com.vibelife.paper.VibeLifePlugin
+main: com.packetcraft.paper.PacketCraftPlugin
 api-version: '1.21'
-description: VibeLife social features bridge for Minecraft
-authors: [VibeLife]
+description: PacketCraft social features bridge for Minecraft
+authors: [PacketCraft]
 depend: []
 softdepend: [Vault, WorldGuard]
 commands:
-  vibelife:
-    description: VibeLife main command
+  packetcraft:
+    description: PacketCraft main command
     usage: /<command> [subcommand]
-    aliases: [vl]
+    aliases: [pc]
   parcel:
     description: Manage parcels (land claims)
     usage: /<command> [info|claim|release|list]
@@ -28,6 +28,6 @@ commands:
     description: Send currency to a player
     usage: /<command> <player> <amount>
 permissions:
-  vibelife.admin:
-    description: VibeLife admin permissions
+  packetcraft.admin:
+    description: PacketCraft admin permissions
     default: op

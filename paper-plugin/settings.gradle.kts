@@ -1,1 +1,1 @@
-rootProject.name = "vibelife-paper"
+rootProject.name = "packetcraft-paper"

@@ -9,7 +9,6 @@ import {
   setTitle,
   onBlockPlaced,
   onBlockBroken,
-  onEnemyDefeated,
   onRegionVisited,
   onFriendAdded,
   onObjectPlaced,
@@ -111,7 +110,6 @@ export async function registerAchievementRoutes(app: FastifyInstance) {
     switch (stat) {
       case "blocksPlaced": unlocked = onBlockPlaced(accountId); break;
       case "blocksBroken": unlocked = onBlockBroken(accountId); break;
-      case "enemiesDefeated": unlocked = onEnemyDefeated(accountId); break;
       case "regionVisited": unlocked = regionId ? onRegionVisited(accountId, regionId) : []; break;
       case "friendsMade": unlocked = onFriendAdded(accountId); break;
       case "objectsPlaced": unlocked = onObjectPlaced(accountId); break;

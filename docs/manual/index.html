@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VibeLife — Complete Game Manual</title>
+<title>PacketCraft — Complete Game Manual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,6 @@
 --text:#2c2416;--text2:#6b5d4f;--text3:#9a8b7a;
 --shadow:rgba(44,36,22,.08);--shadow-md:rgba(44,36,22,.12);
 --border:#e0d5c5;--border-light:#ebe3d6;
---green:#3fb950;--red:#c05731;--accent:#1b4332;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
@@ -36,8 +35,8 @@ h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
 /* Top Nav */
 .top-nav{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest);z-index:1000;display:flex;align-items:center;padding:0 32px}
 .top-nav .logo{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px}
-.top-nav .logo .vibe{color:var(--forest)}
-.top-nav .logo .life{color:var(--amber)}
+.top-nav .logo .pkt{color:var(--forest)}
+.top-nav .logo .craft{color:var(--amber)}
 .top-nav .logo .cube{display:inline-flex;gap:2px;flex-wrap:wrap;width:20px;margin-right:4px}
 .top-nav .logo .cube span{display:block;width:8px;height:8px}
 .top-nav .logo .cube .c1{background:var(--forest)}
@@ -52,12 +51,11 @@ h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
 
 /* Sidebar TOC */
 .sidebar{position:fixed;top:60px;left:0;width:280px;bottom:0;overflow-y:auto;background:var(--warm-white);border-right:2px solid var(--border);padding:20px 0;font-size:13.5px;z-index:100}
-.sidebar::-webkit-scrollbar{width:5px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.sidebar::-webkit-scrollbar{width:5px}.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
 .sidebar .toc-title{padding:0 20px 12px;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--text3);font-weight:600;font-family:'Sora',sans-serif}
 .sidebar a{display:block;padding:5px 20px;color:var(--text2);transition:.15s}
 .sidebar a:hover{color:var(--forest);background:rgba(27,67,50,.05);text-decoration:none}
 .sidebar a.l2{padding-left:36px;font-size:12.5px}
-.sidebar a.l3{padding-left:50px;font-size:12px;color:var(--text3)}
 .sidebar .divider{height:1px;background:var(--border-light);margin:10px 20px}
 
 /* Content */
@@ -74,7 +72,7 @@ li::marker{color:var(--amber)}
 strong{color:var(--text)}
 
 /* Cards */
-.card{background:var(--warm-white);border:2px solid var(--border);border-radius:0;padding:20px 24px;margin:16px 0;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.card{background:var(--warm-white);border:2px solid var(--border);padding:20px 24px;margin:16px 0;box-shadow:4px 4px 0 var(--border-light);position:relative}
 .card::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
 .card::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
 .card h4{margin-top:0;color:var(--amber)}
@@ -88,1005 +86,474 @@ td{padding:9px 14px;border:2px solid var(--border);color:var(--text)}
 tr:nth-child(even) td{background:var(--paper)}
 
 /* Code */
-code{background:var(--forest-pale);padding:2px 7px;border-radius:0;font-size:13.5px;color:var(--forest);font-family:'Courier New','Fira Code',monospace;border:1px solid rgba(27,67,50,.15)}
-pre{background:var(--warm-white);border:2px solid var(--border);border-radius:0;padding:16px 20px;overflow-x:auto;margin:12px 0;font-size:13px;line-height:1.6;box-shadow:3px 3px 0 var(--border-light)}
-pre code{background:none;padding:0;border:none}
+code{background:var(--forest-pale);padding:2px 7px;font-size:13.5px;color:var(--forest);font-family:'Courier New','Fira Code',monospace;border:1px solid rgba(27,67,50,.15)}
 
 /* Key badges */
-kbd{display:inline-block;background:var(--navy);color:var(--cream);border:none;border-radius:0;padding:2px 8px;font-size:12.5px;font-family:'Sora',sans-serif;font-weight:700;margin:0 2px;box-shadow:2px 2px 0 var(--border)}
+kbd{display:inline-block;background:var(--navy);color:var(--cream);padding:2px 8px;font-size:12.5px;font-family:'Sora',sans-serif;font-weight:700;margin:0 2px;box-shadow:2px 2px 0 var(--border)}
 
 /* Tip / Warning boxes */
-.tip,.warn,.info{border-radius:0;padding:14px 18px;margin:16px 0;font-size:14.5px;box-shadow:3px 3px 0 var(--border-light)}
+.tip,.warn,.info-box{padding:14px 18px;margin:16px 0;font-size:14.5px;box-shadow:3px 3px 0 var(--border-light)}
 .tip{background:var(--forest-pale);border-left:4px solid var(--forest)}
-.warn{background:var(--terra-pale);border-left:4px solid var(--terra)}
-.info{background:var(--amber-pale);border-left:4px solid var(--amber)}
-.tip strong{color:var(--forest)}.warn strong{color:var(--terra)}.info strong{color:var(--amber)}
+.warn{background:var(--amber-pale);border-left:4px solid var(--amber)}
+.info-box{background:var(--navy-pale);border-left:4px solid var(--navy)}
 
-/* Highlight box */
-.highlight-box{background:var(--amber-pale);border:2px solid var(--amber);padding:18px 22px;margin:16px 0;font-size:14px;color:var(--brown);line-height:1.7;box-shadow:3px 3px 0 var(--border)}
-.highlight-box strong{color:var(--amber)}
-
-/* Stat bars */
-.bar{height:18px;border-radius:0;position:relative;margin:4px 0 10px;overflow:hidden}
-.bar-bg{background:var(--paper);width:100%;height:100%;border:1px solid var(--border)}
-.bar-fill{height:100%;position:absolute;top:0;left:0}
-.bar-hp .bar-fill{background:linear-gradient(90deg,var(--terra),#e07050);width:75%}
-.bar-mp .bar-fill{background:linear-gradient(90deg,var(--navy),var(--navy-light));width:60%}
-.bar-xp .bar-fill{background:linear-gradient(90deg,var(--amber),var(--honey));width:40%}
-
-/* Badge */
-.badge{display:inline-block;padding:2px 10px;border-radius:0;font-size:11.5px;font-weight:600;margin:2px;font-family:'Sora',sans-serif}
-.badge-common{background:var(--paper);color:var(--text2);border:1px solid var(--border)}
-.badge-uncommon{background:var(--forest-pale);color:var(--forest);border:1px solid rgba(27,67,50,.2)}
-.badge-rare{background:var(--navy-pale);color:var(--navy);border:1px solid rgba(27,42,74,.2)}
-.badge-legendary{background:var(--amber-pale);color:var(--amber);border:1px solid rgba(212,135,14,.3)}
+/* Footer */
+footer{border-top:3px solid var(--forest);padding:32px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:12px;background:var(--navy);margin-top:60px}
+footer div{color:rgba(255,255,255,.5)}
+footer .foot-links{display:flex;gap:20px}
+footer a{color:rgba(255,255,255,.5)}footer a:hover{color:var(--honey)}
 
 /* Responsive */
-@media(max-width:900px){.sidebar{display:none}.content{margin-left:0;padding:80px 20px 80px}}
-@media(max-width:600px){h1{font-size:28px}h2{font-size:22px}.card-grid{grid-template-columns:1fr}}
+@media(max-width:900px){
+.sidebar{display:none}
+.content{margin-left:0;padding:80px 24px 80px}
+}
+@media(max-width:600px){
+.top-nav .nav-links{display:none}
+.card-grid{grid-template-columns:1fr}
+table{font-size:12px}
+th,td{padding:6px 8px}
+}
 </style>
 </head>
 <body>
 
-<!-- Top Navigation -->
-<nav class="top-nav">
-  <a href="../index.html" class="logo">
-    <span class="cube"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></span>
-    <span><span class="vibe">Vibe</span><span class="life">Life</span></span>
-  </a>
-  <div class="nav-links">
-    <a href="#getting-started">Start</a>
-    <a href="#world">World</a>
-    <a href="#building">Building</a>
-    <a href="#combat">Combat</a>
-    <a href="#social">Social</a>
-    <a href="#economy">Economy</a>
-    <a href="#advanced">Advanced</a>
-    <a href="../plugin.html">Plugin Guide</a>
-    <a href="../deploy.html">Deploy</a>
-  </div>
-</nav>
-
-<!-- Sidebar TOC -->
-<aside class="sidebar">
-  <div class="toc-title">Table of Contents</div>
-  <a href="#welcome">Welcome</a>
-  <div class="divider"></div>
-
-  <a href="#getting-started">1. Getting Started</a>
-  <a class="l2" href="#joining">Joining a Server</a>
-  <a class="l2" href="#controls-overview">Controls Overview</a>
-  <a class="l2" href="#fabric-mod">Fabric Mod</a>
-  <div class="divider"></div>
-
-  <a href="#world">2. The World</a>
-  <a class="l2" href="#regions">Regions</a>
-  <a class="l2" href="#parcels">Parcels &amp; Land</a>
-  <a class="l2" href="#navigation">Navigation &amp; Teleportation</a>
-  <a class="l2" href="#day-night">Day/Night Cycle</a>
-  <a class="l2" href="#seasons">Seasons &amp; Weather</a>
-  <div class="divider"></div>
-
-  <a href="#building">3. Building</a>
-  <a class="l2" href="#block-building">Block Building</a>
-  <a class="l2" href="#permissions">Permissions</a>
-  <a class="l2" href="#blueprints">Blueprints</a>
-  <div class="divider"></div>
-
-  <a href="#combat">4. Combat &amp; RPG</a>
-  <a class="l2" href="#combat-stats">Player Stats</a>
-  <a class="l2" href="#attacking">Attacking</a>
-  <a class="l2" href="#enemies">Enemies</a>
-  <a class="l2" href="#loot">Loot &amp; Drops</a>
-  <a class="l2" href="#death-respawn">Death &amp; Respawn</a>
-  <a class="l2" href="#leveling">Leveling &amp; XP</a>
-  <div class="divider"></div>
-
-  <a href="#social">5. Social</a>
-  <a class="l2" href="#chat-system">Chat</a>
-  <a class="l2" href="#friends">Friends</a>
-  <a class="l2" href="#groups-guilds">Groups &amp; Guilds</a>
-  <a class="l2" href="#emotes">Emotes</a>
-  <a class="l2" href="#voice-chat">Voice Chat</a>
-  <a class="l2" href="#presence">Presence &amp; Status</a>
-  <a class="l2" href="#photos">Photos</a>
-  <a class="l2" href="#events">Events</a>
-  <a class="l2" href="#activity-feed">Activity Feed</a>
-  <div class="divider"></div>
-
-  <a href="#economy">6. Economy</a>
-  <a class="l2" href="#currency">Currency</a>
-  <a class="l2" href="#marketplace">Marketplace</a>
-  <a class="l2" href="#trading">Trading</a>
-  <a class="l2" href="#auctions">Auctions</a>
-  <div class="divider"></div>
-
-  <a href="#progression">7. Progression</a>
-  <a class="l2" href="#achievements">Achievements</a>
-  <a class="l2" href="#titles">Titles</a>
-  <a class="l2" href="#challenges">Challenges</a>
-  <a class="l2" href="#leaderboards">Leaderboards</a>
-  <div class="divider"></div>
-
-  <a href="#creatures">8. Creatures</a>
-  <a class="l2" href="#pets">Pets</a>
-  <a class="l2" href="#npcs">NPCs &amp; Quests</a>
-  <div class="divider"></div>
-
-  <a href="#homes">9. Homes</a>
-  <a class="l2" href="#home-system">Home System</a>
-  <a class="l2" href="#home-ratings">Ratings &amp; Showcase</a>
-  <div class="divider"></div>
-
-  <a href="#seasonal">10. Seasonal Content</a>
-  <a class="l2" href="#seasonal-items">Seasonal Items</a>
-  <a class="l2" href="#holidays">Holidays</a>
-  <div class="divider"></div>
-
-  <a href="#advanced">11. Advanced Features</a>
-  <a class="l2" href="#mobile">Mobile Companion</a>
-  <a class="l2" href="#federation">Federation</a>
-  <a class="l2" href="#creator-tools">Creator Tools</a>
-  <div class="divider"></div>
-
-  <a href="#reference">12. Reference</a>
-  <a class="l2" href="#controls-ref">Controls Reference</a>
-  <a class="l2" href="#chat-commands-ref">Chat Commands</a>
-  <a class="l2" href="#enemy-table-ref">Enemy Stats Table</a>
-  <a class="l2" href="#achievement-list-ref">Achievement List</a>
-</aside>
-
-<!-- Main Content -->
-<main class="content">
-
-<!-- ============================================================ -->
-<section id="welcome">
-<h1>VibeLife Game Manual</h1>
-<p class="subtitle">The complete guide to exploring, building, battling, and socializing in VibeLife &mdash; a Minecraft Paper server plugin with an optional Fabric client mod.</p>
-
-<div class="card">
-<h4>What is VibeLife?</h4>
-<p>VibeLife is a Paper server plugin that transforms any Minecraft server into a social MMORPG. It adds land ownership with parcels, a full player economy powered by Vibes currency, RPG combat with stats and leveling, friends and guilds, achievements, pets, seasonal content, events, and much more. Players join a Minecraft server running the VibeLife plugin and are automatically set up &mdash; no separate registration needed. Your Minecraft account is your identity. The optional VibeLife Fabric client mod adds rich UI overlays for managing economy, social features, marketplace, achievements, and events.</p>
+<!-- ===== TOP NAV ===== -->
+<div class="top-nav">
+<a href="../" class="logo">
+<span class="cube"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></span>
+<span><span class="pkt">Packet</span><span class="craft">Craft</span></span>
+</a>
+<div class="nav-links">
+<a href="../">Home</a>
+<a href="../#world">World</a>
+<a href="../#social">Social</a>
+<a href="../#plugin">Plugin Guide</a>
+<a href="../devmanual/" class="cta-sm">Dev Docs</a>
 </div>
-</section>
-
-<!-- ============================================================ -->
-<section id="getting-started">
-<h2>1. Getting Started</h2>
-
-<h3 id="joining">Joining a Server</h3>
-<p>Join any Minecraft server running the VibeLife plugin. You are automatically authenticated by your Minecraft account &mdash; no separate registration, login, or account creation is needed. The moment you join, your balance, friends, parcels, and achievements begin tracking.</p>
-
-<div class="highlight-box">
-<strong>Automatic setup:</strong> When you first join a VibeLife server, you start with <strong>1,000 Vibes</strong> (currency). Your inventory, parcels, friends list, and progress are all saved and persist between sessions.
 </div>
 
-<p>If you have the optional <strong>Fabric client mod</strong> installed, you get extra UI screens for economy, social, marketplace, achievements, and events. Without it, everything is still accessible via chat commands.</p>
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+<div class="toc-title">Game Manual</div>
+<a href="#getting-started">Getting Started</a>
+<a href="#commands">Commands</a>
+<a href="#keybinds" class="l2">Keybinds</a>
+<div class="divider"></div>
+<a href="#economy">Economy &amp; Vibes</a>
+<a href="#land">Land &amp; Parcels</a>
+<a href="#regions" class="l2">Regions</a>
+<a href="#parcel-tiers" class="l2">Parcel Tiers</a>
+<a href="#homes">Homes</a>
+<div class="divider"></div>
+<a href="#social">Social</a>
+<a href="#friends" class="l2">Friends</a>
+<a href="#groups" class="l2">Groups &amp; Guilds</a>
+<a href="#marketplace">Marketplace</a>
+<div class="divider"></div>
+<a href="#achievements">Achievements</a>
+<a href="#levels">Levels &amp; Titles</a>
+<a href="#challenges">Challenges</a>
+<div class="divider"></div>
+<a href="#pets">Pets</a>
+<a href="#events">Events</a>
+<a href="#photos">Photos</a>
+</div>
 
-<h3 id="controls-overview">Controls Overview</h3>
-<p>VibeLife uses standard Minecraft controls for all movement and interaction. The plugin adds chat commands, and the Fabric mod adds keybinds for quick access to feature screens.</p>
+<!-- ===== CONTENT ===== -->
+<div class="content">
 
+<h1>PacketCraft Game Manual</h1>
+<p class="subtitle">The complete guide to everything you can do on a PacketCraft server.</p>
+
+<!-- GETTING STARTED -->
+<h2 id="getting-started">Getting Started</h2>
+<p>PacketCraft transforms a standard Minecraft server into a social MMORPG platform with economy, land ownership, achievements, pets, events, and much more. When you join a PacketCraft server, your account is created automatically. No registration needed.</p>
+<div class="tip">
+<strong>Tip:</strong> Install the PacketCraft Fabric mod for the best experience. It adds keybind-activated GUI screens for economy, social, marketplace, achievements, and events &mdash; no chat commands needed.
+</div>
+<p>Your progress is tracked from the moment you join: balance, friends, parcels, achievements, pet bonds, and event participation. Everything persists across sessions.</p>
+
+<!-- COMMANDS -->
+<h2 id="commands">Commands</h2>
+<p>PacketCraft provides 11 player commands. Type them in chat to use them.</p>
+
+<h3>Land &amp; Parcels</h3>
 <table>
-<tr><th>Action</th><th>Input</th></tr>
-<tr><td>Move forward / back / left / right</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td></tr>
-<tr><td>Jump</td><td><kbd>Space</kbd></td></tr>
-<tr><td>Sneak / crouch</td><td><kbd>Shift</kbd></td></tr>
-<tr><td>Sprint</td><td>Double-tap <kbd>W</kbd> or <kbd>Ctrl</kbd></td></tr>
-<tr><td>Place block</td><td>Right-click</td></tr>
-<tr><td>Break block</td><td>Left-click (hold)</td></tr>
-<tr><td>Attack / interact</td><td>Left-click / Right-click</td></tr>
-<tr><td>Open inventory</td><td><kbd>E</kbd></td></tr>
-<tr><td>Open chat</td><td><kbd>T</kbd></td></tr>
-<tr><td>Run command</td><td><kbd>/</kbd></td></tr>
+<tr><th>Command</th><th>Description</th></tr>
+<tr><td><code>/parcel info</code></td><td>View info about the parcel you're standing on &mdash; owner, tier, collaborators</td></tr>
+<tr><td><code>/parcel claim</code></td><td>Claim the unclaimed parcel you're standing on</td></tr>
+<tr><td><code>/parcel release</code></td><td>Give up your claimed parcel, making it available to others</td></tr>
+<tr><td><code>/parcel list</code></td><td>List all parcels in the current region. Aliases: <code>/plot</code>, <code>/land</code></td></tr>
 </table>
 
-<h4>Fabric Mod Keybinds</h4>
-<p>If you have the VibeLife Fabric mod installed, these keys open feature screens directly in-game:</p>
+<h3>Friends &amp; Social</h3>
 <table>
-<tr><th>Key</th><th>Screen</th><th>Description</th></tr>
-<tr><td><kbd>V</kbd></td><td>Economy</td><td>Check your balance, view transactions, send Vibes to players</td></tr>
-<tr><td><kbd>N</kbd></td><td>Social</td><td>Friends list, groups, direct messages, player profiles</td></tr>
-<tr><td><kbd>M</kbd></td><td>Marketplace</td><td>Buy and sell items, place bids on auctions, manage listings</td></tr>
-<tr><td><kbd>J</kbd></td><td>Achievements</td><td>View progress, browse challenges, check leaderboards, equip titles</td></tr>
-<tr><td><kbd>K</kbd></td><td>Events</td><td>Upcoming events, RSVP, event leaderboards and rewards</td></tr>
+<tr><th>Command</th><th>Description</th></tr>
+<tr><td><code>/friends list</code></td><td>View your friends list and pending requests</td></tr>
+<tr><td><code>/friends add &lt;player&gt;</code></td><td>Send a friend request to another player</td></tr>
+<tr><td><code>/friends remove &lt;player&gt;</code></td><td>Remove a player from your friends list</td></tr>
+<tr><td><code>/friends messages</code></td><td>Read offline messages. Alias: <code>/friends msg</code></td></tr>
 </table>
 
-<h4>Chat Commands (Quick Reference)</h4>
+<h3>Economy</h3>
 <table>
-<tr><th>Command</th><th>What it does</th></tr>
-<tr><td><code>/parcel info</code></td><td>Info about the land you're standing on</td></tr>
-<tr><td><code>/parcel claim</code></td><td>Claim unclaimed land as yours</td></tr>
-<tr><td><code>/parcel release</code></td><td>Give up your claimed land</td></tr>
-<tr><td><code>/parcel list</code></td><td>List all parcels in the current region</td></tr>
-<tr><td><code>/friends list</code></td><td>See your friends and pending requests</td></tr>
-<tr><td><code>/friends add &lt;player&gt;</code></td><td>Send a friend request</td></tr>
-<tr><td><code>/balance</code></td><td>Check your Vibes balance</td></tr>
+<tr><th>Command</th><th>Description</th></tr>
+<tr><td><code>/balance</code></td><td>Check your current Vibes balance</td></tr>
 <tr><td><code>/pay &lt;player&gt; &lt;amount&gt;</code></td><td>Send Vibes to another player</td></tr>
-<tr><td><code>/market</code></td><td>Browse the marketplace</td></tr>
-<tr><td><code>/w &lt;player&gt; &lt;message&gt;</code></td><td>Send a private whisper</td></tr>
+<tr><td><code>/market</code></td><td>Browse the player marketplace</td></tr>
 </table>
 
-<h3 id="fabric-mod">The Fabric Client Mod</h3>
-<p>The VibeLife Fabric mod is optional but enhances your experience significantly. It adds rich GUI screens for all major features, so you can manage your economy, friends, marketplace, achievements, and events through visual interfaces instead of chat commands alone. Install it like any other Fabric mod &mdash; drop the JAR into your <code>mods/</code> folder.</p>
+<!-- KEYBINDS -->
+<h3 id="keybinds">Fabric Mod Keybinds</h3>
+<p>With the PacketCraft Fabric mod installed, these keys open full GUI screens:</p>
+<table>
+<tr><th>Key</th><th>Screen</th><th>Features</th></tr>
+<tr><td><kbd>V</kbd></td><td>Economy</td><td>Balance, transactions, send Vibes</td></tr>
+<tr><td><kbd>N</kbd></td><td>Social</td><td>Friends, groups, messages, profiles, online status</td></tr>
+<tr><td><kbd>M</kbd></td><td>Marketplace</td><td>Buy, sell, auctions, storefronts</td></tr>
+<tr><td><kbd>J</kbd></td><td>Achievements</td><td>Progress, challenges, leaderboards, titles</td></tr>
+<tr><td><kbd>K</kbd></td><td>Events</td><td>Upcoming events, RSVP, leaderboards, rewards</td></tr>
+</table>
 
-<div class="tip"><strong>Tip:</strong> Everything you can do with the Fabric mod can also be done via chat commands. The mod just makes it more convenient with dedicated UI screens.</div>
-</section>
+<!-- ECONOMY -->
+<h2 id="economy">Economy &amp; Vibes</h2>
+<p>The PacketCraft economy is powered by <strong>Vibes</strong>, the universal currency. You start with a small balance and earn more by playing.</p>
 
-<!-- ============================================================ -->
-<section id="world">
-<h2>2. The World</h2>
+<h3>Earning Vibes</h3>
+<ul>
+<li>Complete achievements (each awards XP and sometimes Vibes)</li>
+<li>Sell items on the marketplace</li>
+<li>Win event prizes</li>
+<li>Complete daily and weekly challenges</li>
+<li>Receive payments from other players</li>
+</ul>
+
+<h3>Spending Vibes</h3>
+<ul>
+<li>Buy items from the marketplace</li>
+<li>Bid on auctions</li>
+<li>Pay other players with <code>/pay &lt;player&gt; &lt;amount&gt;</code></li>
+<li>Purchase blueprints from other builders</li>
+<li>Guild treasury deposits</li>
+</ul>
+<div class="info-box">
+<strong>Note:</strong> Vibes are shared across all PacketCraft servers. Your balance travels with you.
+</div>
+
+<!-- LAND & PARCELS -->
+<h2 id="land">Land &amp; Parcels</h2>
+<p>The world is divided into parcels &mdash; protected plots of land that can be claimed, built on, and shared.</p>
 
 <h3 id="regions">Regions</h3>
-<p>The VibeLife world is divided into <strong>regions</strong> &mdash; discrete, named areas that players can explore. Each region has its own terrain, parcels, enemies, and atmosphere. Regions track their population in real-time and support many concurrent players.</p>
-
-<h3 id="parcels">Parcels &amp; Land Ownership</h3>
-<p>Each region is subdivided into rectangular <strong>parcels</strong> defined by coordinate boundaries. Parcels are the foundation of the building and ownership system.</p>
-
-<h4>Parcel Tiers</h4>
+<p>PacketCraft worlds are organized into 6 distinct regions, each with unique terrain, atmosphere, and community:</p>
 <table>
-<tr><th>Tier</th><th>Description</th><th>Building Access</th></tr>
-<tr><td><strong>Public</strong></td><td>Community land, open to all</td><td>Anyone can build</td></tr>
-<tr><td><strong>Residential</strong></td><td>Claimable by any player</td><td>Owner and collaborators only</td></tr>
-<tr><td><strong>Premium</strong></td><td>Premium claimable land</td><td>Owner and collaborators only</td></tr>
+<tr><th>Region</th><th>Terrain</th><th>Mood</th><th>Capacity</th></tr>
+<tr><td><strong>Aurora Docks</strong></td><td>Floating harbor</td><td>Social</td><td>80 players</td></tr>
+<tr><td><strong>Glass Garden</strong></td><td>Botanical sky dome</td><td>Relaxed</td><td>50 players</td></tr>
+<tr><td><strong>Neon District</strong></td><td>Urban grid</td><td>Energetic</td><td>100 players</td></tr>
+<tr><td><strong>Cloud Summit</strong></td><td>Mountain peak</td><td>Adventurous</td><td>60 players</td></tr>
+<tr><td><strong>Cozy Village</strong></td><td>Autumn town</td><td>Cozy</td><td>40 players</td></tr>
+<tr><td><strong>Zen Retreat</strong></td><td>Japanese garden</td><td>Peaceful</td><td>30 players</td></tr>
 </table>
 
-<h4>Claiming Land</h4>
-<p>To claim an unclaimed residential or premium parcel, stand on it and type <code>/parcel claim</code>. Once claimed, only you and any collaborators you add can build on that parcel. Use <code>/parcel release</code> to release parcels you no longer need. Use <code>/parcel info</code> to see who owns the land you're standing on.</p>
-
-<h4>Collaborators</h4>
-<p>Parcel owners can invite other players as <strong>collaborators</strong>, granting them full building rights on that parcel. This enables group building projects.</p>
-
-<h3 id="navigation">Navigation &amp; Teleportation</h3>
-<p>Move through the world using standard Minecraft movement. The plugin adds waypoint-based teleportation on top:</p>
-
-<h4>Teleport Points</h4>
-<ul>
-<li><strong>Create waypoint</strong> &mdash; saves your current position with a custom name</li>
-<li><strong>List waypoints</strong> &mdash; view all your saved teleport points</li>
-<li><strong>Teleport</strong> &mdash; instantly travel to any saved waypoint</li>
-<li><strong>Cross-region teleport</strong> &mdash; travel between different regions; your position in the previous region is saved</li>
-</ul>
-
-<h3 id="day-night">Day/Night Cycle</h3>
-<p>VibeLife uses Minecraft's day/night cycle, enhanced by the plugin with seasonal atmosphere changes affecting sky tints, fog, and ambient lighting.</p>
-
-<h3 id="seasons">Seasons &amp; Weather</h3>
-<p>The world follows a real-time seasonal calendar:</p>
-<table>
-<tr><th>Season</th><th>Months</th><th>Ambient Effects</th><th>Theme</th></tr>
-<tr><td>Spring</td><td>March &ndash; May</td><td>Cherry blossoms</td><td>Warm pastels, blooming</td></tr>
-<tr><td>Summer</td><td>June &ndash; August</td><td>Fireflies</td><td>Bright, tropical</td></tr>
-<tr><td>Autumn</td><td>September &ndash; November</td><td>Falling leaves</td><td>Warm oranges, harvest</td></tr>
-<tr><td>Winter</td><td>December &ndash; February</td><td>Snowflakes</td><td>Cool blues, cozy</td></tr>
-</table>
-<p>Each season changes ambient particle effects and unlocks seasonal items, achievements, and events.</p>
-</section>
-
-<!-- ============================================================ -->
-<section id="building">
-<h2>3. Building</h2>
-
-<h3 id="block-building">Block Building</h3>
-<p>Building in VibeLife is standard Minecraft block building. Place blocks, break blocks, craft items &mdash; the full Minecraft experience. The VibeLife plugin controls <em>where</em> you can build through the parcel system.</p>
-
-<div class="tip"><strong>Tip:</strong> You can only build on parcels where you have permission &mdash; public parcels, parcels you own, or parcels where you're a collaborator. Use <code>/parcel info</code> to check permissions for the land you're standing on.</div>
-
-<h4>How It Works</h4>
-<ul>
-<li>On <strong>your parcel</strong>, you can freely place and break blocks</li>
-<li>On <strong>public parcels</strong>, anyone can build</li>
-<li>On a <strong>collaborator's parcel</strong>, you have full building rights if they added you</li>
-<li>On <strong>unclaimed land</strong>, you cannot build &mdash; claim it first with <code>/parcel claim</code></li>
-<li>On <strong>another player's parcel</strong>, building is denied (a message shows the owner's name)</li>
-</ul>
-
-<h3 id="permissions">Build Permissions</h3>
-<div class="card">
-<h4>Permission Rules</h4>
-<ul>
-<li><strong>Public parcels</strong> &mdash; Everyone can build freely</li>
-<li><strong>Your parcel</strong> &mdash; Full control over your claimed land</li>
-<li><strong>Collaborator</strong> &mdash; Full build rights if the owner added you</li>
-<li><strong>Unclaimed parcel</strong> &mdash; Cannot build; claim it first</li>
-<li><strong>Other player's parcel</strong> &mdash; Denied (message shows owner name)</li>
-</ul>
-</div>
-
-<h3 id="blueprints">Blueprints</h3>
-<p>Save your creations as <strong>blueprints</strong> &mdash; reusable templates that store the full arrangement of blocks. Blueprints can be:</p>
-<ul>
-<li><strong>Saved</strong> from your current build</li>
-<li><strong>Loaded</strong> from your blueprint library</li>
-<li><strong>Placed</strong> to instantly recreate the entire arrangement on your parcel</li>
-<li><strong>Sold</strong> on the marketplace for other players to purchase</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="combat">
-<h2>4. Combat &amp; RPG</h2>
-<p>Combat in VibeLife uses standard Minecraft combat mechanics &mdash; melee hits, ranged attacks, blocking. The plugin layers an RPG system on top, tracking stats, XP, levels, loot drops, and more.</p>
-
-<h3 id="combat-stats">Player Stats</h3>
-<p>Every player has RPG combat stats tracked by the plugin that scale with their combat level:</p>
-
-<div class="card">
-<h4>Stats at a Glance</h4>
-<div class="bar bar-hp"><div class="bar-bg"></div><div class="bar-fill"></div></div>
-<p><strong>HP</strong> (Health Points) = 100 + level x 20</p>
-<div class="bar bar-mp"><div class="bar-bg"></div><div class="bar-fill"></div></div>
-<p><strong>Mana</strong> = 50 + level x 10</p>
-<div class="bar bar-xp"><div class="bar-bg"></div><div class="bar-fill"></div></div>
-<p><strong>XP to Next Level</strong> = level x 100</p>
-</div>
-
-<table>
-<tr><th>Stat</th><th>Formula</th><th>Level 1</th><th>Level 10</th><th>Level 25</th></tr>
-<tr><td>Max HP</td><td>100 + level x 20</td><td>120</td><td>300</td><td>600</td></tr>
-<tr><td>Max Mana</td><td>50 + level x 10</td><td>60</td><td>150</td><td>300</td></tr>
-<tr><td>Strength</td><td>10 + level x 2</td><td>12</td><td>30</td><td>60</td></tr>
-<tr><td>Defense</td><td>5 + level x 2</td><td>7</td><td>25</td><td>55</td></tr>
-<tr><td>XP to Next</td><td>level x 100</td><td>100</td><td>1,000</td><td>2,500</td></tr>
-</table>
-
-<h4>Regeneration</h4>
-<p>Health and mana regenerate every second while alive:</p>
-<ul>
-<li><strong>HP Regen</strong> &mdash; 2% of Max HP per second</li>
-<li><strong>Mana Regen</strong> &mdash; 3% of Max Mana per second</li>
-</ul>
-
-<h3 id="attacking">Attacking</h3>
-<p>Combat uses standard Minecraft attack mechanics. Hit mobs with your weapon or use ranged attacks. The plugin tracks two damage styles on top of normal Minecraft combat:</p>
-
+<h3 id="parcel-tiers">Parcel Tiers</h3>
+<p>Parcels come in three tiers:</p>
 <div class="card-grid">
 <div class="card">
-<h4>Melee Attack</h4>
-<p><strong>Damage</strong> = Strength x 1.0 &minus; Enemy Defense<br>
-<strong>Mana Cost</strong>: None<br>
-<strong>Best for</strong>: Sustained combat, no resource cost</p>
+<h4>Public</h4>
+<p>Open to all players. Anyone can build here. Great for community projects and newcomers.</p>
 </div>
 <div class="card">
-<h4>Magic Attack</h4>
-<p><strong>Damage</strong> = Strength x 1.5 &minus; Enemy Defense<br>
-<strong>Mana Cost</strong>: 20 per cast<br>
-<strong>Best for</strong>: Burst damage, 50% stronger than melee</p>
+<h4>Standard</h4>
+<p>Claimable by any player. Once claimed, only the owner and invited collaborators can build.</p>
+</div>
+<div class="card">
+<h4>Premium</h4>
+<p>Larger plots in prime locations. Same ownership rules as standard but with more space.</p>
 </div>
 </div>
 
-<div class="info"><strong>Critical Hits:</strong> Every attack has a 10% chance to deal <strong>double damage</strong>. Critical hits are announced in chat.</div>
-<p>Minimum damage is always 1, even if the enemy's defense exceeds your strength.</p>
-
-<h3 id="enemies">Enemies</h3>
-<p>The plugin spawns custom enemies in regions. These mobs have AI with multiple behavior states and are tracked by the RPG system:</p>
-
-<table>
-<tr><th>Variant</th><th>HP</th><th>STR</th><th>DEF</th><th>Difficulty</th></tr>
-<tr><td>Slime</td><td>50</td><td>5</td><td>2</td><td>Easy</td></tr>
-<tr><td>Skeleton</td><td>80</td><td>10</td><td>5</td><td>Medium</td></tr>
-<tr><td>Golem</td><td>200</td><td>15</td><td>15</td><td>Hard (tanky)</td></tr>
-<tr><td>Shadow</td><td>100</td><td>20</td><td>3</td><td>Hard (glass cannon)</td></tr>
-<tr><td>Drake</td><td>500</td><td>25</td><td>20</td><td>Boss</td></tr>
-</table>
-<p>Enemy stats scale with their level: HP increases by 25% per level, Strength and Defense by 20% per level. Enemies can spawn at levels 1&ndash;5.</p>
-
-<h4>Enemy AI Behavior</h4>
-<ol>
-<li><strong>Idle</strong> &mdash; Standing still, scanning for players within 8 blocks</li>
-<li><strong>Patrol</strong> &mdash; Wandering randomly within 5 blocks of spawn (20% chance per tick)</li>
-<li><strong>Aggro</strong> &mdash; Player detected! Locks on to nearest target</li>
-<li><strong>Chase</strong> &mdash; Moves toward player</li>
-<li><strong>Attack</strong> &mdash; Within melee range, attacks every 1.5 seconds</li>
-<li><strong>Dead</strong> &mdash; Defeated; respawns after 30 seconds at original spawn point</li>
-</ol>
-<p>Enemies give up the chase if the player moves more than 15 blocks from the enemy's spawn point.</p>
-
-<h3 id="loot">Loot &amp; Drops</h3>
-<p>Defeating an enemy always drops Vibes currency plus a chance at rare items:</p>
-<table>
-<tr><th>Enemy</th><th>Vibes</th><th>Special Drop</th><th>Drop Chance</th></tr>
-<tr><td>Slime</td><td>5&ndash;15</td><td>&mdash;</td><td>&mdash;</td></tr>
-<tr><td>Skeleton</td><td>10&ndash;25</td><td>Bone</td><td>30%</td></tr>
-<tr><td>Golem</td><td>20&ndash;50</td><td>Stone Core</td><td>20%</td></tr>
-<tr><td>Shadow</td><td>15&ndash;40</td><td>Shadow Essence</td><td>15%</td></tr>
-<tr><td>Drake</td><td>50&ndash;150</td><td>Drake Scale</td><td>10%</td></tr>
-</table>
-
-<h3 id="death-respawn">Death &amp; Respawn</h3>
-<p>When your HP reaches zero:</p>
-<ol>
-<li>You die and see the standard Minecraft death screen</li>
-<li><strong>5% of your Vibes</strong> are deducted as a death penalty</li>
-<li>Your RPG stats (HP and Mana) are fully restored on respawn</li>
-<li>You respawn at your bed or world spawn as normal</li>
-<li>Your death counter increases</li>
-</ol>
-<div class="warn"><strong>Warning:</strong> The death penalty can be significant at high wealth levels. Bank your Vibes by investing in marketplace items if you're heading into dangerous territory.</div>
-
-<h3 id="leveling">Leveling &amp; XP</h3>
-<p>Defeating enemies awards <strong>20 x enemy level</strong> XP. When your accumulated XP reaches the threshold, you level up automatically:</p>
+<h3>Claiming and Managing</h3>
 <ul>
-<li>All stats are recalculated to new level values</li>
-<li>HP and Mana are fully restored</li>
-<li>Excess XP carries over to the next level</li>
-<li>A "Level Up!" notification appears in chat</li>
-<li>Maximum combat level: <strong>100</strong></li>
+<li>Walk to an unclaimed parcel and use <code>/parcel claim</code></li>
+<li>Only you and your collaborators can place or remove blocks on your parcel</li>
+<li>Transfer ownership or add collaborators through the API or admin tools</li>
+<li>Release your parcel with <code>/parcel release</code> to make it available again</li>
 </ul>
-</section>
 
-<!-- ============================================================ -->
-<section id="social">
-<h2>5. Social Features</h2>
+<!-- HOMES -->
+<h2 id="homes">Homes</h2>
+<p>Set a parcel as your home for quick teleportation and visitor features.</p>
+<ul>
+<li><strong>Set home</strong> &mdash; Designate any parcel you own as your home</li>
+<li><strong>Teleport home</strong> &mdash; Instantly return to your home parcel</li>
+<li><strong>Privacy controls</strong> &mdash; Set your home as public, friends-only, or private</li>
+<li><strong>Ratings</strong> &mdash; Other players can rate and favorite your home</li>
+<li><strong>Featured homes</strong> &mdash; Top-rated homes appear on the showcase</li>
+<li><strong>Visitor tracking</strong> &mdash; See who has visited your home</li>
+</ul>
 
-<h3 id="chat-system">Chat</h3>
-<p>VibeLife uses Minecraft's chat system with additional features layered by the plugin:</p>
-
-<h4>Region Chat</h4>
-<p>Standard Minecraft chat broadcasts to everyone in your region. Messages are limited to 180 characters.</p>
-
-<h4>Whisper (Private Messages)</h4>
-<p>Type <code>/w &lt;username&gt; &lt;message&gt;</code> to send a private message to another player. Whispers are only visible to sender and recipient.</p>
-
-<h4>Group Chat</h4>
-<p>Members of a group (guild) can chat in their group channel. Messages are visible to all group members regardless of which region they're in.</p>
-
-<p>Chat history is buffered (last 50 messages per region) and sent to you when you join a region.</p>
+<!-- SOCIAL -->
+<h2 id="social">Social</h2>
+<p>PacketCraft has a full social system built in. Connect with other players, form groups, and build communities.</p>
 
 <h3 id="friends">Friends</h3>
-<p>Build your social network with the friends system:</p>
 <ul>
-<li><code>/friends add &lt;player&gt;</code> &mdash; Send a friend request</li>
-<li><code>/friends list</code> &mdash; See friends and pending requests</li>
-<li><code>/friends remove &lt;player&gt;</code> &mdash; Remove a friend</li>
-<li><strong>Block</strong> &mdash; Block a player to prevent them from whispering or interacting with you</li>
-<li><strong>Unblock</strong> &mdash; Remove a block</li>
+<li>Send friend requests with <code>/friends add &lt;player&gt;</code></li>
+<li>View your friends list and their online status</li>
+<li>Send and receive offline messages</li>
+<li>Block players you don't want to interact with</li>
+<li>View player profiles with bio and avatar info</li>
 </ul>
-<p>Your friends list shows each friend's online status, current region, and custom status message.</p>
 
-<h4>Offline Messages</h4>
-<p>Send messages (up to 1,000 characters) to friends who are offline. They'll see your messages when they next log in via <code>/friends messages</code>.</p>
+<h3 id="groups">Groups &amp; Guilds</h3>
+<p>Groups are player-created organizations with shared resources and hierarchy.</p>
+<ul>
+<li><strong>Create a group</strong> with a name and description</li>
+<li><strong>Invite members</strong> and assign roles (member, officer, leader)</li>
+<li><strong>Shared treasury</strong> &mdash; deposit and withdraw Vibes as a group</li>
+<li><strong>Guild parcels</strong> &mdash; assign parcels to the guild for shared building</li>
+<li><strong>Emblems and banners</strong> &mdash; customize your guild's visual identity</li>
+<li><strong>Alliances</strong> &mdash; form alliances with other guilds, accept or break them</li>
+</ul>
 
-<h3 id="groups-guilds">Groups &amp; Guilds</h3>
-<p>Create or join groups (guilds) for organized collaboration:</p>
+<!-- MARKETPLACE -->
+<h2 id="marketplace">Marketplace</h2>
+<p>The player-driven marketplace supports three types of transactions:</p>
 
-<h4>Roles</h4>
+<h3>Fixed-Price Listings</h3>
+<p>List items at a set price. Buyers purchase instantly. Browse listings with <code>/market</code> or press <kbd>M</kbd>.</p>
+
+<h3>Auctions</h3>
+<p>List items for auction with a starting price. Other players place bids. Highest bidder wins when the auction ends.</p>
+
+<h3>Direct Trading</h3>
+<p>Propose a trade to another player with specific items and Vibes. The other player can accept or decline.</p>
+
+<h3>Storefronts</h3>
+<p>Set up a persistent storefront to sell your goods. Other players can browse your inventory, rate your store, and place commissions for custom work.</p>
+<ul>
+<li>Price history tracking per item</li>
+<li>Trending items feed</li>
+<li>Commission system for custom orders</li>
+</ul>
+
+<!-- ACHIEVEMENTS -->
+<h2 id="achievements">Achievements</h2>
+<p>There are 27 achievements across 5 categories. They unlock automatically as you play. Each awards XP toward your level.</p>
+
+<h3>Explorer (5 achievements)</h3>
 <table>
-<tr><th>Role</th><th>Permissions</th></tr>
-<tr><td><strong>Member</strong></td><td>Group chat, view treasury</td></tr>
-<tr><td><strong>Officer</strong></td><td>Manage members, treasury transactions, edit emblem/banner</td></tr>
-<tr><td><strong>Owner</strong></td><td>Full control, promote members, assign parcels, manage alliances</td></tr>
+<tr><th>Achievement</th><th>Description</th><th>XP</th></tr>
+<tr><td>First Steps</td><td>Visit your first region</td><td>25</td></tr>
+<tr><td>Wanderer</td><td>Visit 3 different regions</td><td>75</td></tr>
+<tr><td>Cartographer</td><td>Visit 6 different regions</td><td>200</td></tr>
+<tr><td>Frequent Flyer</td><td>Teleport 10 times</td><td>100</td></tr>
+<tr><td>Marathon Runner</td><td>Walk 1000 distance units</td><td>150</td></tr>
 </table>
 
-<h4>Guild Features</h4>
-<ul>
-<li><strong>Treasury</strong> &mdash; Shared guild bank. Members can deposit Vibes; officers/owners can withdraw</li>
-<li><strong>Emblem</strong> &mdash; Customize your guild's icon color and design</li>
-<li><strong>Banner</strong> &mdash; Set a guild banner message (up to 200 characters)</li>
-<li><strong>Parcel Ownership</strong> &mdash; Assign player-owned parcels to the guild for shared building</li>
-<li><strong>Alliances</strong> &mdash; Form alliances with other guilds for cross-guild building rights and mutual visibility</li>
-</ul>
-
-<h3 id="emotes">Emotes</h3>
-<p>Express yourself with emotes across 4 categories:</p>
-
-<div class="card-grid">
-<div class="card">
-<h4>Greetings</h4>
-<p>Wave, Bow, Salute</p>
-</div>
-<div class="card">
-<h4>Expressions</h4>
-<p>Dance, Cheer, Laugh, Cry</p>
-</div>
-<div class="card">
-<h4>Actions</h4>
-<p>Sit, Meditate, Yoga, Stretch, High-Five</p>
-</div>
-<div class="card">
-<h4>Fun</h4>
-<p>Dab, Backflip, Air Guitar</p>
-</div>
-</div>
-
-<h4>Emote Combos</h4>
-<p>When two players perform the same compatible emote within <strong>3 seconds</strong> and <strong>3 blocks</strong> of each other, a special combo effect triggers:</p>
-<ul>
-<li><strong>High-Five</strong> &mdash; celebratory burst</li>
-<li><strong>Dance</strong> &mdash; synchronized dance effect</li>
-<li><strong>Bow</strong> &mdash; respectful exchange</li>
-<li><strong>Wave</strong> &mdash; friendly greeting effect</li>
-</ul>
-
-<h3 id="voice-chat">Voice Chat</h3>
-<p>VibeLife supports spatial voice chat within regions:</p>
-<ul>
-<li><strong>Join/Leave</strong> &mdash; Connect to your region's voice channel (max 32 participants)</li>
-<li><strong>Mute</strong> &mdash; Stop transmitting your voice</li>
-<li><strong>Deafen</strong> &mdash; Mute all incoming audio</li>
-<li><strong>Volume</strong> &mdash; Adjust from 0.0 to 1.0</li>
-</ul>
-
-<h4>Spatial Audio</h4>
-<p>Voice volume scales based on distance. Players beyond 30 blocks are silent. This creates natural proximity-based conversations.</p>
-
-<h3 id="presence">Presence &amp; Status</h3>
-<p>Set your online status to communicate availability:</p>
-<ul>
-<li><strong>Online</strong> &mdash; Actively playing (default)</li>
-<li><strong>Busy</strong> &mdash; In a focused activity</li>
-<li><strong>Away</strong> &mdash; Auto-set after 10 minutes of inactivity</li>
-<li><strong>Invisible</strong> &mdash; Appear offline to others</li>
-<li><strong>Offline</strong> &mdash; Logged out</li>
-</ul>
-<p>You can also set a custom status message (e.g., "Building my castle!" or "AFK for dinner").</p>
-
-<h3 id="photos">Photos</h3>
-<p>Capture and share screenshots of your adventures:</p>
-<ul>
-<li><strong>Take Photo</strong> &mdash; Capture with title, position, and metadata</li>
-<li><strong>Filters</strong> &mdash; None, Vintage, Noir, Warm, Cool, Dreamy, Pixel, Posterize</li>
-<li><strong>Visibility</strong> &mdash; Public, Friends-only, or Private</li>
-<li><strong>Interactions</strong> &mdash; Like and comment on photos (comments up to 500 characters)</li>
-<li><strong>Discovery</strong> &mdash; Browse the global feed, player galleries, and featured photos</li>
-</ul>
-
-<h3 id="events">Events</h3>
-<p>Create and attend community events:</p>
-
-<h4>Event Types</h4>
-<div class="card-grid">
-<div class="card"><h4>Build Competition</h4><p>Compete to build the best creation</p></div>
-<div class="card"><h4>Dance Party</h4><p>Social dance gathering</p></div>
-<div class="card"><h4>Grand Opening</h4><p>Celebrate a new location</p></div>
-<div class="card"><h4>Workshop</h4><p>Learn and share skills</p></div>
-<div class="card"><h4>Meetup</h4><p>General social gathering</p></div>
-<div class="card"><h4>Concert</h4><p>Music performances</p></div>
-<div class="card"><h4>Market Day</h4><p>Trading and commerce fair</p></div>
-<div class="card"><h4>Exploration</h4><p>Group adventure expedition</p></div>
-</div>
-
-<p>Events support <strong>RSVP</strong> with optional max attendees, <strong>recurring schedules</strong> (daily, weekly, monthly), <strong>prize descriptions</strong>, and <strong>leaderboards</strong> tracking top creators and most attended events. Press <kbd>K</kbd> with the Fabric mod to see upcoming events.</p>
-
-<h3 id="activity-feed">Activity Feed</h3>
-<p>Stay updated on what's happening in VibeLife:</p>
-<ul>
-<li><strong>Global Feed</strong> &mdash; See all player activities (builds, photos, achievements, events)</li>
-<li><strong>Friends Feed</strong> &mdash; Activities from accepted friends only</li>
-<li><strong>Player Activity</strong> &mdash; View a specific player's activity history</li>
-<li><strong>Like Activities</strong> &mdash; Show appreciation for others' activities</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="economy">
-<h2>6. Economy</h2>
-
-<h3 id="currency">Currency</h3>
-<p>VibeLife's economy runs on <strong>Vibes</strong> &mdash; the universal in-game currency. New players start with <strong>1,000 Vibes</strong>. Check your balance any time with <code>/balance</code>.</p>
-
-<h4>Earning Vibes</h4>
-<ul>
-<li><strong>Combat loot</strong> &mdash; Defeat enemies for guaranteed Vibes drops</li>
-<li><strong>Marketplace sales</strong> &mdash; Sell items to other players</li>
-<li><strong>Achievements &amp; challenges</strong> &mdash; XP and Vibes rewards</li>
-<li><strong>Quest rewards</strong> &mdash; NPC quest completion</li>
-<li><strong>Gifts</strong> &mdash; Receive from other players via <code>/pay</code></li>
-</ul>
-
-<h4>Spending Vibes</h4>
-<ul>
-<li><strong>Marketplace purchases</strong> &mdash; Buy items, blueprints, and resources</li>
-<li><strong>Pay players</strong> &mdash; Send Vibes with <code>/pay &lt;player&gt; &lt;amount&gt;</code></li>
-<li><strong>Guild treasury</strong> &mdash; Deposit into your guild's bank</li>
-<li><strong>Death penalty</strong> &mdash; Lose 5% on death in combat</li>
-</ul>
-<p>All transactions are logged with type, amount, and timestamp for full audit trail.</p>
-
-<h3 id="marketplace">Marketplace</h3>
-<p>The marketplace is VibeLife's player-driven economy hub. Access it via <code>/market</code> or press <kbd>M</kbd> with the Fabric mod:</p>
-<ul>
-<li><strong>List items</strong> &mdash; Set a fixed price or create an auction</li>
-<li><strong>Browse</strong> &mdash; Filter by item kind, price range, and sort order</li>
-<li><strong>Buy</strong> &mdash; Purchase fixed-price items instantly</li>
-<li><strong>Price History</strong> &mdash; View the last 50 sales for any item to track market trends</li>
-<li><strong>Cancel</strong> &mdash; Remove your active listings</li>
-</ul>
-
-<h4>Listable Item Types</h4>
-<p>Outfit, Accessory, Tool, Pet, Decoration, Consumable, Blueprint</p>
-
-<h3 id="trading">Trading</h3>
-<p>Direct player-to-player trading with the trade offer system:</p>
-<ol>
-<li>Create a trade offer specifying items and/or Vibes you're offering</li>
-<li>Specify what items and/or Vibes you want in return</li>
-<li>The recipient can <strong>accept</strong>, <strong>decline</strong>, or counter</li>
-<li>On acceptance, items and Vibes are exchanged atomically</li>
-</ol>
-
-<h3 id="auctions">Auctions</h3>
-<p>List items for competitive bidding:</p>
-<ul>
-<li>Set a <strong>minimum bid</strong> amount</li>
-<li>Auctions run for a set duration (default: 24 hours)</li>
-<li>Bid Vibes are <strong>held</strong> (unavailable for other purchases) until you're outbid</li>
-<li>When outbid, your held Vibes are automatically released</li>
-<li>Highest bidder wins when the auction expires</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="progression">
-<h2>7. Progression</h2>
-
-<h3 id="achievements">Achievements</h3>
-<p>VibeLife features <strong>30+ achievements</strong> across 5 categories, each awarding XP. Achievements unlock automatically as you play &mdash; no need to activate or track them.</p>
-
-<h4>Explorer</h4>
+<h3>Builder (6 achievements)</h3>
 <table>
-<tr><th>Achievement</th><th>Requirement</th><th>XP</th></tr>
-<tr><td>First Steps</td><td>Visit 1 region</td><td>25</td></tr>
-<tr><td>Wanderer</td><td>Visit 3 regions</td><td>75</td></tr>
-<tr><td>Cartographer</td><td>Visit 6 regions</td><td>200</td></tr>
-<tr><td>Frequent Flyer</td><td>Use 10 teleports</td><td>100</td></tr>
-<tr><td>Marathon Runner</td><td>Travel 1,000 distance</td><td>150</td></tr>
-</table>
-
-<h4>Builder</h4>
-<table>
-<tr><th>Achievement</th><th>Requirement</th><th>XP</th></tr>
-<tr><td>First Build</td><td>Place 1 block on your parcel</td><td>25</td></tr>
-<tr><td>Handyman</td><td>Place 10 blocks</td><td>75</td></tr>
-<tr><td>Architect</td><td>Place 50 blocks</td><td>200</td></tr>
-<tr><td>Master Builder</td><td>Place 100 blocks</td><td>500</td></tr>
+<tr><th>Achievement</th><th>Description</th><th>XP</th></tr>
+<tr><td>First Build</td><td>Place your first object</td><td>25</td></tr>
+<tr><td>Handyman</td><td>Place 10 objects</td><td>75</td></tr>
+<tr><td>Architect</td><td>Place 50 objects</td><td>200</td></tr>
+<tr><td>Master Builder</td><td>Place 100 objects</td><td>500</td></tr>
 <tr><td>Blueprint Creator</td><td>Create 1 blueprint</td><td>100</td></tr>
-<tr><td>Variety Builder</td><td>Use 6 block types</td><td>150</td></tr>
+<tr><td>Variety Builder</td><td>Use all 6 asset types</td><td>150</td></tr>
 </table>
 
-<h4>Social</h4>
+<h3>Social (7 achievements)</h3>
 <table>
-<tr><th>Achievement</th><th>Requirement</th><th>XP</th></tr>
-<tr><td>Hello World</td><td>Send 10 messages</td><td>25</td></tr>
-<tr><td>Chatterbox</td><td>Send 50 messages</td><td>75</td></tr>
-<tr><td>Orator</td><td>Send 100 messages</td><td>150</td></tr>
+<tr><th>Achievement</th><th>Description</th><th>XP</th></tr>
+<tr><td>Hello World</td><td>Send 10 chat messages</td><td>25</td></tr>
+<tr><td>Chatterbox</td><td>Send 50 chat messages</td><td>75</td></tr>
+<tr><td>Orator</td><td>Send 100 chat messages</td><td>150</td></tr>
 <tr><td>First Friend</td><td>Make 1 friend</td><td>50</td></tr>
 <tr><td>Popular</td><td>Make 5 friends</td><td>150</td></tr>
 <tr><td>Celebrity</td><td>Make 10 friends</td><td>300</td></tr>
 <tr><td>Partygoer</td><td>Attend 1 event</td><td>50</td></tr>
-<tr><td>Regular</td><td>Attend 5 events</td><td>200</td></tr>
 </table>
 
-<h4>Collector</h4>
+<h3>Collector (6 achievements)</h3>
 <table>
-<tr><th>Achievement</th><th>Requirement</th><th>XP</th></tr>
-<tr><td>Starter Collection</td><td>Collect 5 items</td><td>50</td></tr>
-<tr><td>Hoarder</td><td>Collect 10 items</td><td>100</td></tr>
-<tr><td>Curator</td><td>Collect 20 items</td><td>250</td></tr>
-<tr><td>Bronze Earner</td><td>Earn 100 Vibes</td><td>50</td></tr>
-<tr><td>Silver Earner</td><td>Earn 500 Vibes</td><td>150</td></tr>
-<tr><td>Gold Earner</td><td>Earn 1,000 Vibes</td><td>400</td></tr>
+<tr><th>Achievement</th><th>Description</th><th>XP</th></tr>
+<tr><td>Starter Collection</td><td>Own 5 items</td><td>50</td></tr>
+<tr><td>Hoarder</td><td>Own 10 items</td><td>100</td></tr>
+<tr><td>Curator</td><td>Own 20 items</td><td>250</td></tr>
+<tr><td>Bronze Earner</td><td>Earn 100 currency</td><td>50</td></tr>
+<tr><td>Silver Earner</td><td>Earn 500 currency</td><td>150</td></tr>
+<tr><td>Gold Earner</td><td>Earn 1000 currency</td><td>400</td></tr>
 </table>
 
-<h4>Warrior</h4>
+<h3>Warrior (3 + 3 achievements)</h3>
 <table>
-<tr><th>Achievement</th><th>Requirement</th><th>XP</th></tr>
-<tr><td>First Blood</td><td>Defeat 1 enemy</td><td>50</td></tr>
+<tr><th>Achievement</th><th>Description</th><th>XP</th></tr>
+<tr><td>First Blood</td><td>Defeat your first enemy</td><td>50</td></tr>
 <tr><td>Monster Hunter</td><td>Defeat 25 enemies</td><td>150</td></tr>
 <tr><td>Dragonslayer</td><td>Defeat 100 enemies</td><td>500</td></tr>
 <tr><td>Apprentice Fighter</td><td>Reach combat level 5</td><td>100</td></tr>
 <tr><td>Veteran Warrior</td><td>Reach combat level 10</td><td>300</td></tr>
 <tr><td>Legendary Champion</td><td>Reach combat level 25</td><td>750</td></tr>
-<tr><td>Block Builder</td><td>Place 100 blocks</td><td>100</td></tr>
-<tr><td>Master Miner</td><td>Break 500 blocks</td><td>200</td></tr>
+<tr><td>Block Builder</td><td>Place 100 voxel blocks</td><td>100</td></tr>
+<tr><td>Master Miner</td><td>Break 500 voxel blocks</td><td>200</td></tr>
 </table>
 
-<h3 id="titles">Titles</h3>
-<p>Earn and display titles as you progress. Press <kbd>J</kbd> with the Fabric mod to equip titles:</p>
+<!-- LEVELS & TITLES -->
+<h2 id="levels">Levels &amp; Titles</h2>
+<p>As you earn XP from achievements and challenges, you level up. Each level requires progressively more XP (level N requires 100 * N XP beyond the previous level).</p>
 
-<h4>Level-Based Titles</h4>
+<h3>Title Unlocks</h3>
+<p>Titles are displayed next to your name. There are 9 titles unlocked through leveling and category mastery:</p>
 <table>
-<tr><th>Title</th><th>Requirement</th></tr>
-<tr><td>Newcomer</td><td>Level 1</td></tr>
+<tr><th>Title</th><th>How to Unlock</th></tr>
+<tr><td>Newcomer</td><td>Level 1 (default)</td></tr>
 <tr><td>Resident</td><td>Level 3</td></tr>
 <tr><td>Contributor</td><td>Level 5</td></tr>
 <tr><td>Veteran</td><td>Level 8</td></tr>
 <tr><td>Champion</td><td>Level 12</td></tr>
 <tr><td>Legend</td><td>Level 15</td></tr>
+<tr><td>Master Builder</td><td>Unlock 4 Builder achievements</td></tr>
+<tr><td>Social Butterfly</td><td>Unlock 5 Social achievements</td></tr>
+<tr><td>Explorer</td><td>Unlock 3 Explorer achievements</td></tr>
 </table>
-
-<h4>Achievement-Based Titles</h4>
-<ul>
-<li><strong>Master Builder</strong> &mdash; Earn 4+ builder achievements</li>
-<li><strong>Social Butterfly</strong> &mdash; Earn 4+ social achievements</li>
-<li><strong>Explorer</strong> &mdash; Earn 4+ explorer achievements</li>
-<li><strong>Champion Warrior</strong> &mdash; Earn 4+ warrior achievements</li>
-</ul>
-
-<h3 id="challenges">Daily &amp; Weekly Challenges</h3>
-<p>Fresh challenges appear regularly to encourage daily engagement:</p>
-
-<h4>Daily Challenges (3 per day, expire at midnight UTC)</h4>
-<ul>
-<li>Send 5 chat messages &mdash; 30 XP</li>
-<li>Place 3 blocks &mdash; 40 XP</li>
-<li>Visit 2 regions &mdash; 35 XP</li>
-<li>Make a new friend &mdash; 45 XP</li>
-</ul>
-
-<h4>Weekly Challenges (2 per week, expire Sunday midnight UTC)</h4>
-<ul>
-<li>Place 50 blocks &mdash; 200 Vibes + "Master Builder" title</li>
-<li>Visit all regions &mdash; 150 Vibes + 50 XP</li>
-</ul>
-
-<h3 id="leaderboards">Leaderboards</h3>
-<p>Compete with other players across multiple categories:</p>
-<ul>
-<li><strong>Combat Leaderboard</strong> &mdash; Ranked by level, then kills</li>
-<li><strong>XP Leaderboard</strong> &mdash; Overall progression ranking</li>
-<li><strong>Category Leaderboards</strong> &mdash; Explorer, Builder, Social, Collector, Warrior</li>
-<li><strong>Seasonal Leaderboard</strong> &mdash; Items collected and achievements per season</li>
-<li><strong>Event Leaderboard</strong> &mdash; Top event creators and most-attended events</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="creatures">
-<h2>8. Creatures</h2>
-
-<h3 id="pets">Pets</h3>
-<p>Adopt and care for companion pets that follow you through the world!</p>
-
-<h4>Pet Species</h4>
-<p>Cat, Dog, Bird, Bunny, Fox, Dragon, Slime, Owl &mdash; each with unique visual appearance.</p>
-
-<h4>Pet Rarity</h4>
-<p>
-<span class="badge badge-common">Common (75%)</span>
-<span class="badge badge-uncommon">Uncommon (20%)</span>
-<span class="badge badge-rare">Rare (4%)</span>
-<span class="badge badge-legendary">Legendary (1%)</span>
-</p>
-
-<h4>Pet Stats</h4>
-<table>
-<tr><th>Stat</th><th>Range</th><th>Description</th></tr>
-<tr><td>Level</td><td>1&ndash;20</td><td>Pet experience level</td></tr>
-<tr><td>XP</td><td>0&ndash;100 per level</td><td>Progress to next level</td></tr>
-<tr><td>Happiness</td><td>0&ndash;100</td><td>Affects behavior and animations</td></tr>
-<tr><td>Energy</td><td>0&ndash;100</td><td>Required for activities</td></tr>
-</table>
-
-<h4>Pet Activities</h4>
-<table>
-<tr><th>Activity</th><th>Effect</th><th>Cooldown</th></tr>
-<tr><td>Feed</td><td>+15 happiness, +20 energy, +5 XP</td><td>5 minutes</td></tr>
-<tr><td>Play</td><td>+10 happiness, &minus;15 energy, +15 XP</td><td>Requires 10+ energy</td></tr>
-<tr><td>Pet (petting)</td><td>+3 happiness</td><td>Instant</td></tr>
-<tr><td>Perform Trick</td><td>&minus;5 energy, +10 XP</td><td>Must know trick</td></tr>
-</table>
-
-<h4>Tricks</h4>
-<p>Pets can learn up to 8 tricks: Sit, Roll Over, Dance, Jump, Spin, Wave, Play Dead, Fetch. Tricks have a 20% chance to be learned during play sessions, and pets automatically learn a trick on level-up.</p>
-
-<p>Pets follow their owner and cycle through animations: Idle, Walk, Run, Sit, Trick, Sleep, Eat, Play.</p>
-
-<h3 id="npcs">NPCs &amp; Quests</h3>
-<p>Non-player characters populate the world and offer interactive experiences:</p>
-
-<h4>NPC Types</h4>
-<table>
-<tr><th>Type</th><th>Role</th></tr>
-<tr><td>Ambient</td><td>Background characters with flavor dialogue</td></tr>
-<tr><td>Shopkeeper</td><td>Buy and sell items</td></tr>
-<tr><td>Quest-Giver</td><td>Offers quests with objectives and rewards</td></tr>
-<tr><td>Tour Guide</td><td>Tutorials and orientation</td></tr>
-<tr><td>Enemy</td><td>Hostile combat NPCs</td></tr>
-</table>
-
-<h4>Quest System</h4>
-<p>Quest-givers offer objectives that can include:</p>
-<ul>
-<li><strong>Visit Region</strong> &mdash; Explore specific regions</li>
-<li><strong>Talk to NPC</strong> &mdash; Interact with other NPCs</li>
-<li><strong>Collect Item</strong> &mdash; Gather specific materials</li>
-<li><strong>Spend Vibes</strong> &mdash; Purchase items</li>
-<li><strong>Explore Parcels</strong> &mdash; Visit specific locations</li>
-<li><strong>Chat Count</strong> &mdash; Engage in conversation</li>
-</ul>
-<p>Quests come in <strong>daily</strong>, <strong>weekly</strong>, and <strong>one-time</strong> varieties with rewards including Vibes, items, titles, and XP.</p>
-</section>
-
-<!-- ============================================================ -->
-<section id="homes">
-<h2>9. Homes</h2>
-
-<h3 id="home-system">Home System</h3>
-<p>Claim a parcel and set it as your home for a personal base:</p>
-<ul>
-<li><strong>Set Home</strong> &mdash; Designate any parcel you own as your home location</li>
-<li><strong>Teleport Home</strong> &mdash; Instant travel back to your home from anywhere</li>
-<li><strong>Privacy Settings</strong> &mdash; Set home access to Public, Friends-Only, or Private</li>
-<li><strong>Doorbell</strong> &mdash; Visitors can ring your doorbell to notify you of their arrival</li>
-</ul>
-
-<h3 id="home-ratings">Ratings &amp; Showcase</h3>
-<p>The home rating system encourages creative building:</p>
-<ul>
-<li><strong>Rate homes</strong> &mdash; 1&ndash;5 star rating system</li>
-<li><strong>Favorite</strong> &mdash; Bookmark homes you love</li>
-<li><strong>Visitor Counter</strong> &mdash; Track how many players visit your home</li>
-<li><strong>Featured Showcase</strong> &mdash; Top-rated homes are highlighted in the showcase for all players to discover and visit</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="seasonal">
-<h2>10. Seasonal Content</h2>
-
-<h3 id="seasonal-items">Seasonal Items</h3>
-<p>Each season brings exclusive collectible items across multiple types:</p>
-<ul>
-<li><strong>Decorations</strong> &mdash; Seasonal props and ornaments</li>
-<li><strong>Wearables</strong> &mdash; Hats, crowns, and accessories</li>
-<li><strong>Emotes</strong> &mdash; Special seasonal animations</li>
-<li><strong>Pet Accessories</strong> &mdash; Dress up your companion</li>
-<li><strong>Consumables</strong> &mdash; Seasonal food and special items</li>
-</ul>
-<p>Items have rarity tiers (Common, Uncommon, Rare, Legendary) and may be available only during specific holidays.</p>
-
-<h3 id="holidays">Holidays</h3>
-<p>Seven holidays throughout the year with special items and decorations:</p>
-
-<table>
-<tr><th>Holiday</th><th>Dates</th><th>Season</th><th>Special Items</th></tr>
-<tr><td>Valentine's Day</td><td>Feb 10&ndash;16</td><td>Winter</td><td>Heart bouquet, Love letter emote</td></tr>
-<tr><td>Spring Festival</td><td>Mar 20 &ndash; Apr 5</td><td>Spring</td><td>Cherry blossom crown, Spring lantern</td></tr>
-<tr><td>Summer Beach Party</td><td>Jul 1&ndash;21</td><td>Summer</td><td>Surfboard, Beach ball emote, Tiki torch</td></tr>
-<tr><td>Halloween</td><td>Oct 20 &ndash; Nov 2</td><td>Autumn</td><td>Witch hat, Ghost pet, Jack-o-lantern</td></tr>
-<tr><td>Harvest Festival</td><td>Nov 15&ndash;30</td><td>Autumn</td><td>Cornucopia hat, Harvest wreath</td></tr>
-<tr><td>Winter Wonderland</td><td>Dec 15&ndash;31</td><td>Winter</td><td>Snowflake crown, Ice crystal pet, Holiday sweater</td></tr>
-<tr><td>New Year's</td><td>Dec 30 &ndash; Jan 3</td><td>Winter</td><td>Party hat, Firework emote, Confetti popper</td></tr>
-</table>
-
-<h4>Seasonal Achievements</h4>
-<p>Earn seasonal achievements for collecting items (3+ per season), placing decorations (5+ per season), attending seasonal events (3+), and finding legendary items.</p>
-
-<h4>Seasonal Leaderboard</h4>
-<p>Compete each season for the most items collected and achievements unlocked. Top 50 players per season are ranked.</p>
-</section>
-
-<!-- ============================================================ -->
-<section id="advanced">
-<h2>11. Advanced Features</h2>
-
-<h3 id="mobile">Mobile Companion App</h3>
-<p>Stay connected to VibeLife on the go with the mobile companion:</p>
-<ul>
-<li><strong>Dashboard</strong> &mdash; Quick stats, online friends, recent activity</li>
-<li><strong>Inventory Management</strong> &mdash; View and manage your items</li>
-<li><strong>Marketplace Browsing</strong> &mdash; Browse and purchase listings</li>
-<li><strong>Friends List</strong> &mdash; See who's online and their current region</li>
-<li><strong>Quick Teleport</strong> &mdash; Teleport to a region directly from mobile</li>
-<li><strong>Quick Message</strong> &mdash; Send offline messages to friends</li>
-<li><strong>Quick Vibes Send</strong> &mdash; Gift Vibes without opening the full client</li>
-<li><strong>Push Notifications</strong> &mdash; Friend online, messages received, group invites, Vibes received, regional events, system alerts</li>
-<li><strong>Quiet Hours</strong> &mdash; Customize notification windows</li>
-</ul>
-
-<h3 id="federation">Federation (Multi-Server)</h3>
-<p>VibeLife supports federation &mdash; multiple servers can interconnect to form a larger world:</p>
-<ul>
-<li><strong>Server Directory</strong> &mdash; Browse connected federated servers with descriptions, tags, and population</li>
-<li><strong>Cross-Server Teleport</strong> &mdash; Travel between servers with portable identity tokens (10-minute expiry, HMAC-SHA256 signed)</li>
-<li><strong>Federated Marketplace</strong> &mdash; Search listings across all connected servers in parallel</li>
-<li><strong>Trust System</strong> &mdash; Servers establish trust through a challenge-response handshake protocol</li>
-<li><strong>Health Monitoring</strong> &mdash; Heartbeat system with 5-minute timeout; servers marked online, offline, or degraded</li>
-</ul>
-
-<h3 id="creator-tools">Creator Tools</h3>
-<p>Advanced tools for content creators:</p>
-<ul>
-<li><strong>Asset Submission</strong> &mdash; Upload custom content through the review pipeline</li>
-<li><strong>Asset Review Queue</strong> &mdash; Admin approval for quality and appropriateness</li>
-<li><strong>Analytics Dashboard</strong> &mdash; Track views, sales, and revenue for your creations</li>
-<li><strong>Revenue Splits</strong> &mdash; Multi-creator revenue sharing for collaborative works</li>
-<li><strong>Payout System</strong> &mdash; Creator earnings from marketplace sales</li>
-<li><strong>API Keys</strong> &mdash; Developer access for custom integrations</li>
-<li><strong>Webhooks</strong> &mdash; Receive notifications for events on your creations</li>
-</ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="reference">
-<h2>12. Quick Reference</h2>
-
-<h3 id="controls-ref">Controls Reference</h3>
-
-<h4>Standard Minecraft Controls</h4>
-<table>
-<tr><th>Action</th><th>Input</th></tr>
-<tr><td>Move</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td></tr>
-<tr><td>Jump</td><td><kbd>Space</kbd></td></tr>
-<tr><td>Sneak / crouch</td><td><kbd>Shift</kbd></td></tr>
-<tr><td>Sprint</td><td>Double-tap <kbd>W</kbd> or <kbd>Ctrl</kbd></td></tr>
-<tr><td>Place block</td><td>Right-click</td></tr>
-<tr><td>Break block</td><td>Left-click (hold)</td></tr>
-<tr><td>Attack</td><td>Left-click</td></tr>
-<tr><td>Use / interact</td><td>Right-click</td></tr>
-<tr><td>Open inventory</td><td><kbd>E</kbd></td></tr>
-<tr><td>Open chat</td><td><kbd>T</kbd></td></tr>
-<tr><td>Run command</td><td><kbd>/</kbd></td></tr>
-<tr><td>Drop item</td><td><kbd>Q</kbd></td></tr>
-<tr><td>Swap hands</td><td><kbd>F</kbd></td></tr>
-</table>
-
-<h4>Fabric Mod Keybinds</h4>
-<table>
-<tr><th>Key</th><th>Screen</th><th>Description</th></tr>
-<tr><td><kbd>V</kbd></td><td>Economy</td><td>Balance, transactions, send Vibes</td></tr>
-<tr><td><kbd>N</kbd></td><td>Social</td><td>Friends, groups, messages, profiles</td></tr>
-<tr><td><kbd>M</kbd></td><td>Marketplace</td><td>Browse, buy, sell, auction</td></tr>
-<tr><td><kbd>J</kbd></td><td>Achievements</td><td>Progress, challenges, leaderboards, titles</td></tr>
-<tr><td><kbd>K</kbd></td><td>Events</td><td>Upcoming events, RSVP, rewards</td></tr>
-</table>
-
-<h3 id="chat-commands-ref">Chat Commands</h3>
-<table>
-<tr><th>Command</th><th>Usage</th><th>Description</th></tr>
-<tr><td><code>/parcel info</code></td><td><code>/parcel info</code></td><td>See info about the land you're standing on</td></tr>
-<tr><td><code>/parcel claim</code></td><td><code>/parcel claim</code></td><td>Claim unclaimed land as yours</td></tr>
-<tr><td><code>/parcel release</code></td><td><code>/parcel release</code></td><td>Give up your claimed land</td></tr>
-<tr><td><code>/parcel list</code></td><td><code>/parcel list</code></td><td>List all parcels in the current region</td></tr>
-<tr><td><code>/friends list</code></td><td><code>/friends list</code></td><td>See your friends and pending requests</td></tr>
-<tr><td><code>/friends add</code></td><td><code>/friends add Steve</code></td><td>Send a friend request</td></tr>
-<tr><td><code>/friends remove</code></td><td><code>/friends remove Steve</code></td><td>Remove a friend</td></tr>
-<tr><td><code>/friends messages</code></td><td><code>/friends messages</code></td><td>Read offline messages</td></tr>
-<tr><td><code>/balance</code></td><td><code>/balance</code></td><td>Check your Vibes balance</td></tr>
-<tr><td><code>/pay</code></td><td><code>/pay Steve 100</code></td><td>Send Vibes to another player</td></tr>
-<tr><td><code>/market</code></td><td><code>/market</code></td><td>Browse the marketplace</td></tr>
-<tr><td><code>/w</code></td><td><code>/w Steve Hello!</code></td><td>Send a private whisper</td></tr>
-</table>
-
-<h3 id="enemy-table-ref">Enemy Reference Table</h3>
-<table>
-<tr><th>Enemy</th><th>Base HP</th><th>STR</th><th>DEF</th><th>Vibes Drop</th><th>Rare Drop</th><th>Drop %</th></tr>
-<tr><td>Slime</td><td>50</td><td>5</td><td>2</td><td>5&ndash;15</td><td>&mdash;</td><td>&mdash;</td></tr>
-<tr><td>Skeleton</td><td>80</td><td>10</td><td>5</td><td>10&ndash;25</td><td>Bone</td><td>30%</td></tr>
-<tr><td>Golem</td><td>200</td><td>15</td><td>15</td><td>20&ndash;50</td><td>Stone Core</td><td>20%</td></tr>
-<tr><td>Shadow</td><td>100</td><td>20</td><td>3</td><td>15&ndash;40</td><td>Shadow Essence</td><td>15%</td></tr>
-<tr><td>Drake</td><td>500</td><td>25</td><td>20</td><td>50&ndash;150</td><td>Drake Scale</td><td>10%</td></tr>
-</table>
-<p><em>Stats scale per level: HP +25%, STR +20%, DEF +20%. XP awarded: 20 x enemy level.</em></p>
-
-<h3 id="achievement-list-ref">Achievement Quick Reference</h3>
-<table>
-<tr><th>Category</th><th>Count</th><th>Total XP Available</th></tr>
-<tr><td>Explorer</td><td>5</td><td>550 XP</td></tr>
-<tr><td>Builder</td><td>6</td><td>1,050 XP</td></tr>
-<tr><td>Social</td><td>8</td><td>1,050 XP</td></tr>
-<tr><td>Collector</td><td>6</td><td>1,000 XP</td></tr>
-<tr><td>Warrior</td><td>8</td><td>2,150 XP</td></tr>
-<tr><td><strong>Total</strong></td><td><strong>33</strong></td><td><strong>5,800 XP</strong></td></tr>
-</table>
-
-<div class="card" style="margin-top:48px;text-align:center;border-color:var(--forest)">
-<h4 style="color:var(--forest)">Need Help?</h4>
-<p>VibeLife is constantly evolving with new features, regions, and content. Join a server, make friends, claim your land, and start building. See you in VibeLife!</p>
+<div class="info-box">
+<strong>Note:</strong> You can equip any title you've unlocked. Change your active title through the Achievements screen (press <kbd>J</kbd>).
 </div>
 
-</section>
+<!-- CHALLENGES -->
+<h2 id="challenges">Challenges</h2>
+<p>Challenges are rotating objectives that award bonus XP.</p>
 
-<footer style="margin-top:80px;border-top:3px solid var(--forest);color:var(--text3);font-size:13px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:24px 20px">
-<div>VibeLife &mdash; Minecraft Paper Plugin + Fabric Mod</div>
-<div style="display:flex;gap:20px">
-<a href="../index.html" style="color:var(--text3)">Home</a>
-<a href="../plugin.html" style="color:var(--text3)">Plugin Guide</a>
-<a href="../deploy.html" style="color:var(--text3)">Deploy</a>
+<h3>Daily Challenges (3 per day)</h3>
+<p>Randomly selected each day from these templates:</p>
+<ul>
+<li>Send 5 chat messages (30 XP)</li>
+<li>Place 3 objects (40 XP)</li>
+<li>Visit 2 regions (35 XP)</li>
+<li>Walk 200 distance units (25 XP)</li>
+<li>Send 10 chat messages (50 XP)</li>
+<li>Place 5 objects (60 XP)</li>
+<li>Make a new friend (45 XP)</li>
+<li>Teleport to another region (20 XP)</li>
+</ul>
+
+<h3>Weekly Challenges (2 per week)</h3>
+<p>Larger objectives with bigger rewards:</p>
+<ul>
+<li>Send 50 chat messages this week (150 XP)</li>
+<li>Place 20 objects this week (200 XP)</li>
+<li>Visit 4 regions this week (175 XP)</li>
+<li>Make 3 friends this week (200 XP)</li>
+<li>Walk 500 distance units this week (125 XP)</li>
+</ul>
+
+<!-- PETS -->
+<h2 id="pets">Pets</h2>
+<p>Adopt a companion that follows you through the world. There are 8 species, each available in 4 rarities.</p>
+
+<h3>Species</h3>
+<table>
+<tr><th>Species</th><th>Rarities</th></tr>
+<tr><td>Cat</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Dog</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Bird</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Bunny</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Fox</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Dragon</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Slime</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+<tr><td>Owl</td><td>Common, Uncommon, Rare, Legendary</td></tr>
+</table>
+
+<h3>Tricks</h3>
+<p>Pets learn tricks as you interact with them. There are 8 tricks:</p>
+<ul>
+<li><strong>Sit</strong> &mdash; Your pet sits in place</li>
+<li><strong>Roll Over</strong> &mdash; A full roll animation</li>
+<li><strong>Dance</strong> &mdash; Pet dances along with you</li>
+<li><strong>Jump</strong> &mdash; A happy hop</li>
+<li><strong>Spin</strong> &mdash; Quick spin in place</li>
+<li><strong>Wave</strong> &mdash; Pet waves at nearby players</li>
+<li><strong>Play Dead</strong> &mdash; Dramatic collapse</li>
+<li><strong>Fetch</strong> &mdash; Pet runs out and comes back</li>
+</ul>
+
+<h3>Interactions</h3>
+<ul>
+<li><strong>Feed</strong> &mdash; Increases happiness and energy</li>
+<li><strong>Play</strong> &mdash; Builds your bond level. Higher bonds mean more tricks learned.</li>
+<li><strong>Pet</strong> &mdash; Quick interaction that boosts happiness</li>
+<li><strong>Summon/Dismiss</strong> &mdash; Call your active pet to your side or send them away</li>
+</ul>
+<div class="tip">
+<strong>Tip:</strong> Playing with your pet has a chance to teach them a new trick. Pets also learn a new trick each time they level up.
+</div>
+
+<!-- EVENTS -->
+<h2 id="events">Events</h2>
+<p>Events are server-wide activities that players can create, RSVP to, and participate in. There are 8 event types:</p>
+
+<table>
+<tr><th>Type</th><th>Description</th></tr>
+<tr><td><strong>Build Competition</strong></td><td>Themed building challenges with prizes and time limits</td></tr>
+<tr><td><strong>Dance Party</strong></td><td>Emote sync events with bonus XP for coordinated moves</td></tr>
+<tr><td><strong>Grand Opening</strong></td><td>Celebrate a new build, storefront, or community space</td></tr>
+<tr><td><strong>Workshop</strong></td><td>Teaching sessions on building techniques or game features</td></tr>
+<tr><td><strong>Meetup</strong></td><td>Casual community gatherings and social hangouts</td></tr>
+<tr><td><strong>Concert</strong></td><td>In-world music events at special venues</td></tr>
+<tr><td><strong>Market Day</strong></td><td>Boosted marketplace activity with special deals</td></tr>
+<tr><td><strong>Exploration</strong></td><td>Group adventures to discover new areas and landmarks</td></tr>
+</table>
+
+<h3>Event Features</h3>
+<ul>
+<li>Events can be one-time or recurring (daily, weekly, monthly)</li>
+<li>RSVP to events to get reminders</li>
+<li>Events have optional attendee limits and prize pools</li>
+<li>Event leaderboards track participation</li>
+<li>View events with <kbd>K</kbd> (Fabric mod) or through the API</li>
+</ul>
+
+<!-- PHOTOS -->
+<h2 id="photos">Photos</h2>
+<p>Capture moments in-game with the photo system. Take screenshots, apply filters, and share them with the community.</p>
+
+<h3>Filters</h3>
+<p>There are 8 photo filters available:</p>
+<table>
+<tr><th>Filter</th><th>Effect</th></tr>
+<tr><td>None</td><td>Original unmodified screenshot</td></tr>
+<tr><td>Vintage</td><td>Warm sepia tones with faded edges</td></tr>
+<tr><td>Noir</td><td>Black and white with high contrast</td></tr>
+<tr><td>Warm</td><td>Golden, sunny color shift</td></tr>
+<tr><td>Cool</td><td>Blue-tinted, crisp tones</td></tr>
+<tr><td>Dreamy</td><td>Soft focus with pastel colors</td></tr>
+<tr><td>Pixel</td><td>Retro pixelated look</td></tr>
+<tr><td>Posterize</td><td>Reduced color palette, poster-art style</td></tr>
+</table>
+
+<h3>Sharing</h3>
+<ul>
+<li>Photos appear in the community feed</li>
+<li>Other players can like and comment on your photos</li>
+<li>Featured photos are highlighted on the showcase</li>
+<li>Browse any player's photo gallery by visiting their profile</li>
+<li>Set photo visibility: public, friends-only, or private</li>
+</ul>
+
+</div><!-- /content -->
+
+<!-- ===== FOOTER ===== -->
+<footer>
+<div>PacketCraft &mdash; Open Source Minecraft MMORPG Platform &bull; 2026</div>
+<div class="foot-links">
+<a href="../">Main Site</a>
+<a href="../#plugin">Plugin Guide</a>
+<a href="../devmanual/">Dev Manual</a>
+<a href="https://github.com">GitHub</a>
 </div>
 </footer>
-
-</main>
 
 </body>
 </html>

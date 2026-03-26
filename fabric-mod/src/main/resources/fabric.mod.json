@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "id": "vibelife",
+  "id": "packetcraft",
   "version": "${version}",
-  "name": "VibeLife",
-  "description": "Social features, economy, marketplace, and more for VibeLife servers",
-  "authors": ["VibeLife"],
+  "name": "PacketCraft",
+  "description": "Social features, economy, marketplace, and more for PacketCraft servers",
+  "authors": ["PacketCraft"],
   "contact": {},
   "license": "All-Rights-Reserved",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.vibelife.fabric.VibeLifeClient"]
+    "client": ["com.packetcraft.fabric.PacketCraftClient"]
   },
   "mixins": [],
   "depends": {

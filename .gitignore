@@ -2,9 +2,16 @@ node_modules/
 dist/
 .env
 npm-debug.log*
-native-client/godot/.godot/
-*.uid
 .claude/settings.local.json
+
+# IDE patterns
+**/bin/
+.classpath
+.project
+.factorypath
+.settings/
+*.iml
+.idea/
 
 # Java/Gradle build artifacts
 **/build/

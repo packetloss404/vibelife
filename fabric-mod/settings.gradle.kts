@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "vibelife-fabric"
+rootProject.name = "packetcraft-fabric"

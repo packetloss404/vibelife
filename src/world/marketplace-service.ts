@@ -343,44 +343,11 @@ export async function declineTrade(token: string, tradeId: string): Promise<{ ok
 
 // Valid item kinds that can be listed on the marketplace
 const VALID_ITEM_KINDS = new Set([
-  "outfit", "accessory", "tool", "pet", "decoration", "consumable",
-  "voxel_blueprint", "custom_block"
+  "outfit", "accessory", "tool", "pet", "decoration", "consumable"
 ]);
 
 export function isValidItemKind(kind: string): boolean {
   return VALID_ITEM_KINDS.has(kind) || kind.length > 0;
-}
-
-export async function createDirectListing(
-  token: string,
-  itemId: string,
-  itemName: string,
-  itemKind: "voxel_blueprint" | "custom_block",
-  price: number
-): Promise<MarketListing | undefined> {
-  const session = _getSession(token);
-  if (!session) return undefined;
-  if (price <= 0) return undefined;
-
-  for (const listing of listings.values()) {
-    if (listing.itemId === itemId && listing.status === "active") return undefined;
-  }
-
-  const listing: MarketListing = {
-    id: randomUUID(),
-    sellerAccountId: session.accountId,
-    sellerDisplayName: session.displayName,
-    itemId,
-    itemName,
-    itemKind,
-    price,
-    listingType: "fixed",
-    createdAt: new Date().toISOString(),
-    status: "active",
-  };
-
-  listings.set(listing.id, listing);
-  return listing;
 }
 
 export async function listTradeOffers(token: string): Promise<TradeOffer[]> {

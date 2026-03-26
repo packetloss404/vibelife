@@ -1,4 +1,4 @@
-# VibeLife
+# PacketCraft
 
 A social MMORPG platform built on Minecraft. Uses a Paper server plugin for gameplay integration, a Fabric client mod for custom GUI, and a Fastify/TypeScript sidecar for social features, economy, marketplace, achievements, and events.
 
@@ -33,7 +33,7 @@ A social MMORPG platform built on Minecraft. Uses a Paper server plugin for game
 
 ### Economy
 - Currency system (Vibes) with balance tracking and transaction history
-- Vault API integration — any Vault-compatible plugin works with VibeLife currency
+- Vault API integration — any Vault-compatible plugin works with PacketCraft currency
 - In-game commands: `/balance`, `/pay <player> <amount>`
 - Fabric GUI for full economy management (V key)
 
@@ -97,10 +97,10 @@ src/                              # Fastify sidecar
     persistence.ts                — Dual-mode persistence layer
 
 paper-plugin/                     # Paper server plugin (Java 21, Paper API)
-  src/main/java/com/vibelife/paper/
-    VibeLifePlugin.java           — Main entry, registers all listeners/commands
+  src/main/java/com/packetcraft/paper/
+    PacketCraftPlugin.java           — Main entry, registers all listeners/commands
     bridge/SidecarClient.java     — Async HTTP client for sidecar
-    auth/LoginListener.java       — MC UUID → VibeLife account linking
+    auth/LoginListener.java       — MC UUID → PacketCraft account linking
     parcels/ParcelManager.java    — Parcel cache + sync
     parcels/ParcelListener.java   — Block protection via parcel permissions
     economy/VaultProvider.java    — Vault Economy backed by sidecar
@@ -110,8 +110,8 @@ paper-plugin/                     # Paper server plugin (Java 21, Paper API)
     messaging/                    — Plugin channel for Fabric mod
 
 fabric-mod/                       # Fabric client mod (Java 21)
-  src/main/java/com/vibelife/fabric/
-    VibeLifeClient.java           — Mod entry, session management
+  src/main/java/com/packetcraft/fabric/
+    PacketCraftClient.java           — Mod entry, session management
     network/SidecarApi.java       — Async HTTP client for sidecar
     network/PluginChannelHandler.java — Server → client notifications
     screen/                       — EconomyScreen, SocialScreen, MarketplaceScreen,
@@ -150,17 +150,17 @@ docs/                             # Documentation site
 ```bash
 # Sidecar
 npm install
-DATABASE_URL=postgres://vibelife:vibelife@127.0.0.1:5432/vibelife npm run dev
+DATABASE_URL=postgres://packetcraft:packetcraft@127.0.0.1:5432/packetcraft npm run dev
 
 # Paper plugin
 cd paper-plugin
 ./gradlew shadowJar
-cp build/libs/vibelife-paper-*.jar ../paper-server/plugins/
+cp build/libs/packetcraft-paper-*.jar ../paper-server/plugins/
 
 # Fabric mod
 cd fabric-mod
 ./gradlew build
-# Output: build/libs/vibelife-*.jar → player's mods/ folder
+# Output: build/libs/packetcraft-*.jar → player's mods/ folder
 
 # Start Paper
 cd paper-server
@@ -169,13 +169,13 @@ java -Xms1G -Xmx2G -jar paper.jar --nogui
 
 ### Configuration
 
-**Plugin config** (`plugins/VibeLife/config.yml`):
+**Plugin config** (`plugins/PacketCraft/config.yml`):
 ```yaml
 sidecar:
   url: "http://localhost:3000"
   api-key: "change-me-in-production"
   timeout-ms: 5000
-channel: "vibelife:main"
+channel: "packetcraft:main"
 regions:
   world: "aurora-docks"
   world_nether: "nether-realm"
@@ -195,7 +195,7 @@ ADMIN_BOOTSTRAP_TOKEN=...    # Bootstrap admin access
 1. Player joins MC server
 2. Plugin calls `POST /api/auth/mc-login` with MC UUID + username
 3. Sidecar creates or finds linked account, returns session token
-4. Token sent to Fabric mod via `vibelife:main` plugin message channel
+4. Token sent to Fabric mod via `packetcraft:main` plugin message channel
 5. Fabric mod uses token for all direct sidecar API calls
 
 ## Development

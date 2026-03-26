@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VibeLife Deployment Guide — Server Admin Setup</title>
+<title>PacketCraft Deployment Guide — Server Admin Setup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -183,8 +183,8 @@ nav .links{display:none}
 <span style="background:var(--forest-light)"></span>
 <span style="background:var(--brown-light)"></span>
 </div>
-<h1>VibeLife <span class="accent">Deployment Guide</span></h1>
-<p class="subtitle">Everything you need to run VibeLife on your Paper server</p>
+<h1>PacketCraft <span class="accent">Deployment Guide</span></h1>
+<p class="subtitle">Everything you need to run PacketCraft on your Paper server</p>
 </section>
 
 <!-- =============== MAIN CONTENT =============== -->
@@ -204,7 +204,7 @@ nav .links{display:none}
 <div class="req-card">
 <span class="req-icon">&#128196;</span>
 <div class="req-name">Paper 1.21.1+</div>
-<div class="req-detail">VibeLife targets the Paper API. Spigot and Bukkit are not supported.</div>
+<div class="req-detail">PacketCraft targets the Paper API. Spigot and Bukkit are not supported.</div>
 </div>
 <div class="req-card">
 <span class="req-icon">&#127760;</span>
@@ -223,14 +223,14 @@ nav .links{display:none}
 <div class="section" id="quickstart">
 <span class="section-icon">&#128640;</span>
 <h2><span class="sq"></span>Quick Start</h2>
-<p>Follow these four steps to go from zero to a running VibeLife server.</p>
+<p>Follow these four steps to go from zero to a running PacketCraft server.</p>
 
 <div class="step">
 <div class="step-number">1</div>
 <h3>Set up PostgreSQL</h3>
-<p>Create a dedicated database and user for VibeLife. Adjust the password for production environments.</p>
-<div class="code-block">sudo -u postgres psql -c "CREATE USER vibelife WITH PASSWORD 'vibelife';"
-sudo -u postgres psql -c "CREATE DATABASE vibelife OWNER vibelife;"</div>
+<p>Create a dedicated database and user for PacketCraft. Adjust the password for production environments.</p>
+<div class="code-block">sudo -u postgres psql -c "CREATE USER packetcraft WITH PASSWORD 'packetcraft';"
+sudo -u postgres psql -c "CREATE DATABASE packetcraft OWNER packetcraft;"</div>
 </div>
 
 <div class="step">
@@ -238,7 +238,7 @@ sudo -u postgres psql -c "CREATE DATABASE vibelife OWNER vibelife;"</div>
 <h3>Start the Sidecar</h3>
 <p>The Fastify sidecar provides the REST API that the plugin communicates with. Point it at your database.</p>
 <div class="code-block">cd /opt/packetcraft
-DATABASE_URL=postgres://vibelife:vibelife@127.0.0.1:5432/vibelife npm run dev</div>
+DATABASE_URL=postgres://packetcraft:packetcraft@127.0.0.1:5432/packetcraft npm run dev</div>
 <div class="warn-box">
 <strong>Warning:</strong> After starting, check <code>http://localhost:3000/api/health</code> &mdash; it must show <code>"persistence":"postgres"</code>. If it shows <code>"memory"</code>, the database connection failed silently and you are running on the in-memory store. Your data will be lost on restart.
 </div>
@@ -250,16 +250,16 @@ DATABASE_URL=postgres://vibelife:vibelife@127.0.0.1:5432/vibelife npm run dev</d
 <p>Compile the Paper plugin using Gradle. The shadow JAR bundles all dependencies.</p>
 <div class="code-block">cd paper-plugin
 ./gradlew shadowJar</div>
-<p>The output JAR will be at <code>paper-plugin/build/libs/vibelife-paper-*.jar</code>.</p>
+<p>The output JAR will be at <code>paper-plugin/build/libs/packetcraft-paper-*.jar</code>.</p>
 </div>
 
 <div class="step">
 <div class="step-number">4</div>
 <h3>Install &amp; Start Paper</h3>
 <p>Copy the plugin JAR into your Paper server's plugins directory and launch the server.</p>
-<div class="code-block">cp paper-plugin/build/libs/vibelife-paper-*.jar paper-server/plugins/
+<div class="code-block">cp paper-plugin/build/libs/packetcraft-paper-*.jar paper-server/plugins/
 cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
-<p>On first boot, VibeLife will generate its default configuration at <code>plugins/VibeLife/config.yml</code>.</p>
+<p>On first boot, PacketCraft will generate its default configuration at <code>plugins/PacketCraft/config.yml</code>.</p>
 </div>
 </div>
 
@@ -267,10 +267,10 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="section" id="configuration">
 <span class="section-icon">&#9881;</span>
 <h2><span class="sq"></span>Configuration</h2>
-<p>VibeLife is configured through two places: the plugin config file and sidecar environment variables.</p>
+<p>PacketCraft is configured through two places: the plugin config file and sidecar environment variables.</p>
 
 <div class="info-card">
-<h3>Plugin Config &mdash; plugins/VibeLife/config.yml</h3>
+<h3>Plugin Config &mdash; plugins/PacketCraft/config.yml</h3>
 <table class="config-table">
 <thead>
 <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
@@ -293,13 +293,13 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 </tr>
 <tr>
 <td><code>channel</code></td>
-<td><code>vibelife:main</code></td>
+<td><code>packetcraft:main</code></td>
 <td>Plugin messaging channel used to communicate with the Fabric client mod.</td>
 </tr>
 <tr>
 <td><code>regions</code></td>
 <td>&mdash;</td>
-<td>Maps Minecraft world names to VibeLife region IDs. Example: <code>world: region-overworld</code>.</td>
+<td>Maps Minecraft world names to PacketCraft region IDs. Example: <code>world: region-overworld</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -341,7 +341,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="section" id="architecture">
 <span class="section-icon">&#127959;</span>
 <h2><span class="sq"></span>Architecture Overview</h2>
-<p>VibeLife is composed of three main components that work together.</p>
+<p>PacketCraft is composed of three main components that work together.</p>
 
 <div class="arch-flow">
 <div class="arch-box sidecar">Fastify Sidecar<br><span style="font-size:11px;font-weight:400">REST API + Database</span></div>
@@ -357,7 +357,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <ul>
 <li>The Paper plugin detects the join event and calls the sidecar at <code>/api/auth/mc-login</code></li>
 <li>The sidecar authenticates the player and returns a session token</li>
-<li>The plugin sends the token to the player's Fabric mod via the <code>vibelife:main</code> plugin messaging channel</li>
+<li>The plugin sends the token to the player's Fabric mod via the <code>packetcraft:main</code> plugin messaging channel</li>
 <li>The Fabric mod can now make authenticated requests directly to the sidecar for UI data</li>
 </ul>
 </div>
@@ -377,7 +377,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="info-card">
 <h3>Backups</h3>
 <p>Use standard PostgreSQL tools to back up your data:</p>
-<div class="code-block">pg_dump -U vibelife -h 127.0.0.1 vibelife &gt; vibelife-backup-$(date +%Y%m%d).sql</div>
+<div class="code-block">pg_dump -U packetcraft -h 127.0.0.1 packetcraft &gt; packetcraft-backup-$(date +%Y%m%d).sql</div>
 <p>Schedule this with cron for regular automated backups.</p>
 </div>
 
@@ -407,12 +407,12 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="section" id="vault">
 <span class="section-icon">&#128176;</span>
 <h2><span class="sq"></span>Vault Economy Integration</h2>
-<p>VibeLife registers as a Vault economy provider, making it compatible with any plugin that uses the Vault API.</p>
+<p>PacketCraft registers as a Vault economy provider, making it compatible with any plugin that uses the Vault API.</p>
 
 <div class="info-card">
 <h3>Details</h3>
 <ul>
-<li><strong>Soft dependency:</strong> Vault is not required. If Vault is not installed, the economy still works through VibeLife commands</li>
+<li><strong>Soft dependency:</strong> Vault is not required. If Vault is not installed, the economy still works through PacketCraft commands</li>
 <li><strong>Currency:</strong> Vibes (integer-based, no decimals)</li>
 <li><strong>Standard Vault API:</strong> Other plugins can call <code>getBalance()</code>, <code>depositPlayer()</code>, <code>withdrawPlayer()</code>, etc.</li>
 <li>Balances are stored in the sidecar database, not in Vault's config</li>
@@ -426,7 +426,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <h2><span class="sq"></span>Permissions</h2>
 
 <div class="info-card">
-<h3>vibelife.admin</h3>
+<h3>packetcraft.admin</h3>
 <p>Grants the ability to bypass parcel protection. Players with this permission can build and break blocks in any parcel, regardless of ownership.</p>
 <p style="margin-top:8px"><strong>Default:</strong> <code>op</code> &mdash; only server operators have this permission by default. Assign it via your permissions plugin (e.g., LuckPerms) as needed.</p>
 </div>
@@ -455,7 +455,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="keybind-grid">
 <div class="keybind-card">
 <div class="keybind-key">V</div>
-<div class="keybind-name">VibeLife Menu</div>
+<div class="keybind-name">PacketCraft Menu</div>
 </div>
 <div class="keybind-card">
 <div class="keybind-key">N</div>
@@ -481,7 +481,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <div class="section" id="monitoring">
 <span class="section-icon">&#128200;</span>
 <h2><span class="sq"></span>Monitoring &amp; Health</h2>
-<p>Keep an eye on your VibeLife deployment with these built-in tools.</p>
+<p>Keep an eye on your PacketCraft deployment with these built-in tools.</p>
 
 <div class="info-card">
 <h3>Health Endpoint</h3>
@@ -496,7 +496,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 
 <div class="info-card">
 <h3>Plugin Logs</h3>
-<p>All plugin log messages are prefixed with <code>[VibeLife]</code>. Look for these in your Paper server console or <code>logs/latest.log</code>.</p>
+<p>All plugin log messages are prefixed with <code>[PacketCraft]</code>. Look for these in your Paper server console or <code>logs/latest.log</code>.</p>
 <ul>
 <li><strong>Startup:</strong> Confirms sidecar connection, parcel sync count, Vault hook</li>
 <li><strong>Warnings:</strong> Sidecar unreachable, API errors, fallback behavior</li>
@@ -515,11 +515,11 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 <h3>Pre-Launch Checklist</h3>
 <ul class="checklist">
 <li><span class="check-box"></span>Change <code>sidecar.api-key</code> from the default <code>changeme</code> to a strong, random secret</li>
-<li><span class="check-box"></span>Set a strong PostgreSQL password (not <code>vibelife</code>)</li>
+<li><span class="check-box"></span>Set a strong PostgreSQL password (not <code>packetcraft</code>)</li>
 <li><span class="check-box"></span>Verify <code>/api/health</code> shows <code>"persistence":"postgres"</code></li>
 <li><span class="check-box"></span>Configure <code>CORS_ORIGINS</code> to only allow your domain(s)</li>
 <li><span class="check-box"></span>Set up automated database backups with <code>pg_dump</code> and cron</li>
-<li><span class="check-box"></span>Monitor server logs for <code>[VibeLife]</code> warnings and errors</li>
+<li><span class="check-box"></span>Monitor server logs for <code>[PacketCraft]</code> warnings and errors</li>
 <li><span class="check-box"></span>Configure <code>regions</code> in <code>config.yml</code> to map your world names to region IDs</li>
 <li><span class="check-box"></span>Test Vault integration if you use other economy plugins</li>
 <li><span class="check-box"></span>Run the sidecar behind a process manager (systemd, pm2) for auto-restart</li>
@@ -531,7 +531,7 @@ cd paper-server &amp;&amp; java -Xms1G -Xmx2G -jar paper.jar --nogui</div>
 
 <!-- =============== FOOTER =============== -->
 <footer>
-<div>VibeLife &mdash; Open Source Voxel MMORPG &bull; 2026</div>
+<div>PacketCraft &mdash; Open Source Voxel MMORPG &bull; 2026</div>
 <div class="foot-links">
 <a href="index.html">Main Site</a>
 <a href="plugin.html">Plugin Guide</a>

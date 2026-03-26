@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VibeLife — Developer Manual</title>
+<title>PacketCraft — Developer Manual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,17 +35,17 @@ h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
 /* Top bar */
 .topbar{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest);z-index:1000;display:flex;align-items:center;padding:0 24px;gap:16px}
 .topbar .brand{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;letter-spacing:.5px}
-.topbar .brand .vibe{color:var(--forest)}
-.topbar .brand .life{color:var(--amber)}
+.topbar .brand .pkt{color:var(--forest)}
+.topbar .brand .craft{color:var(--amber)}
 .topbar .brand em{font-style:normal;color:var(--text2);font-weight:400;font-family:'Inter',sans-serif;font-size:13px;margin-left:6px}
-.topbar .pill{font-size:10px;background:var(--forest-pale);border:1px solid var(--forest-light);border-radius:10px;padding:2px 10px;color:var(--forest);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.topbar .pill{font-size:10px;background:var(--forest-pale);border:1px solid var(--forest-light);padding:2px 10px;color:var(--forest);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
 .topbar nav{margin-left:auto;display:flex;gap:14px;font-size:12.5px;font-weight:600}
 .topbar nav a{color:var(--text2);padding:4px 0;border-bottom:2px solid transparent}
 .topbar nav a:hover{color:var(--forest);border-bottom-color:var(--forest);text-decoration:none}
 
 /* Sidebar */
 .sidebar{position:fixed;top:60px;left:0;width:270px;bottom:0;overflow-y:auto;background:var(--paper);border-right:1px solid var(--border);padding:16px 0;font-size:12.5px;z-index:100}
-.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
 .sidebar .sec{padding:0 16px;margin:10px 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text3);font-weight:700;font-family:'Sora',sans-serif}
 .sidebar a{display:block;padding:3px 16px;color:var(--text2);transition:.12s}
 .sidebar a:hover{color:var(--forest);background:rgba(27,67,50,.04);text-decoration:none}
@@ -68,1195 +68,629 @@ ul,ol{margin:0 0 14px 20px}
 li{margin-bottom:4px}
 
 /* Code */
-code{background:var(--forest-pale);padding:1px 6px;border-radius:3px;font-size:13px;color:var(--forest);font-family:'JetBrains Mono','Fira Code',monospace}
-pre{background:var(--warm-white);border:1px solid var(--border);border-radius:6px;padding:14px 18px;overflow-x:auto;margin:10px 0 16px;font-size:12.5px;line-height:1.65;position:relative;font-family:'JetBrains Mono','Fira Code',monospace}
+code{background:var(--forest-pale);padding:1px 6px;font-size:13px;color:var(--forest);font-family:'Courier New','Fira Code',monospace}
+pre{background:var(--warm-white);border:2px solid var(--border);padding:14px 18px;overflow-x:auto;margin:10px 0 16px;font-size:12.5px;line-height:1.65;position:relative;font-family:'Courier New','Fira Code',monospace;box-shadow:3px 3px 0 var(--border-light)}
 pre code{background:none;padding:0;color:var(--text)}
-.lang-badge{position:absolute;top:6px;right:10px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);background:var(--paper);padding:2px 8px;border-radius:3px;font-weight:700;font-family:'Sora',sans-serif}
+.lang-badge{position:absolute;top:6px;right:10px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);background:var(--paper);padding:2px 8px;font-weight:700;font-family:'Sora',sans-serif}
 
 /* Cards */
-.card{background:var(--warm-white);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin:12px 0;box-shadow:0 1px 3px var(--shadow)}
+.card{background:var(--warm-white);border:2px solid var(--border);padding:16px 20px;margin:12px 0;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.card::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
+.card::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
 .card h4{margin-top:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:12px 0}
 .grid .card{margin:0}
 
 /* Tables */
 table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.5px}
-th{background:var(--forest);color:var(--cream);text-align:left;padding:8px 12px;font-weight:600;border:1px solid var(--forest-light);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;font-family:'Sora',sans-serif}
-td{padding:7px 12px;border:1px solid var(--border)}
+th{background:var(--forest);color:var(--cream);text-align:left;padding:8px 12px;font-weight:600;border:2px solid var(--forest);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;font-family:'Sora',sans-serif}
+td{padding:7px 12px;border:2px solid var(--border)}
 tr:nth-child(even) td{background:var(--paper)}
 
 /* Badges */
-.tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:1px 2px;font-family:'Sora',sans-serif}
+.tag{display:inline-block;padding:1px 8px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:1px 2px;font-family:'Sora',sans-serif}
 .tag-ts{background:var(--navy-pale);color:var(--navy)}
 .tag-java{background:var(--terra-pale);color:var(--terra)}
 .tag-rest{background:var(--amber-pale);color:var(--brown)}
-.tag-http{background:var(--amber-pale);color:var(--brown)}
-.tag-tier{background:var(--paper);color:var(--amber);border:1px solid var(--border)}
 
 /* Callouts */
-.note,.warn,.tip,.arch{border-radius:6px;padding:12px 16px;margin:14px 0;font-size:13px}
+.note,.warn,.tip{padding:12px 16px;margin:14px 0;font-size:13px;box-shadow:3px 3px 0 var(--border-light)}
 .note{background:rgba(27,67,50,.05);border-left:3px solid var(--forest)}
 .warn{background:rgba(192,87,49,.05);border-left:3px solid var(--terra)}
 .tip{background:rgba(212,135,14,.05);border-left:3px solid var(--amber)}
-.arch{background:rgba(27,42,74,.05);border-left:3px solid var(--navy)}
-.note strong{color:var(--forest)}.warn strong{color:var(--terra)}.tip strong{color:var(--amber)}.arch strong{color:var(--navy)}
 
-/* Flow diagrams (ASCII) */
-.flow{background:var(--warm-white);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin:12px 0;font-size:12px;line-height:1.5;white-space:pre;overflow-x:auto;color:var(--navy);font-family:'JetBrains Mono','Fira Code',monospace}
+/* Footer */
+footer{border-top:3px solid var(--forest);padding:32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;font-size:12px;background:var(--navy);margin-top:60px}
+footer div{color:rgba(255,255,255,.5)}
+footer .foot-links{display:flex;gap:20px}
+footer a{color:rgba(255,255,255,.5)}footer a:hover{color:var(--honey)}
 
 /* Responsive */
-@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:72px 16px 80px}}
+@media(max-width:900px){
+.sidebar{display:none}
+.main{margin-left:0;padding:76px 20px 80px}
+}
+@media(max-width:600px){
+.topbar nav{display:none}
+.grid{grid-template-columns:1fr}
+table{font-size:11px}
+th,td{padding:5px 8px}
+}
 </style>
 </head>
 <body>
 
-<header class="topbar">
-<div class="brand"><span class="vibe">Vibe</span><span class="life">Life</span> <em>// dev manual</em></div>
-<span class="pill">Minecraft Edition</span>
+<!-- ===== TOP BAR ===== -->
+<div class="topbar">
+<a href="../" class="brand"><span class="pkt">Packet</span><span class="craft">Craft</span><em>Developer Manual</em></a>
+<span class="pill">v1.0</span>
 <nav>
-<a href="#architecture">Architecture</a>
-<a href="#server">Sidecar</a>
-<a href="#services">Services</a>
-<a href="#plugin">Plugin</a>
-<a href="#persistence">Persistence</a>
-<a href="#guides">Guides</a>
-<a href="#api-ref">API Ref</a>
-<a href="plugin.html">Plugin Guide</a>
-<a href="deploy.html">Deploy</a>
-<a href="index.html">Home</a>
+<a href="../">Home</a>
+<a href="../#plugin">Plugin Guide</a>
+<a href="../manual/">Game Manual</a>
 </nav>
-</header>
+</div>
 
-<aside class="sidebar">
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
 <div class="sec">Overview</div>
-<a href="#intro">Introduction</a>
-<a href="#stack">Tech Stack</a>
-<a href="#project-structure">Project Structure</a>
-<a href="#conventions">Conventions</a>
+<a href="#architecture">Architecture</a>
+<a href="#quick-start">Quick Start</a>
 <div class="sep"></div>
-
-<div class="sec">Architecture</div>
-<a href="#architecture">System Architecture</a>
-<a class="l2" href="#data-flow">Data Flow</a>
-<a class="l2" href="#tier-system">Tier System</a>
-<a class="l2" href="#type-system">Type System &amp; Contracts</a>
-<div class="sep"></div>
-
-<div class="sec">Sidecar Server</div>
-<a href="#server">Server Entry Point</a>
-<a class="l2" href="#fastify-setup">Fastify Setup</a>
-<a class="l2" href="#middleware">Middleware &amp; Plugins</a>
-<a class="l2" href="#route-registration">Route Registration</a>
-<div class="sep"></div>
-
-<div class="sec">Auth &amp; Sessions</div>
-<a href="#auth">Authentication</a>
-<a class="l2" href="#auth-flow">MC Auth Flow</a>
-<a class="l2" href="#session-mgmt">Session Management</a>
-<a class="l2" href="#token-resolution">Token Resolution</a>
-<div class="sep"></div>
-
-<div class="sec">State &amp; Services</div>
-<a href="#shared-state">Shared State</a>
-<a class="l2" href="#state-maps">State Maps</a>
-<a class="l2" href="#permissions">Permission System</a>
-<a href="#services">Service Layer</a>
-<a class="l2" href="#svc-avatar">Avatar Service</a>
-<a class="l2" href="#svc-parcel">Parcel Service</a>
-<a class="l2" href="#svc-object">Object Service</a>
-<a class="l2" href="#svc-economy">Economy Service</a>
-<a class="l2" href="#svc-marketplace">Marketplace Service</a>
-<a class="l2" href="#svc-social">Social Service</a>
-<a class="l2" href="#svc-chat">Chat Service</a>
-<a class="l2" href="#svc-other">Other Services</a>
-<div class="sep"></div>
-
-<div class="sec">Paper Plugin</div>
-<a href="#plugin">Paper Plugin Architecture</a>
-<a class="l2" href="#plugin-listeners">Listeners &amp; Hooks</a>
-<a class="l2" href="#plugin-sidecar-client">SidecarClient</a>
-<a class="l2" href="#plugin-messaging">Plugin Messaging</a>
-<div class="sep"></div>
-
-<div class="sec">Fabric Mod</div>
-<a href="#fabric-mod">Fabric Mod Architecture</a>
-<a class="l2" href="#mod-screens">UI Screens</a>
-<div class="sep"></div>
-
-<div class="sec">Persistence</div>
-<a href="#persistence">Persistence Layer</a>
-<a class="l2" href="#dual-mode">Dual-Mode Design</a>
-<a class="l2" href="#persistence-api">API Surface</a>
-<a class="l2" href="#adding-persistence">Adding New Entities</a>
-<div class="sep"></div>
-
-<div class="sec">Guides</div>
-<a href="#guides">Developer Guides</a>
-<a class="l2" href="#guide-setup">Dev Environment Setup</a>
-<a class="l2" href="#guide-new-service">Adding a New Service</a>
-<a class="l2" href="#guide-new-route">Adding a New Route</a>
-<a class="l2" href="#guide-new-event">Adding a Region Event</a>
-<a class="l2" href="#guide-build-plugin">Building the Paper Plugin</a>
-<a class="l2" href="#guide-build-mod">Building the Fabric Mod</a>
-<div class="sep"></div>
-
 <div class="sec">API Reference</div>
-<a href="#api-ref">HTTP Endpoints</a>
-<a class="l2" href="#api-auth">Auth</a>
-<a class="l2" href="#api-regions">Regions &amp; Objects</a>
-<a class="l2" href="#api-parcels">Parcels</a>
-<a class="l2" href="#api-economy">Economy &amp; Marketplace</a>
-<a class="l2" href="#api-social">Social</a>
-<a class="l2" href="#api-combat">Combat</a>
-<a class="l2" href="#api-misc">Everything Else</a>
-</aside>
+<a href="#api-auth">Auth</a>
+<a href="#api-regions">Regions &amp; Objects</a>
+<a href="#api-parcels">Parcels</a>
+<a href="#api-economy">Economy</a>
+<a href="#api-social">Social &amp; Friends</a>
+<a href="#api-groups">Groups &amp; Guilds</a>
+<a href="#api-marketplace">Marketplace</a>
+<a href="#api-storefronts">Storefronts</a>
+<a href="#api-achievements">Achievements</a>
+<a href="#api-pets">Pets</a>
+<a href="#api-events">Events</a>
+<a href="#api-homes">Homes</a>
+<a href="#api-photos">Photos</a>
+<a href="#api-voice">Voice</a>
+<a href="#api-presence">Presence</a>
+<a href="#api-admin">Admin</a>
+<div class="sep"></div>
+<div class="sec">Internals</div>
+<a href="#auth-model">Auth Model</a>
+<a href="#persistence">Persistence Layer</a>
+<a href="#plugin-messages">Plugin Message Protocol</a>
+<a href="#paper-plugin">Paper Plugin Architecture</a>
+<a href="#fabric-mod">Fabric Mod Architecture</a>
+<div class="sep"></div>
+<div class="sec">Operations</div>
+<a href="#config">Configuration</a>
+<a href="#testing">Testing</a>
+<a href="#project-structure">Project Structure</a>
+</div>
 
-<main class="main">
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
 
-<!-- ================================================================ -->
-<section id="intro">
-<h1>VibeLife Developer Manual</h1>
-<p class="tagline">Complete technical reference for building, extending, and understanding the VibeLife platform &mdash; a Minecraft Paper server plugin system with Fastify sidecar and Fabric client mod.</p>
+<h1>PacketCraft Developer Manual</h1>
+<p class="tagline">Architecture, API reference, and internals for the PacketCraft platform &mdash; Paper + Fabric + Fastify.</p>
+
+<!-- ===== ARCHITECTURE ===== -->
+<h2 id="architecture">Architecture</h2>
+<p>PacketCraft is a 3-tier system built for Minecraft server platforms:</p>
 
 <div class="grid">
 <div class="card">
-<h4>Sidecar Backend</h4>
-<p><span class="tag tag-ts">TypeScript</span> Fastify 5, Node.js ESM, 50+ services, 40+ route files, dual-mode persistence (PostgreSQL or in-memory)</p>
+<h4>Paper Plugin <span class="tag tag-java">Java</span></h4>
+<p>Runs inside the Paper Minecraft server. Handles in-game commands (/parcel, /friends, /balance, /pay, /market), listens to game events, and communicates with the sidecar via HTTP.</p>
 </div>
 <div class="card">
-<h4>Paper Plugin</h4>
-<p><span class="tag tag-java">Java 21</span> Paper server plugin (Gradle). Bridges Minecraft server events to the sidecar via HTTP/REST. Handles auth, parcels, chat, achievements, economy.</p>
+<h4>Fabric Client Mod <span class="tag tag-java">Java</span></h4>
+<p>Runs on the player's Minecraft client. Provides keybind-activated GUI screens (V/N/M/J/K) for economy, social, marketplace, achievements, and events. Communicates via plugin messages and direct sidecar API calls.</p>
 </div>
 <div class="card">
-<h4>Fabric Mod</h4>
-<p><span class="tag tag-java">Java 21</span> Fabric client mod (Fabric Loom). Renders UI overlay screens for economy, social, marketplace, achievements, and events.</p>
-</div>
-<div class="card">
-<h4>Communication</h4>
-<p><span class="tag tag-rest">REST</span> Plugin &rarr; Sidecar via HTTP/REST. Mod &rarr; Sidecar via HTTP/REST. Plugin &rarr; Mod via plugin messaging channel (<code>vibelife:main</code>).</p>
+<h4>Fastify Sidecar <span class="tag tag-ts">TypeScript</span></h4>
+<p>Standalone HTTP server (Fastify 5 + TypeScript) that owns all business logic, persistence, and real-time state. Exposes 40+ REST endpoints. Dual persistence: in-memory for dev, PostgreSQL for prod.</p>
 </div>
 </div>
-</section>
 
-<!-- ================================================================ -->
-<section id="stack">
-<h2>Tech Stack</h2>
-<table>
-<tr><th>Layer</th><th>Technology</th><th>Key Files</th></tr>
-<tr><td>Sidecar Server</td><td>Fastify 5 + TypeScript + Node.js (ESM)</td><td><code>src/server.ts</code></td></tr>
-<tr><td>Contracts</td><td>TypeScript type unions + validators</td><td><code>src/contracts.ts</code></td></tr>
-<tr><td>Services</td><td>Pure TS functions, in-memory Maps</td><td><code>src/world/*.ts</code></td></tr>
-<tr><td>Routes</td><td>Fastify route handlers</td><td><code>src/routes/*.ts</code></td></tr>
-<tr><td>Persistence</td><td>Dual-mode: in-memory Maps + PostgreSQL</td><td><code>src/data/persistence.ts</code></td></tr>
-<tr><td>Paper Plugin</td><td>Paper API (Java 21, Gradle, shadowJar)</td><td><code>paper-plugin/</code></td></tr>
-<tr><td>Fabric Mod</td><td>Fabric API (Java 21, Fabric Loom)</td><td><code>fabric-mod/</code></td></tr>
-<tr><td>Plugin &harr; Sidecar</td><td>HTTP/REST (OkHttp / Java HttpClient)</td><td><code>SidecarClient.java</code></td></tr>
-<tr><td>Plugin &harr; Mod</td><td>Plugin messaging channel (<code>vibelife:main</code>)</td><td><code>PluginMessageHandler.java</code></td></tr>
-<tr><td>Auth</td><td>MC UUID-based, session tokens from sidecar</td><td><code>src/world/auth-service.ts</code></td></tr>
-</table>
-</section>
-
-<!-- ================================================================ -->
-<section id="project-structure">
-<h2>Project Structure</h2>
-<pre><code>vibelife/
-&#x251C;&#x2500;&#x2500; src/                              <span style="color:var(--text3)"># TypeScript sidecar (Fastify)</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; server.ts                     <span style="color:var(--text3)"># Fastify app, route registration</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; contracts.ts                  <span style="color:var(--text3)"># ALL shared types &amp; unions</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; data/
-&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; persistence.ts            <span style="color:var(--text3)"># Dual-mode persistence layer</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; world/                        <span style="color:var(--text3)"># Domain services</span>
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; _shared-state.ts          <span style="color:var(--text3)"># Mutable state, sessions, permissions</span>
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; store.ts                  <span style="color:var(--text3)"># Barrel re-exports</span>
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; auth-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; avatar-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; parcel-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; object-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; chat-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; economy-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; marketplace-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; social-service.ts
-&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; achievement-service.ts
-&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; ... (50+ total services)
-&#x2502;   &#x2514;&#x2500;&#x2500; routes/                       <span style="color:var(--text3)"># HTTP endpoint handlers</span>
-&#x2502;       &#x251C;&#x2500;&#x2500; auth.ts
-&#x2502;       &#x251C;&#x2500;&#x2500; regions.ts
-&#x2502;       &#x251C;&#x2500;&#x2500; parcels.ts
-&#x2502;       &#x251C;&#x2500;&#x2500; economy.ts
-&#x2502;       &#x251C;&#x2500;&#x2500; marketplace.ts
-&#x2502;       &#x2514;&#x2500;&#x2500; ... (40+ route files)
-&#x251C;&#x2500;&#x2500; paper-plugin/                     <span style="color:var(--text3)"># Paper server plugin (Java 21, Gradle)</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; build.gradle.kts
-&#x2502;   &#x2514;&#x2500;&#x2500; src/main/java/
-&#x2502;       &#x2514;&#x2500;&#x2500; life/vibe/plugin/
-&#x2502;           &#x251C;&#x2500;&#x2500; VibeLifePlugin.java   <span style="color:var(--text3)"># Plugin entry point</span>
-&#x2502;           &#x251C;&#x2500;&#x2500; SidecarClient.java    <span style="color:var(--text3)"># HTTP client to sidecar</span>
-&#x2502;           &#x251C;&#x2500;&#x2500; PluginMessageHandler.java
-&#x2502;           &#x251C;&#x2500;&#x2500; LoginListener.java
-&#x2502;           &#x251C;&#x2500;&#x2500; ParcelListener.java
-&#x2502;           &#x251C;&#x2500;&#x2500; ChatListener.java
-&#x2502;           &#x251C;&#x2500;&#x2500; AchievementHook.java
-&#x2502;           &#x2514;&#x2500;&#x2500; VaultProvider.java
-&#x251C;&#x2500;&#x2500; fabric-mod/                       <span style="color:var(--text3)"># Fabric client mod (Java 21, Fabric Loom)</span>
-&#x2502;   &#x251C;&#x2500;&#x2500; build.gradle
-&#x2502;   &#x2514;&#x2500;&#x2500; src/main/java/
-&#x2502;       &#x2514;&#x2500;&#x2500; life/vibe/mod/
-&#x2502;           &#x251C;&#x2500;&#x2500; VibeLifeMod.java      <span style="color:var(--text3)"># Mod entry point</span>
-&#x2502;           &#x251C;&#x2500;&#x2500; SidecarApi.java       <span style="color:var(--text3)"># REST client to sidecar</span>
-&#x2502;           &#x251C;&#x2500;&#x2500; screens/              <span style="color:var(--text3)"># UI overlay screens</span>
-&#x2502;           &#x2514;&#x2500;&#x2500; PluginMessageReceiver.java
-&#x251C;&#x2500;&#x2500; paper-server/                     <span style="color:var(--text3)"># Test Paper server setup</span>
-&#x251C;&#x2500;&#x2500; public/                           <span style="color:var(--text3)"># Static served files</span>
-&#x251C;&#x2500;&#x2500; package.json
-&#x2514;&#x2500;&#x2500; tsconfig.json</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="conventions">
-<h2>Naming Conventions</h2>
-<table>
-<tr><th>Item</th><th>Convention</th><th>Example</th></tr>
-<tr><td>Service files (TS)</td><td><code>kebab-case-service.ts</code></td><td><code>economy-service.ts</code></td></tr>
-<tr><td>Route files (TS)</td><td><code>kebab-case.ts</code></td><td><code>marketplace.ts</code></td></tr>
-<tr><td>Contract types</td><td><code>PascalCaseContract</code></td><td><code>AvatarContract</code></td></tr>
-<tr><td>Service functions</td><td><code>camelCase</code> verbs</td><td><code>claimParcel()</code>, <code>sendCurrency()</code></td></tr>
-<tr><td>State Maps</td><td><code>camelCase</code> plurals</td><td><code>sessions</code>, <code>avatarsByRegion</code></td></tr>
-<tr><td>Plugin classes (Java)</td><td><code>PascalCase</code></td><td><code>LoginListener</code>, <code>SidecarClient</code></td></tr>
-<tr><td>Mod screens (Java)</td><td><code>PascalCaseScreen</code></td><td><code>EconomyScreen</code>, <code>MarketplaceScreen</code></td></tr>
-<tr><td>Plugin channel</td><td><code>namespace:channel</code></td><td><code>vibelife:main</code></td></tr>
-</table>
-</section>
-
-<!-- ================================================================ -->
-<section id="architecture">
-<h2>System Architecture</h2>
-
-<h3 id="data-flow">Data Flow</h3>
-<div class="flow">
-+----------------------------------------------------------------------+
-|                     MINECRAFT CLIENT + FABRIC MOD                    |
-|  Fabric Mod --&gt; HTTP/REST --&gt; Sidecar API (economy, social, etc.)   |
-|  Fabric Mod &lt;-- Plugin Msg &lt;-- Paper Plugin (token, notifications)  |
-+----------------------------+-----------------------------------------+
-                             | Minecraft Protocol
-                             v
-+----------------------------------------------------------------------+
-|                     PAPER SERVER + PAPER PLUGIN                      |
-|  LoginListener --&gt; POST /api/auth/mc-login --&gt; Sidecar              |
-|  ChatListener  --&gt; POST /api/chat --&gt; Sidecar                       |
-|  ParcelListener --&gt; POST /api/parcels/* --&gt; Sidecar                 |
-|  AchievementHook --&gt; POST /api/achievements/* --&gt; Sidecar           |
-|  VaultProvider  --&gt; GET/POST /api/currency/* --&gt; Sidecar            |
-|  PluginMessageHandler --&gt; vibelife:main --&gt; Fabric Mod              |
-+----------------------------+-----------------------------------------+
-                             | HTTP/REST
-                             v
-+----------------------------------------------------------------------+
-|                      SIDECAR (src/server.ts)                         |
-|  +--------------+  +---------------+                                 |
-|  | Fastify App  |  | Route Files   |                                 |
-|  | CORS, Rate   |  | src/routes/*  |                                 |
-|  | Limit, Static|  |               |                                 |
-|  +------+-------+  +-------+-------+                                 |
-|         +-------------------+                                        |
-|                             v                                        |
-|  +------------------------------------------------------------------+|
-|  |              src/world/store.ts (barrel)                         ||
-|  |  Re-exports from all services + shared state                    ||
-|  +------------------------------+-----------------------------------+|
-|                                 v                                    |
-|  +------------------------------------------------------------------+|
-|  |           src/world/_shared-state.ts                             ||
-|  |  sessions Map, avatarsByRegion Map, regions[], persistence      ||
-|  |  getBuildPermission(), resolveToken()                            ||
-|  +------------------------------+-----------------------------------+|
-|                                 v                                    |
-|  +------------------------------------------------------------------+|
-|  |           src/data/persistence.ts                                ||
-|  |  In-Memory Maps (dev) --or--&gt; PostgreSQL (production)           ||
-|  +------------------------------------------------------------------+|
-+----------------------------------------------------------------------+</div>
-
-<h3 id="tier-system">Tier System</h3>
-<p>Features are organized into tiers registered in order in <code>server.ts</code>:</p>
-<table>
-<tr><th>Tier</th><th>Features</th><th>Key Services</th></tr>
-<tr><td><span class="tag tag-tier">Tier 1-2</span></td><td>Auth, regions, avatars, objects, parcels, chat, economy, marketplace, inventory, achievements, social, groups, radio, emotes</td><td>auth, avatar, parcel, object, chat, economy, marketplace, social, achievement, emote, radio</td></tr>
-<tr><td><span class="tag tag-tier">Tier 3</span></td><td>Scripts, interactives, voice, pets, photos, media, seasonal</td><td>script, voice, pet, photo, media, seasonal</td></tr>
-<tr><td><span class="tag tag-tier">Tier 4</span></td><td>Mobile companion, creator tools, federation, NPCs</td><td>mobile, creator-tools, federation, npc</td></tr>
-</table>
-
-<div class="note"><strong>Note:</strong> Combat and voxel systems from the old Tier 5 are no longer needed &mdash; Minecraft provides these natively. The Paper plugin hooks into Minecraft's combat events (EntityDeathEvent, etc.) to track stats, XP, and loot through the sidecar.</div>
-
-<h3 id="type-system">Type System &amp; Contracts</h3>
-<p><strong>File:</strong> <code>src/contracts.ts</code> &mdash; the single source of truth for all shared types.</p>
-
-<h4>Key Contract Types</h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Session contract
-type Session = {
-  token: string; accountId: string; avatarId: string;
-  displayName: string; mcUuid: string;
-  role: "resident" | "admin"; expiresAt: number;
-}
-
-// Avatar profile
-type AvatarContract = {
-  avatarId: string; accountId: string; displayName: string;
-  mcUuid: string; appearance: AvatarAppearance;
-}
-
-// Parcel land unit
-type Parcel = {
-  id: string; regionId: string; name: string;
-  minX: number; maxX: number; minZ: number; maxZ: number;
-  tier: "public" | "residential" | "premium";
-  ownerAccountId: string | null; collaboratorAccountIds: string[];
-}
-
-// Combat stats (tracked by sidecar, driven by MC events)
-type CombatStats = {
-  accountId: string; level: number;
-  xp: number; xpToNext: number; kills: number; deaths: number;
-}
-
-// Currency transaction types
-type CurrencyTransactionType = "gift" | "purchase" | "sale" | "bonus"
-  | "region_tax" | "loot" | "death_penalty";</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="server">
-<h2>Sidecar Server Entry Point</h2>
-<p><strong>File:</strong> <code>src/server.ts</code> &mdash; the Fastify sidecar that all services run through. Both the Paper plugin and Fabric mod communicate with this server via REST.</p>
-
-<h3 id="fastify-setup">Fastify Setup</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-const app = Fastify({ logger: true });
-
-// Plugin registration order:
-await app.register(cors, { origin: dynamicOriginCallback });
-await app.register(rateLimit, { max: 60, timeWindow: "1 minute" });
-await app.register(fastifyStatic, { root: "./public", prefix: "/" });</code></pre>
-
-<h3 id="middleware">Middleware &amp; Plugins</h3>
-<table>
-<tr><th>Plugin</th><th>Purpose</th><th>Configuration</th></tr>
-<tr><td><code>@fastify/cors</code></td><td>Cross-origin requests</td><td><code>CORS_ORIGINS</code> env var, comma-separated, defaults to localhost:3000</td></tr>
-<tr><td><code>@fastify/rate-limit</code></td><td>Request throttling</td><td>60 req/min global, per-route overrides available</td></tr>
-<tr><td><code>@fastify/static</code></td><td>Static file serving</td><td><code>./public</code> directory</td></tr>
-</table>
-
-<h3 id="route-registration">Route Registration Order</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Tier 1-2: Core
-registerAuthRoutes(app);        // /api/auth/*
-registerRegionRoutes(app);      // /api/regions/*
-registerObjectRoutes(app);      // /api/regions/:id/objects
-registerParcelRoutes(app);      // /api/parcels/*
-registerChatRoutes(app);        // /api/regions/:id/chat-history
-registerEconomyRoutes(app);     // /api/currency/*
-registerMarketplaceRoutes(app); // /api/marketplace/*
-registerAssetRoutes(app);       // /api/assets/*
-registerAchievementRoutes(app); // /api/achievements, /api/progress/*
-registerSocialRoutes(app);      // /api/friends/*, /api/groups/*
-registerGuildRoutes(app);       // /api/groups/:id/treasury, emblem, etc.
-registerRadioRoutes(app);       // /api/radio/*
-registerEmoteRoutes(app);       // /api/emotes/*
-registerCombatRoutes(app);      // /api/combat/* (stat tracking)
-
-// Tier 3
-registerScriptRoutes(app);      // /api/scripts/*
-registerVoiceRoutes(app);       // /api/voice/*
-registerPetRoutes(app);         // /api/pets/*
-registerPhotoRoutes(app);       // /api/photos/*
-registerMediaRoutes(app);       // /api/media/*
-registerSeasonalRoutes(app);    // /api/seasonal/*
-
-// Tier 4
-registerMobileRoutes(app);      // /api/mobile/*
-registerCreatorToolsRoutes(app);// /api/creator/*
-registerFederationRoutes(app);  // /api/federation/*
-registerNpcRoutes(app);         // /api/npcs/*
-registerAdminRoutes(app);       // /api/admin/*</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="auth">
-<h2>Authentication &amp; Sessions</h2>
-
-<h3 id="auth-flow">MC Auth Flow</h3>
-<p>Authentication is driven by Minecraft UUIDs. When a player joins the Paper server, the plugin calls the sidecar to create or resume a session.</p>
-<div class="flow">
-Player joins MC Server
-       |
-       v
-Paper Plugin (LoginListener)
-       |
-       +-- POST /api/auth/mc-login -----------&gt; Sidecar
-       |   { mcUuid, username }                 | Lookup or create account
-       |                                        | Create session (8h TTL)
-       |&lt;------ { token, session } -------------+
-       |
-       +-- Send token to Fabric Mod via
-       |   plugin messaging (vibelife:main)
-       |
-       v
-Fabric Mod receives token
-       |
-       +-- Uses token for all REST calls
-       |   GET /api/currency/balance?token=X
-       |   GET /api/friends?token=X
-       |   etc.
-       v</div>
-
-<div class="note"><strong>Note:</strong> There is no guest/register/login flow from a sidebar UI. The Minecraft server authenticates the player, and the Paper plugin bridges that identity to the sidecar. The sidecar trusts the plugin's mc-login call because it comes from the server process.</div>
-
-<h3 id="session-mgmt">Session Management</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Session TTL: 8 hours
-const SESSION_TTL_MS = 1000 * 60 * 60 * 8;
-
-// Session structure
-type Session = {
-  token: string;          // UUID v4
-  accountId: string;      // UUID v4
-  avatarId: string;       // UUID v4
-  displayName: string;
-  mcUuid: string;         // Minecraft UUID
-  role: "resident" | "admin";
-  expiresAt: number;      // Date.now() + TTL
-};
-
-// Stored in global Map
-const sessions = new Map&lt;string, Session&gt;();
-
-// Token validation refreshes TTL
-export function resolveToken(token: string): Session | null {
-  const session = sessions.get(token);
-  if (!session) return null;
-  if (session.expiresAt &lt; Date.now()) {
-    sessions.delete(token);
-    return null;
-  }
-  session.expiresAt = Date.now() + SESSION_TTL_MS; // Refresh
-  return session;
-}</code></pre>
-
-<h3 id="token-resolution">Token Resolution in Routes</h3>
-<p>Tokens can be passed in three ways. Routes extract them using a consistent pattern:</p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// In route handler:
-const token = request.body?.token
-  ?? request.query?.token
-  ?? request.headers.authorization?.replace("Bearer ", "");
-
-const session = resolveToken(token);
-if (!session) return reply.status(401).send({ error: "Invalid or expired token" });</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="shared-state">
-<h2>Shared State</h2>
-<p><strong>File:</strong> <code>src/world/_shared-state.ts</code> &mdash; central mutable state and permission helpers.</p>
-
-<h3 id="state-maps">Core State Maps</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-export let persistence: PersistenceLayer;    // Persistence adapter
-export let regions: RegionSummary[] = [];    // All regions
-export const sessions = new Map&lt;string, Session&gt;();
-export const avatarsByRegion = new Map&lt;string, Map&lt;string, AvatarState&gt;&gt;();
-export const chatHistoryByRegion = new Map&lt;string, ChatHistoryEntry[]&gt;();
-export const objectGroups = new Map&lt;string, ObjectGroupContract&gt;();</code></pre>
-
-<div class="arch"><strong>Architecture note:</strong> All services import from <code>_shared-state.ts</code> and operate on these Maps directly. This enables zero-latency reads but means the sidecar is single-process. The barrel file <code>store.ts</code> re-exports everything from all services for convenient imports.</div>
-
-<h3 id="permissions">Permission System</h3>
-
-<h4>Build Permission</h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-type BuildPermission = {
-  allowed: boolean;
-  parcel: Parcel | null;
-  reason?: string;
-};
-
-export function getBuildPermission(
-  regionId: string, accountId: string, x: number, z: number
-): BuildPermission {
-  const parcel = findParcelAt(regionId, x, z);
-  if (!parcel)
-    return { allowed: false, parcel: null, reason: "No parcel here" };
-  if (parcel.tier === "public")
-    return { allowed: true, parcel };
-  if (parcel.ownerAccountId === accountId)
-    return { allowed: true, parcel };
-  if (parcel.collaboratorAccountIds.includes(accountId))
-    return { allowed: true, parcel };
-  if (!parcel.ownerAccountId)
-    return { allowed: false, parcel, reason: "Claim this parcel first" };
-  return { allowed: false, parcel, reason: "Owned by another player" };
-}</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="services">
-<h2>Service Layer</h2>
-<p>Services are pure TypeScript modules in <code>src/world/</code>. They import shared state, implement business logic, and are re-exported through <code>store.ts</code>.</p>
-
-<div class="tip"><strong>Pattern:</strong> Every service follows the same structure: import shared state &rarr; validate session &rarr; check permissions &rarr; mutate state &rarr; persist &rarr; return result.</div>
-
-<h3 id="svc-avatar">Avatar Service</h3>
-<p><strong>File:</strong> <code>src/world/avatar-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Profile management -- called from REST endpoints
-getAvatar(session)
-  -&gt; Returns avatar profile, appearance, stats
-
-// Appearance update
-updateAppearance(session, appearance)
-  -&gt; Updates in-memory + persistence
-  -&gt; Returns updated avatar
-
-// Teleport between regions (tracked by sidecar)
-teleportToRegion(session, targetRegionId)
-  -&gt; Saves current position
-  -&gt; Removes from old region
-  -&gt; Adds to new region
-  -&gt; Updates profile stats (worldVisits++)</code></pre>
-
-<h3 id="svc-parcel">Parcel Service</h3>
-<p><strong>File:</strong> <code>src/world/parcel-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-claimParcel(session, parcelId)
-  -&gt; Validates parcel unclaimed &amp; correct region
-  -&gt; Sets ownerAccountId
-
-releaseParcel(session, parcelId)
-  -&gt; Validates ownership
-  -&gt; Clears ownerAccountId &amp; collaborators
-
-addCollaborator(session, parcelId, collaboratorAccountId)
-  -&gt; Validates ownership
-  -&gt; Pushes to collaboratorAccountIds[]</code></pre>
-
-<h3 id="svc-object">Object Service</h3>
-<p><strong>File:</strong> <code>src/world/object-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-createRegionObject(session, asset, x, y, z, rotationY, scale)
-  -&gt; getBuildPermission() check
-  -&gt; Creates object with UUID
-  -&gt; Stores in persistence
-
-updateRegionObject(session, objectId, updates)
-  -&gt; Permission check (owner or parcel rights)
-  -&gt; Updates position/rotation/scale
-
-deleteRegionObject(session, objectId)
-  -&gt; Permission check
-  -&gt; Removes from persistence
-
-handleGroupObjects(session, objectIds, groupName)
-handleDuplicateGroup(session, groupName, offsetX, offsetY, offsetZ)</code></pre>
-
-<h3 id="svc-economy">Economy Service</h3>
-<p><strong>File:</strong> <code>src/world/economy-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-getBalance(accountId): number              // Default: 1000
-sendCurrency(fromId, toId, amount, type)   // Transfer + log transaction
-listCurrencyTransactions(accountId, limit) // Audit trail (max 100)</code></pre>
-<div class="note"><strong>Vault integration:</strong> The Paper plugin's <code>VaultProvider</code> class exposes the sidecar economy through the Vault API, so other MC plugins (shops, etc.) can check balances and transfer currency using standard Vault calls.</div>
-
-<h3 id="svc-marketplace">Marketplace Service</h3>
-<p><strong>File:</strong> <code>src/world/marketplace-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Listing types: "fixed" | "auction"
-// Statuses: "active" | "sold" | "expired" | "cancelled"
-// Valid kinds: outfit, accessory, tool, pet, decoration, consumable
-
-createListing(accountId, itemId, price, type, auctionEndTime?)
-buyListing(accountId, listingId)           // Fixed price purchase
-placeBid(accountId, listingId, amount)     // Auction bid (holds currency)
-cancelListing(accountId, listingId)
-getListings(filters: {kind?, minPrice?, maxPrice?, sort?})
-getPriceHistory(itemName, limit)           // Last 50 sales
-
-// Trade offers
-createTradeOffer(from, to, offeredItems, offeredCurrency, requestedItems, requestedCurrency)
-acceptTrade(accountId, tradeId)            // Atomic exchange
-declineTrade(accountId, tradeId)</code></pre>
-
-<h3 id="svc-social">Social Service</h3>
-<p><strong>File:</strong> <code>src/world/social-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Friends: status = "pending" | "accepted" | "blocked"
-addFriend(accountId, friendAccountId)
-removeFriend(accountId, friendAccountId)
-blockAccount(accountId, blockedAccountId)
-listFriends(accountId): FriendContract[]
-
-// Groups
-createGroup(accountId, name, description)
-addGroupMember(groupId, memberId, role)    // "member" | "officer" | "owner"
-removeGroupMember(groupId, memberId)
-setMemberRole(groupId, memberId, role)
-
-// Offline messaging
-sendOfflineMessage(fromId, toId, message)  // Max 1000 chars
-listOfflineMessages(accountId, limit)
-markMessageRead(accountId, messageId)
-
-// Profiles
-getProfile(accountId) / updateProfile(accountId, {bio, imageUrl})</code></pre>
-
-<h3 id="svc-chat">Chat Service</h3>
-<p><strong>File:</strong> <code>src/world/chat-service.ts</code></p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Message limit: 180 characters
-// History buffer: 50 messages per region
-// Channels: "region" | "whisper" | "global" | "group"
-
-handleChat(session, message)        -&gt; Store in history
-handleWhisper(session, target, msg) -&gt; Store + return
-getChatHistory(regionId)            -&gt; Last 50 messages</code></pre>
-<div class="note"><strong>MC integration:</strong> The Paper plugin's <code>ChatListener</code> hooks into <code>AsyncChatEvent</code> and forwards messages to the sidecar. Chat history is available via the Fabric mod's UI or through REST.</div>
-
-<h3 id="svc-other">Other Services</h3>
-<table>
-<tr><th>Service</th><th>File</th><th>Key Functions</th></tr>
-<tr><td>Achievement</td><td><code>achievement-service.ts</code></td><td>33 achievements, 5 categories, XP leveling, titles, daily/weekly challenges</td></tr>
-<tr><td>Combat Stats</td><td><code>combat-service.ts</code></td><td>Stat tracking (kills, deaths, XP, level). Driven by Paper plugin's EntityDeathEvent hook.</td></tr>
-<tr><td>Emote</td><td><code>emote-service.ts</code></td><td>14 emotes, 4 categories, combo detection (3s window, 3 unit range)</td></tr>
-<tr><td>Radio</td><td><code>radio-service.ts</code></td><td>Stations, playlists, tune/skip commands</td></tr>
-<tr><td>Voice</td><td><code>voice-service.ts</code></td><td>Join/leave channel (max 32), mute/deafen, spatial audio (30 unit range)</td></tr>
-<tr><td>Pet</td><td><code>pet-service.ts</code></td><td>8 species, rarity tiers, happiness/energy/XP, 8 tricks, feed/play/pet</td></tr>
-<tr><td>Photo</td><td><code>photo-service.ts</code></td><td>Capture w/ filters (8 types), visibility, likes, comments, gallery, featured</td></tr>
-<tr><td>Event</td><td><code>event-service.ts</code></td><td>8 event types, RSVP, recurring, max attendees, leaderboard</td></tr>
-<tr><td>Home</td><td><code>home-service.ts</code></td><td>Set home, privacy (public/friends/private), doorbell, visitor count</td></tr>
-<tr><td>Home Rating</td><td><code>home-rating-service.ts</code></td><td>1-5 stars, favorites, featured showcase</td></tr>
-<tr><td>Seasonal</td><td><code>seasonal-service.ts</code></td><td>4 seasons, 7 holidays, seasonal items, themes, achievements, leaderboard</td></tr>
-<tr><td>Presence</td><td><code>presence-service.ts</code></td><td>5 states (online/busy/away/invisible/offline), auto-away (10min), custom message</td></tr>
-<tr><td>Activity</td><td><code>activity-service.ts</code></td><td>Global/friends/player feeds, like activities, max 1000 entries</td></tr>
-<tr><td>Media</td><td><code>media-service.ts</code></td><td>Photo frames, video screens, projections, billboards, slideshows</td></tr>
-<tr><td>Script</td><td><code>script-service.ts</code></td><td>Visual node editor, trigger zones (sphere/box), persistent state</td></tr>
-<tr><td>NPC</td><td><code>npc-service.ts</code></td><td>5 types (ambient/shopkeeper/quest-giver/tour-guide/enemy), dialogue trees, quests</td></tr>
-<tr><td>Mobile</td><td><code>mobile-service.ts</code></td><td>Mobile sessions, push notifications, dashboard, quick actions</td></tr>
-<tr><td>Federation</td><td><code>federation-service.ts</code></td><td>Server registry, identity tokens, cross-server teleport, federated marketplace</td></tr>
-<tr><td>Creator Tools</td><td><code>creator-tools-service.ts</code></td><td>Asset pipeline, review queue, analytics, revenue splits, API keys, webhooks</td></tr>
-<tr><td>Guild</td><td><code>guild-service.ts</code></td><td>Treasury, emblem, banner, parcel assignment, alliances</td></tr>
-</table>
-</section>
-
-<!-- ================================================================ -->
-<section id="plugin">
-<h2>Paper Plugin Architecture</h2>
-<p><strong>Directory:</strong> <code>paper-plugin/</code> &mdash; a Paper server plugin (Java 21, built with Gradle + shadowJar) that bridges Minecraft server events to the VibeLife sidecar.</p>
-
-<h3 id="plugin-listeners">Listeners &amp; Hooks</h3>
-<table>
-<tr><th>Class</th><th>MC Event</th><th>Sidecar Endpoint</th><th>Purpose</th></tr>
-<tr><td><code>LoginListener</code></td><td><code>PlayerJoinEvent</code></td><td><code>POST /api/auth/mc-login</code></td><td>Authenticates player by MC UUID, receives session token, sends token to Fabric mod via plugin message</td></tr>
-<tr><td><code>ParcelListener</code></td><td><code>PlayerMoveEvent</code></td><td><code>POST /api/parcels/*</code></td><td>Detects parcel entry/exit, enforces build permissions via sidecar permission checks</td></tr>
-<tr><td><code>ChatListener</code></td><td><code>AsyncChatEvent</code></td><td><code>POST /api/regions/:id/chat</code></td><td>Forwards chat messages to sidecar for history and cross-platform delivery</td></tr>
-<tr><td><code>AchievementHook</code></td><td><code>PlayerAdvancementDoneEvent</code>, <code>EntityDeathEvent</code>, custom triggers</td><td><code>POST /api/achievements/*</code></td><td>Maps MC events to VibeLife achievements; tracks kills, deaths, exploration</td></tr>
-<tr><td><code>VaultProvider</code></td><td>Vault API calls</td><td><code>GET/POST /api/currency/*</code></td><td>Exposes sidecar economy as a Vault economy so other plugins (shops, etc.) can use VibeLife currency</td></tr>
-</table>
-
-<h3 id="plugin-sidecar-client">SidecarClient</h3>
-<p><strong>File:</strong> <code>paper-plugin/src/main/java/life/vibe/plugin/SidecarClient.java</code></p>
-<pre><code><span class="lang-badge">Java</span>
-/**
- * HTTP client that communicates with the VibeLife sidecar.
- * All calls are async (CompletableFuture) to avoid blocking the server thread.
- */
-public class SidecarClient {
-    private final String baseUrl;  // e.g. "http://localhost:3000"
-    private final HttpClient http;
-
-    // Auth
-    public CompletableFuture&lt;McLoginResponse&gt; mcLogin(UUID mcUuid, String username);
-
-    // Economy (called by VaultProvider)
-    public CompletableFuture&lt;Double&gt; getBalance(String accountId);
-    public CompletableFuture&lt;Void&gt; sendCurrency(String from, String to, double amount, String type);
-
-    // Combat stats
-    public CompletableFuture&lt;Void&gt; reportKill(String accountId, String entityType, int xp);
-    public CompletableFuture&lt;Void&gt; reportDeath(String accountId);
-
-    // Achievements
-    public CompletableFuture&lt;Void&gt; grantAchievement(String accountId, String achievementId);
-
-    // Chat
-    public CompletableFuture&lt;Void&gt; forwardChat(String accountId, String regionId, String message);
-
-    // Parcels
-    public CompletableFuture&lt;BuildPermission&gt; checkBuildPermission(
-        String regionId, String accountId, int x, int z);
-}</code></pre>
-
-<h3 id="plugin-messaging">Plugin Messaging Channel</h3>
-<p>The Paper plugin and Fabric mod communicate through the <code>vibelife:main</code> plugin messaging channel. This is used for:</p>
-<ul>
-<li><strong>Token handoff:</strong> After mc-login, the plugin sends the session token to the Fabric mod so it can make authenticated REST calls.</li>
-<li><strong>Notifications:</strong> The plugin can push real-time notifications (achievement unlocked, currency received, friend request) to the mod for UI display.</li>
-<li><strong>Sidecar URL:</strong> The plugin sends the configured sidecar base URL so the mod knows where to make REST calls.</li>
-</ul>
-<pre><code><span class="lang-badge">Java</span>
-// PluginMessageHandler.java (Paper side)
-public class PluginMessageHandler implements PluginMessageListener {
-    public static final String CHANNEL = "vibelife:main";
-
-    public void sendToken(Player player, String token, String sidecarUrl) {
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("TOKEN");
-        out.writeUTF(token);
-        out.writeUTF(sidecarUrl);
-        player.sendPluginMessage(plugin, CHANNEL, out.toByteArray());
-    }
-
-    public void sendNotification(Player player, String type, String json) {
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("NOTIFY");
-        out.writeUTF(type);
-        out.writeUTF(json);
-        player.sendPluginMessage(plugin, CHANNEL, out.toByteArray());
-    }
-}</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="fabric-mod">
-<h2>Fabric Mod Architecture</h2>
-<p><strong>Directory:</strong> <code>fabric-mod/</code> &mdash; a Fabric client mod (Java 21, Fabric Loom) that provides UI overlay screens for VibeLife features inside the Minecraft client.</p>
-
-<h3 id="mod-screens">UI Screens</h3>
-<p>The mod renders overlay screens using Minecraft's GUI system. Each screen fetches data from the sidecar via REST using the session token received from the plugin messaging channel.</p>
-<table>
-<tr><th>Screen</th><th>Description</th><th>Sidecar Endpoints Used</th></tr>
-<tr><td><code>EconomyScreen</code></td><td>Balance display, send currency, transaction history</td><td><code>/api/currency/*</code></td></tr>
-<tr><td><code>MarketplaceScreen</code></td><td>Browse/buy/sell listings, auction bidding, price history</td><td><code>/api/marketplace/*</code></td></tr>
-<tr><td><code>SocialScreen</code></td><td>Friends list, friend requests, groups, offline messages</td><td><code>/api/friends/*</code>, <code>/api/groups/*</code>, <code>/api/messages/*</code></td></tr>
-<tr><td><code>AchievementScreen</code></td><td>Achievement progress, titles, daily/weekly challenges</td><td><code>/api/achievements/*</code>, <code>/api/progress/*</code></td></tr>
-<tr><td><code>EventScreen</code></td><td>Upcoming events, RSVP, leaderboards</td><td><code>/api/events/*</code></td></tr>
-<tr><td><code>ProfileScreen</code></td><td>Player profile, bio, presence status</td><td><code>/api/avatar/profile</code>, <code>/api/presence/*</code></td></tr>
-<tr><td><code>ParcelScreen</code></td><td>Parcel management, collaborator settings</td><td><code>/api/parcels/*</code></td></tr>
-</table>
-
-<pre><code><span class="lang-badge">Java</span>
-// VibeLifeMod.java -- Fabric mod entry point
-public class VibeLifeMod implements ClientModInitializer {
-    private String sessionToken;
-    private String sidecarUrl;
-    private SidecarApi api;
-
-    @Override
-    public void onInitializeClient() {
-        // Register plugin messaging channel receiver
-        ClientPlayNetworking.registerGlobalReceiver(
-            new Identifier("vibelife", "main"),
-            (client, handler, buf, responseSender) -&gt; {
-                String msgType = buf.readString();
-                if ("TOKEN".equals(msgType)) {
-                    sessionToken = buf.readString();
-                    sidecarUrl = buf.readString();
-                    api = new SidecarApi(sidecarUrl, sessionToken);
-                }
-            }
-        );
-
-        // Register keybinds for opening screens
-        KeyBinding economyKey = new KeyBinding("key.vibelife.economy",
-            GLFW.GLFW_KEY_U, "VibeLife");
-        KeyBinding socialKey = new KeyBinding("key.vibelife.social",
-            GLFW.GLFW_KEY_O, "VibeLife");
-        // ... more keybinds
-    }
-}</code></pre>
-</section>
-
-<!-- ================================================================ -->
-<section id="persistence">
-<h2>Persistence Layer</h2>
-<p><strong>File:</strong> <code>src/data/persistence.ts</code></p>
-
-<h3 id="dual-mode">Dual-Mode Design</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-export type PersistenceLayer = {
-  // Accounts
-  createAccount(account: Account): Promise&lt;void&gt;;
-  getAccount(accountId: string): Promise&lt;Account | null&gt;;
-  getAccountByMcUuid(uuid: string): Promise&lt;Account | null&gt;;
-  getAccountByDisplayName(name: string): Promise&lt;Account | null&gt;;
-
-  // Avatar positions (per region)
-  saveAvatarPosition(accountId: string, regionId: string, pos: Position): Promise&lt;void&gt;;
-  getAvatarPosition(accountId: string, regionId: string): Promise&lt;Position | null&gt;;
-
-  // Avatar appearance
-  saveAppearance(accountId: string, appearance: AvatarAppearance): Promise&lt;void&gt;;
-  getAppearance(accountId: string): Promise&lt;AvatarAppearance | null&gt;;
-
-  // Parcels
-  getParcels(regionId: string): Promise&lt;Parcel[]&gt;;
-  updateParcel(parcel: Parcel): Promise&lt;void&gt;;
-
-  // Objects
-  getRegionObjects(regionId: string): Promise&lt;RegionObjectContract[]&gt;;
-  createRegionObject(obj: RegionObjectContract): Promise&lt;void&gt;;
-  updateRegionObject(obj: RegionObjectContract): Promise&lt;void&gt;;
-  deleteRegionObject(regionId: string, objectId: string): Promise&lt;void&gt;;
-
-  // Inventory
-  getInventory(accountId: string): Promise&lt;InventoryItem[]&gt;;
-  addInventoryItem(item: InventoryItem): Promise&lt;void&gt;;
-  updateInventoryItem(item: InventoryItem): Promise&lt;void&gt;;
-
-  // Social
-  getFriends(accountId: string): Promise&lt;FriendContract[]&gt;;
-  addFriend(friend: FriendContract): Promise&lt;void&gt;;
-  removeFriend(accountId: string, friendAccountId: string): Promise&lt;void&gt;;
-
-  // Groups
-  getGroups(accountId: string): Promise&lt;GroupContract[]&gt;;
-  createGroup(group: GroupContract): Promise&lt;void&gt;;
-  getGroupMembers(groupId: string): Promise&lt;GroupMember[]&gt;;
-  addGroupMember(member: GroupMember): Promise&lt;void&gt;;
-  removeGroupMember(groupId: string, memberId: string): Promise&lt;void&gt;;
-
-  // Economy
-  getCurrencyBalance(accountId: string): Promise&lt;number&gt;;
-  setCurrencyBalance(accountId: string, balance: number): Promise&lt;void&gt;;
-  addCurrencyTransaction(tx: CurrencyTransaction): Promise&lt;void&gt;;
-  getCurrencyTransactions(accountId: string, limit: number): Promise&lt;CurrencyTransaction[]&gt;;
-
-  // Profiles, bans, audit logs, teleport points, offline messages ...
-};</code></pre>
-
-<h4>In-Memory Implementation</h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-// Each entity stored as Map&lt;string, T&gt;
-const accounts = new Map&lt;string, Account&gt;();
-const positions = new Map&lt;string, Position&gt;();    // key: `${accountId}:${regionId}`
-const appearances = new Map&lt;string, AvatarAppearance&gt;();
-const parcels = new Map&lt;string, Parcel[]&gt;();       // key: regionId
-const objects = new Map&lt;string, RegionObjectContract[]&gt;(); // key: regionId
-const inventory = new Map&lt;string, InventoryItem[]&gt;();
-const friends = new Map&lt;string, FriendContract[]&gt;();
-const balances = new Map&lt;string, number&gt;();         // default: 1000
-// ... more maps for every entity type</code></pre>
-
-<h3 id="persistence-api">Switching Modes</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-export function createPersistence(mode: "memory" | "postgres"): PersistenceLayer {
-  if (mode === "postgres") {
-    return createPostgresPersistence();  // PostgreSQL (production)
-  }
-  return createMemoryPersistence();       // In-memory Maps (dev)
-}</code></pre>
-
-<h3 id="adding-persistence">Adding New Entities</h3>
-<ol>
-<li>Define the type in <code>contracts.ts</code></li>
-<li>Add CRUD methods to <code>PersistenceLayer</code> interface</li>
-<li>Implement in both memory and postgres modes</li>
-<li>Add a <code>Map&lt;string, T&gt;</code> in the memory implementation</li>
-</ol>
-</section>
-
-<!-- ================================================================ -->
-<section id="guides">
-<h2>Developer Guides</h2>
-
-<h3 id="guide-setup">Development Environment Setup</h3>
-<pre><code><span class="lang-badge">Shell</span>
-# 1. Clone the repo
-git clone &lt;repo-url&gt; vibelife &amp;&amp; cd vibelife
-
-# 2. Install sidecar dependencies and start
+<h3>Data Flow</h3>
+<pre><code>Player Action (in-game)
+    |
+    v
+Paper Plugin (command handler / event listener)
+    |  HTTP request
+    v
+Fastify Sidecar (business logic + persistence)
+    |  response
+    v
+Paper Plugin (chat feedback / scoreboard update)
+    |  plugin message channel
+    v
+Fabric Mod (GUI screen update)</code></pre>
+
+<!-- ===== QUICK START ===== -->
+<h2 id="quick-start">Quick Start</h2>
+<pre><code><span class="lang-badge">bash</span># Clone the repository
+git clone https://github.com/packetcraft/packetcraft.git
+cd packetcraft
+
+# Install Node.js dependencies (sidecar)
 npm install
-npm run dev    # or: npx tsx src/server.ts
-# Sidecar runs on http://localhost:3000
 
-# 3. Build the Paper plugin
-cd paper-plugin
-./gradlew shadowJar
-# Output: build/libs/vibelife-plugin-*.jar
-# Copy to paper-server/plugins/
+# Start the Fastify sidecar in development mode
+npm run dev
+# => Listening on http://localhost:3000
 
-# 4. Build the Fabric mod
-cd fabric-mod
-./gradlew build
-# Output: build/libs/vibelife-mod-*.jar
-# Copy to ~/.minecraft/mods/
+# Build the Paper plugin (requires JDK 21+)
+cd paper-plugin && ./gradlew build
 
-# 5. Start the test Paper server
-cd paper-server
-java -jar paper-*.jar
-# Server uses plugins/vibelife-plugin-*.jar
+# Build the Fabric mod (requires JDK 21+)
+cd fabric-mod && ./gradlew build</code></pre>
+<div class="note">
+<strong>Dev mode</strong> uses in-memory persistence &mdash; all data resets on restart. Set <code>DATABASE_URL</code> to enable PostgreSQL persistence for production.
+</div>
 
-# 6. Launch Minecraft with Fabric + the mod installed
-# Connect to localhost:25565</code></pre>
+<!-- ===== API REFERENCE ===== -->
+<h2 id="api-auth">API Reference: Auth</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/auth/guest</code></td><td>Create a guest session (displayName, regionId)</td></tr>
+<tr><td>POST</td><td><code>/api/auth/register</code></td><td>Register a new account (displayName, password, regionId)</td></tr>
+<tr><td>POST</td><td><code>/api/auth/login</code></td><td>Login with credentials (displayName, password, regionId)</td></tr>
+<tr><td>POST</td><td><code>/api/auth/mc-login</code></td><td>Minecraft UUID-based login (mcUuid, mcUsername, regionId)</td></tr>
+<tr><td>POST</td><td><code>/api/auth/mc-link</code></td><td>Link Minecraft account to existing account</td></tr>
+</table>
 
-<h4>Environment Variables</h4>
+<h2 id="api-regions">API Reference: Regions &amp; Objects</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/regions</code></td><td>List all regions</td></tr>
+<tr><td>GET</td><td><code>/api/regions/:regionId/parcels</code></td><td>List parcels in a region</td></tr>
+<tr><td>GET</td><td><code>/api/regions/:regionId/objects</code></td><td>List objects in a region</td></tr>
+<tr><td>POST</td><td><code>/api/regions/:regionId/objects</code></td><td>Create a new object</td></tr>
+<tr><td>GET</td><td><code>/api/regions/:regionId/chat-history</code></td><td>Get region chat history</td></tr>
+<tr><td>GET</td><td><code>/api/regions/notices</code></td><td>List region notices</td></tr>
+<tr><td>POST</td><td><code>/api/regions/notices</code></td><td>Create a region notice</td></tr>
+<tr><td>DELETE</td><td><code>/api/regions/notices</code></td><td>Delete a region notice</td></tr>
+<tr><td>PUT</td><td><code>/api/objects/:objectId</code></td><td>Update an object</td></tr>
+<tr><td>DELETE</td><td><code>/api/objects/:objectId</code></td><td>Delete an object</td></tr>
+<tr><td>GET</td><td><code>/api/objects/:objectId/permissions</code></td><td>Get object permissions</td></tr>
+<tr><td>PATCH</td><td><code>/api/objects/:objectId/permissions</code></td><td>Update object permissions</td></tr>
+<tr><td>GET</td><td><code>/api/objects/:objectId/scripts</code></td><td>List object scripts</td></tr>
+<tr><td>POST</td><td><code>/api/objects/scripts</code></td><td>Create object script</td></tr>
+<tr><td>PATCH</td><td><code>/api/objects/scripts</code></td><td>Update object script</td></tr>
+<tr><td>DELETE</td><td><code>/api/objects/scripts</code></td><td>Delete object script</td></tr>
+<tr><td>POST</td><td><code>/api/objects/group</code></td><td>Group objects together</td></tr>
+<tr><td>POST</td><td><code>/api/objects/ungroup</code></td><td>Ungroup objects</td></tr>
+<tr><td>POST</td><td><code>/api/objects/group-move</code></td><td>Move a group of objects</td></tr>
+<tr><td>POST</td><td><code>/api/objects/group-delete</code></td><td>Delete a group of objects</td></tr>
+<tr><td>POST</td><td><code>/api/objects/duplicate</code></td><td>Duplicate objects</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:groupId/duplicate</code></td><td>Duplicate an object group</td></tr>
+</table>
+
+<h2 id="api-parcels">API Reference: Parcels</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/parcels/claim</code></td><td>Claim an unclaimed parcel</td></tr>
+<tr><td>POST</td><td><code>/api/parcels/release</code></td><td>Release a claimed parcel</td></tr>
+<tr><td>POST</td><td><code>/api/parcels/collaborators/add</code></td><td>Add a collaborator to a parcel</td></tr>
+<tr><td>POST</td><td><code>/api/parcels/collaborators/remove</code></td><td>Remove a collaborator</td></tr>
+<tr><td>POST</td><td><code>/api/parcels/transfer</code></td><td>Transfer parcel ownership</td></tr>
+<tr><td>GET</td><td><code>/api/parcels/by-region/:regionId</code></td><td>List parcels by region</td></tr>
+<tr><td>POST</td><td><code>/api/parcels/check-build</code></td><td>Check build permission for an account at a location</td></tr>
+</table>
+
+<h2 id="api-economy">API Reference: Economy</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/currency/balance</code></td><td>Get balance (token auth)</td></tr>
+<tr><td>POST</td><td><code>/api/currency/send</code></td><td>Send Vibes to another player</td></tr>
+<tr><td>GET</td><td><code>/api/currency/transactions</code></td><td>List recent transactions</td></tr>
+<tr><td>POST</td><td><code>/api/inventory/equip</code></td><td>Equip an inventory item</td></tr>
+<tr><td>GET</td><td><code>/api/economy/balance/:accountId</code></td><td>Get balance (Paper bridge, accountId)</td></tr>
+<tr><td>GET</td><td><code>/api/economy/has/:accountId</code></td><td>Check if account has enough balance</td></tr>
+<tr><td>GET</td><td><code>/api/economy/transactions/:accountId</code></td><td>List transactions (Paper bridge)</td></tr>
+<tr><td>POST</td><td><code>/api/economy/server-transfer</code></td><td>Server-initiated transfer (deposit/withdraw)</td></tr>
+</table>
+
+<h2 id="api-social">API Reference: Social &amp; Friends</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/friends</code></td><td>List friends and pending requests</td></tr>
+<tr><td>POST</td><td><code>/api/friends</code></td><td>Send friend request</td></tr>
+<tr><td>DELETE</td><td><code>/api/friends</code></td><td>Remove a friend</td></tr>
+<tr><td>POST</td><td><code>/api/friends/block</code></td><td>Block a player</td></tr>
+<tr><td>DELETE</td><td><code>/api/friends/block</code></td><td>Unblock a player</td></tr>
+<tr><td>GET</td><td><code>/api/avatar/profile</code></td><td>Get player profile</td></tr>
+<tr><td>PATCH</td><td><code>/api/avatar/profile</code></td><td>Update profile (bio, image)</td></tr>
+<tr><td>GET</td><td><code>/api/messages/offline</code></td><td>Read offline messages</td></tr>
+<tr><td>POST</td><td><code>/api/messages/offline</code></td><td>Send offline message</td></tr>
+<tr><td>PATCH</td><td><code>/api/messages/offline/read</code></td><td>Mark message as read</td></tr>
+<tr><td>POST</td><td><code>/api/chat/persist</code></td><td>Persist a chat message (Paper bridge)</td></tr>
+</table>
+
+<h2 id="api-groups">API Reference: Groups &amp; Guilds</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/groups</code></td><td>List player's groups</td></tr>
+<tr><td>POST</td><td><code>/api/groups</code></td><td>Create a group</td></tr>
+<tr><td>GET</td><td><code>/api/groups/:groupId/members</code></td><td>List group members</td></tr>
+<tr><td>POST</td><td><code>/api/groups/members</code></td><td>Add a member</td></tr>
+<tr><td>DELETE</td><td><code>/api/groups/members</code></td><td>Remove a member</td></tr>
+<tr><td>GET</td><td><code>/api/groups/:id/details</code></td><td>Get group details</td></tr>
+<tr><td>GET</td><td><code>/api/groups/:id/parcels</code></td><td>List guild parcels</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:id/parcels</code></td><td>Assign parcel to guild</td></tr>
+<tr><td>DELETE</td><td><code>/api/groups/:id/parcels/:parcelId</code></td><td>Remove parcel from guild</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:id/treasury/deposit</code></td><td>Deposit to guild treasury</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:id/treasury/withdraw</code></td><td>Withdraw from treasury</td></tr>
+<tr><td>GET</td><td><code>/api/groups/:id/treasury</code></td><td>Get treasury balance</td></tr>
+<tr><td>PATCH</td><td><code>/api/groups/:id/members/:accountId/role</code></td><td>Change member role</td></tr>
+<tr><td>PATCH</td><td><code>/api/groups/:id/emblem</code></td><td>Update guild emblem</td></tr>
+<tr><td>PATCH</td><td><code>/api/groups/:id/banner</code></td><td>Update guild banner</td></tr>
+<tr><td>GET</td><td><code>/api/groups/:id/alliances</code></td><td>List alliances</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:id/alliances</code></td><td>Propose alliance</td></tr>
+<tr><td>POST</td><td><code>/api/groups/:id/alliances/:targetGroupId/accept</code></td><td>Accept alliance</td></tr>
+<tr><td>DELETE</td><td><code>/api/groups/:id/alliances/:targetGroupId</code></td><td>Break alliance</td></tr>
+</table>
+
+<h2 id="api-marketplace">API Reference: Marketplace</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/marketplace</code></td><td>List marketplace items</td></tr>
+<tr><td>POST</td><td><code>/api/marketplace/list</code></td><td>Create a listing (fixed or auction)</td></tr>
+<tr><td>POST</td><td><code>/api/marketplace/:id/buy</code></td><td>Buy a fixed-price listing</td></tr>
+<tr><td>POST</td><td><code>/api/marketplace/:id/bid</code></td><td>Place a bid on an auction</td></tr>
+<tr><td>DELETE</td><td><code>/api/marketplace/:id</code></td><td>Cancel a listing</td></tr>
+<tr><td>GET</td><td><code>/api/marketplace/history</code></td><td>Transaction history</td></tr>
+<tr><td>GET</td><td><code>/api/marketplace/prices/:itemName</code></td><td>Price history for an item</td></tr>
+<tr><td>GET</td><td><code>/api/marketplace/trending</code></td><td>Trending items</td></tr>
+<tr><td>POST</td><td><code>/api/trades</code></td><td>Propose a direct trade</td></tr>
+<tr><td>GET</td><td><code>/api/trades</code></td><td>List pending trades</td></tr>
+<tr><td>POST</td><td><code>/api/trades/:id/accept</code></td><td>Accept a trade</td></tr>
+<tr><td>POST</td><td><code>/api/trades/:id/decline</code></td><td>Decline a trade</td></tr>
+</table>
+
+<h2 id="api-storefronts">API Reference: Storefronts</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/storefronts</code></td><td>Create or update a storefront</td></tr>
+<tr><td>GET</td><td><code>/api/storefronts</code></td><td>List all storefronts</td></tr>
+<tr><td>GET</td><td><code>/api/storefronts/:accountId</code></td><td>Get a specific storefront</td></tr>
+<tr><td>DELETE</td><td><code>/api/storefronts</code></td><td>Delete your storefront</td></tr>
+<tr><td>POST</td><td><code>/api/storefronts/:accountId/rate</code></td><td>Rate a storefront</td></tr>
+<tr><td>POST</td><td><code>/api/commissions</code></td><td>Create a commission request</td></tr>
+<tr><td>GET</td><td><code>/api/commissions</code></td><td>List commissions</td></tr>
+<tr><td>POST</td><td><code>/api/commissions/:id/accept</code></td><td>Accept a commission</td></tr>
+<tr><td>DELETE</td><td><code>/api/commissions/:id</code></td><td>Cancel a commission</td></tr>
+<tr><td>POST</td><td><code>/api/commissions/:id/complete</code></td><td>Mark commission complete</td></tr>
+</table>
+
+<h2 id="api-achievements">API Reference: Achievements</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/achievements</code></td><td>List all achievement definitions</td></tr>
+<tr><td>GET</td><td><code>/api/progress</code></td><td>Get player progress (XP, level, unlocked)</td></tr>
+<tr><td>GET</td><td><code>/api/progress/challenges</code></td><td>Get daily and weekly challenges</td></tr>
+<tr><td>GET</td><td><code>/api/leaderboard</code></td><td>Get leaderboard (optional category filter)</td></tr>
+<tr><td>GET</td><td><code>/api/titles</code></td><td>List available titles for a player</td></tr>
+<tr><td>POST</td><td><code>/api/titles/set</code></td><td>Set active title</td></tr>
+<tr><td>POST</td><td><code>/api/achievements/increment</code></td><td>Increment a stat (Paper bridge)</td></tr>
+</table>
+
+<h2 id="api-pets">API Reference: Pets</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/pets/adopt</code></td><td>Adopt a new pet (species, name)</td></tr>
+<tr><td>GET</td><td><code>/api/pets</code></td><td>List all your pets</td></tr>
+<tr><td>GET</td><td><code>/api/pets/active</code></td><td>Get your currently summoned pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/summon</code></td><td>Summon a pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/dismiss</code></td><td>Dismiss a pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/feed</code></td><td>Feed a pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/play</code></td><td>Play with a pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/pet</code></td><td>Pet your pet</td></tr>
+<tr><td>POST</td><td><code>/api/pets/:id/trick</code></td><td>Make a pet perform a trick</td></tr>
+<tr><td>GET</td><td><code>/api/pets/:id</code></td><td>Get pet details</td></tr>
+<tr><td>GET</td><td><code>/api/pets/region/:regionId</code></td><td>List pets in a region</td></tr>
+</table>
+
+<h2 id="api-events">API Reference: Events</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/events</code></td><td>Create an event</td></tr>
+<tr><td>GET</td><td><code>/api/events</code></td><td>List events (optional regionId, upcoming filter)</td></tr>
+<tr><td>GET</td><td><code>/api/events/upcoming</code></td><td>List upcoming events</td></tr>
+<tr><td>GET</td><td><code>/api/events/leaderboard</code></td><td>Event participation leaderboard</td></tr>
+<tr><td>GET</td><td><code>/api/events/:id</code></td><td>Get event details</td></tr>
+<tr><td>POST</td><td><code>/api/events/:id/rsvp</code></td><td>RSVP to an event</td></tr>
+<tr><td>DELETE</td><td><code>/api/events/:id</code></td><td>Cancel an event</td></tr>
+<tr><td>GET</td><td><code>/api/events/:id/attendees</code></td><td>List event attendees</td></tr>
+</table>
+
+<h2 id="api-homes">API Reference: Homes</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/homes/set</code></td><td>Set a parcel as home</td></tr>
+<tr><td>GET</td><td><code>/api/homes</code></td><td>Get your home</td></tr>
+<tr><td>POST</td><td><code>/api/homes/teleport</code></td><td>Teleport to your home</td></tr>
+<tr><td>POST</td><td><code>/api/homes/privacy</code></td><td>Set home privacy</td></tr>
+<tr><td>DELETE</td><td><code>/api/homes</code></td><td>Unset your home</td></tr>
+<tr><td>POST</td><td><code>/api/homes/rate</code></td><td>Rate a home</td></tr>
+<tr><td>POST</td><td><code>/api/homes/favorite</code></td><td>Favorite a home</td></tr>
+<tr><td>GET</td><td><code>/api/homes/featured</code></td><td>List featured homes</td></tr>
+<tr><td>GET</td><td><code>/api/homes/favorites</code></td><td>List your favorite homes</td></tr>
+<tr><td>GET</td><td><code>/api/homes/:parcelId/ratings</code></td><td>Get ratings for a home</td></tr>
+<tr><td>GET</td><td><code>/api/homes/:parcelId/visitors</code></td><td>List home visitors</td></tr>
+<tr><td>GET</td><td><code>/api/homes/showcase</code></td><td>Top-rated homes showcase</td></tr>
+</table>
+
+<h2 id="api-photos">API Reference: Photos</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/photos</code></td><td>Take a photo</td></tr>
+<tr><td>GET</td><td><code>/api/photos</code></td><td>List your photos</td></tr>
+<tr><td>GET</td><td><code>/api/photos/feed</code></td><td>Community photo feed</td></tr>
+<tr><td>GET</td><td><code>/api/photos/featured</code></td><td>Featured photos</td></tr>
+<tr><td>GET</td><td><code>/api/photos/gallery/:accountId</code></td><td>Player's photo gallery</td></tr>
+<tr><td>GET</td><td><code>/api/photos/:id</code></td><td>Get a specific photo</td></tr>
+<tr><td>DELETE</td><td><code>/api/photos/:id</code></td><td>Delete a photo</td></tr>
+<tr><td>POST</td><td><code>/api/photos/:id/like</code></td><td>Like a photo</td></tr>
+<tr><td>POST</td><td><code>/api/photos/:id/comment</code></td><td>Comment on a photo</td></tr>
+</table>
+
+<h2 id="api-voice">API Reference: Voice</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/voice/join</code></td><td>Join a voice channel</td></tr>
+<tr><td>POST</td><td><code>/api/voice/leave</code></td><td>Leave voice channel</td></tr>
+<tr><td>POST</td><td><code>/api/voice/mute</code></td><td>Toggle mute</td></tr>
+<tr><td>POST</td><td><code>/api/voice/deafen</code></td><td>Toggle deafen</td></tr>
+<tr><td>GET</td><td><code>/api/voice/participants</code></td><td>List voice participants</td></tr>
+<tr><td>POST</td><td><code>/api/voice/status</code></td><td>Update voice status</td></tr>
+<tr><td>POST</td><td><code>/api/voice/speaking</code></td><td>Update speaking state</td></tr>
+</table>
+
+<h2 id="api-presence">API Reference: Presence</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/presence/status</code></td><td>Update presence status</td></tr>
+<tr><td>GET</td><td><code>/api/presence/:accountId</code></td><td>Get a player's presence</td></tr>
+<tr><td>GET</td><td><code>/api/presence/friends</code></td><td>Get friends' online status</td></tr>
+<tr><td>POST</td><td><code>/api/presence/online</code></td><td>Mark player as online</td></tr>
+<tr><td>POST</td><td><code>/api/presence/offline</code></td><td>Mark player as offline</td></tr>
+</table>
+
+<h2 id="api-admin">API Reference: Admin</h2>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/admin/parcels/assign</code></td><td>Assign parcel to a player</td></tr>
+<tr><td>POST</td><td><code>/api/admin/objects/delete</code></td><td>Force-delete an object</td></tr>
+<tr><td>GET</td><td><code>/api/admin/audit-logs</code></td><td>View audit logs</td></tr>
+<tr><td>POST</td><td><code>/api/admin/ban</code></td><td>Ban a player</td></tr>
+<tr><td>DELETE</td><td><code>/api/admin/ban</code></td><td>Unban a player</td></tr>
+<tr><td>GET</td><td><code>/api/avatar/ban/status</code></td><td>Check ban status</td></tr>
+<tr><td>GET</td><td><code>/api/health</code></td><td>Health check endpoint</td></tr>
+</table>
+
+<h3>Additional endpoints</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>PUT</td><td><code>/api/avatar/appearance</code></td><td>Update avatar appearance</td></tr>
+<tr><td>POST</td><td><code>/api/avatar/teleport</code></td><td>Teleport to a location</td></tr>
+<tr><td>GET</td><td><code>/api/avatar/teleport-points</code></td><td>List saved teleport points</td></tr>
+<tr><td>POST</td><td><code>/api/avatar/teleport-points</code></td><td>Save a teleport point</td></tr>
+<tr><td>DELETE</td><td><code>/api/avatar/teleport-points</code></td><td>Delete a teleport point</td></tr>
+<tr><td>GET</td><td><code>/api/assets</code></td><td>List assets</td></tr>
+<tr><td>POST</td><td><code>/api/assets</code></td><td>Upload an asset</td></tr>
+<tr><td>DELETE</td><td><code>/api/assets</code></td><td>Delete an asset</td></tr>
+<tr><td>POST</td><td><code>/api/blueprints</code></td><td>Create a blueprint</td></tr>
+<tr><td>GET</td><td><code>/api/blueprints</code></td><td>List blueprints</td></tr>
+<tr><td>GET</td><td><code>/api/blueprints/:id</code></td><td>Get blueprint details</td></tr>
+<tr><td>DELETE</td><td><code>/api/blueprints/:id</code></td><td>Delete a blueprint</td></tr>
+<tr><td>POST</td><td><code>/api/blueprints/:id/place</code></td><td>Place a blueprint in the world</td></tr>
+<tr><td>GET</td><td><code>/api/emotes</code></td><td>List all emotes</td></tr>
+<tr><td>GET</td><td><code>/api/activity/feed</code></td><td>Global activity feed</td></tr>
+<tr><td>GET</td><td><code>/api/activity/friends</code></td><td>Friends activity feed</td></tr>
+<tr><td>POST</td><td><code>/api/activity/:id/like</code></td><td>Like an activity</td></tr>
+<tr><td>GET</td><td><code>/api/activity/player/:accountId</code></td><td>Player's activity history</td></tr>
+<tr><td>POST</td><td><code>/api/media</code></td><td>Create media object</td></tr>
+<tr><td>GET</td><td><code>/api/media</code></td><td>List media objects</td></tr>
+<tr><td>GET</td><td><code>/api/media/:objectId</code></td><td>Get media details</td></tr>
+<tr><td>PATCH</td><td><code>/api/media/:objectId</code></td><td>Update media</td></tr>
+<tr><td>DELETE</td><td><code>/api/media/:objectId</code></td><td>Delete media</td></tr>
+</table>
+
+<!-- ===== AUTH MODEL ===== -->
+<h2 id="auth-model">Auth Model</h2>
+<p>PacketCraft supports three auth modes:</p>
+<ul>
+<li><strong>Guest</strong> &mdash; No credentials, ephemeral session. Quick for testing.</li>
+<li><strong>Registered</strong> &mdash; Display name + password. Persistent account.</li>
+<li><strong>Minecraft-linked</strong> &mdash; UUID-based login from the Paper plugin. Automatic account creation on first join.</li>
+</ul>
+<p>All auth endpoints return a <code>token</code> that must be passed to subsequent API calls. Tokens identify the session and map to an <code>accountId</code>.</p>
+<p>Rate limits are enforced on auth endpoints: 10 req/min for guest and login, 5 req/min for registration, 20 req/min for MC login.</p>
+
+<!-- ===== PERSISTENCE ===== -->
+<h2 id="persistence">Persistence Layer</h2>
+<p>The sidecar uses a dual-persistence model:</p>
+<div class="grid">
+<div class="card">
+<h4>In-Memory (Development)</h4>
+<p>Default mode. All data lives in Maps and arrays. Fast iteration, zero setup. Data resets on restart.</p>
+</div>
+<div class="card">
+<h4>PostgreSQL (Production)</h4>
+<p>Enabled by setting <code>DATABASE_URL</code>. Full schema auto-migration. Same interface, durable storage.</p>
+</div>
+</div>
+<p>Both backends implement the same <code>Persistence</code> interface, so business logic is storage-agnostic. The persistence layer handles: accounts, avatars, sessions, parcels, objects, inventory, friends, groups, guilds, marketplace, homes, achievements, pets, photos, events, voice, media, and audit logs.</p>
+
+<!-- ===== PLUGIN MESSAGES ===== -->
+<h2 id="plugin-messages">Plugin Message Protocol</h2>
+<p>The Paper plugin and Fabric mod communicate via Minecraft's plugin message channel system. The channel name is <code>packetcraft:main</code>.</p>
+<p>Messages are JSON-encoded and include a <code>type</code> field. The Fabric mod sends requests (e.g., open economy screen), and the Paper plugin relays data from the sidecar back through the channel.</p>
+<p>Key message types:</p>
+<ul>
+<li><code>economy_data</code> &mdash; Balance and transaction info</li>
+<li><code>social_data</code> &mdash; Friends list and online status</li>
+<li><code>achievement_data</code> &mdash; Progress and unlocked achievements</li>
+<li><code>event_data</code> &mdash; Upcoming events and RSVP status</li>
+<li><code>pet_data</code> &mdash; Active pet state</li>
+</ul>
+
+<!-- ===== PAPER PLUGIN ===== -->
+<h2 id="paper-plugin">Paper Plugin Architecture</h2>
+<p>The Paper plugin is a standard Paper/Bukkit plugin written in Java. Key components:</p>
+
+<h3>Entry Point</h3>
+<p><code>VibeLifePlugin.java</code> &mdash; Main plugin class. Registers commands, listeners, and initializes the sidecar client.</p>
+
+<h3>Commands</h3>
+<ul>
+<li><code>BalanceCommand</code> &mdash; <code>/balance</code></li>
+<li><code>PayCommand</code> &mdash; <code>/pay &lt;player&gt; &lt;amount&gt;</code></li>
+<li><code>ParcelCommand</code> &mdash; <code>/parcel info|claim|release|list</code></li>
+<li><code>FriendsCommand</code> &mdash; <code>/friends list|add|remove|messages</code></li>
+<li><code>MarketCommand</code> &mdash; <code>/market</code></li>
+</ul>
+
+<h3>Listeners</h3>
+<ul>
+<li><code>LoginListener</code> &mdash; Handles player join/quit, creates sidecar session via <code>/api/auth/mc-login</code></li>
+<li><code>ChatListener</code> &mdash; Persists chat messages to the sidecar</li>
+<li><code>ParcelListener</code> &mdash; Enforces build permissions by checking <code>/api/parcels/check-build</code></li>
+<li><code>AchievementHook</code> &mdash; Increments achievement stats on game events</li>
+</ul>
+
+<h3>Bridge</h3>
+<ul>
+<li><code>SidecarClient</code> &mdash; HTTP client for communicating with the Fastify sidecar. All API calls go through this class.</li>
+<li><code>PluginMessageHandler</code> &mdash; Handles plugin message channel for Fabric mod communication</li>
+<li><code>AccountIdCache</code> &mdash; Caches Minecraft UUID to accountId mapping</li>
+<li><code>VaultProvider</code> &mdash; Vault economy integration, delegates to sidecar balance endpoints</li>
+</ul>
+
+<!-- ===== FABRIC MOD ===== -->
+<h2 id="fabric-mod">Fabric Mod Architecture</h2>
+<p>The Fabric mod is a client-side mod that adds GUI screens and HUD elements. Key components:</p>
+
+<h3>Entry Point</h3>
+<p><code>VibeLifeClient.java</code> &mdash; Client mod initializer. Registers keybinds and network handlers.</p>
+
+<h3>Screens</h3>
+<ul>
+<li><code>EconomyScreen</code> &mdash; Balance, transactions, send Vibes (key: <kbd>V</kbd>)</li>
+<li><code>SocialScreen</code> &mdash; Friends, groups, messages, profiles (key: <kbd>N</kbd>)</li>
+<li><code>MarketplaceScreen</code> &mdash; Browse, buy, sell, bid (key: <kbd>M</kbd>)</li>
+<li><code>AchievementsScreen</code> &mdash; Progress, challenges, leaderboards, titles (key: <kbd>J</kbd>)</li>
+<li><code>EventsScreen</code> &mdash; Upcoming events, RSVP, rewards (key: <kbd>K</kbd>)</li>
+</ul>
+
+<h3>Network</h3>
+<ul>
+<li><code>PluginChannelHandler</code> &mdash; Receives data from the Paper plugin via plugin messages</li>
+<li><code>SidecarApi</code> &mdash; Direct HTTP calls to the Fastify sidecar for screen data</li>
+<li><code>KeybindManager</code> &mdash; Registers and handles V/N/M/J/K keybinds</li>
+</ul>
+
+<h3>HUD</h3>
+<ul>
+<li><code>AchievementToast</code> &mdash; Toast notification when an achievement is unlocked</li>
+</ul>
+
+<!-- ===== CONFIGURATION ===== -->
+<h2 id="config">Configuration</h2>
+<p>The Fastify sidecar is configured via environment variables:</p>
 <table>
 <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>PORT</code></td><td>3000</td><td>Sidecar listen port</td></tr>
-<tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Sidecar bind address</td></tr>
+<tr><td><code>PORT</code></td><td>3000</td><td>HTTP server port</td></tr>
+<tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Bind address</td></tr>
+<tr><td><code>DATABASE_URL</code></td><td>(none)</td><td>PostgreSQL connection string. If unset, uses in-memory persistence.</td></tr>
 <tr><td><code>CORS_ORIGINS</code></td><td>localhost:3000</td><td>Comma-separated allowed origins</td></tr>
-<tr><td><code>PERSISTENCE_MODE</code></td><td>memory</td><td><code>memory</code> or <code>postgres</code></td></tr>
-<tr><td><code>ADMIN_BOOTSTRAP_TOKEN</code></td><td>&mdash;</td><td>Token for creating admin accounts</td></tr>
-<tr><td><code>SIDECAR_URL</code></td><td>http://localhost:3000</td><td>URL the Paper plugin uses to reach the sidecar</td></tr>
+<tr><td><code>API_KEY</code></td><td>(none)</td><td>Shared secret for Paper bridge endpoints</td></tr>
 </table>
 
-<h3 id="guide-new-service">Adding a New Service</h3>
-<div class="card">
-<h4>Step-by-Step: Creating <code>fishing-service.ts</code></h4>
-<pre><code><span class="lang-badge">TypeScript</span>
-// 1. Create src/world/fishing-service.ts
-import { sessions, persistence } from "./_shared-state.js";
+<p>The Paper plugin is configured via <code>config.yml</code> in the plugin data folder:</p>
+<ul>
+<li><code>sidecar-url</code> &mdash; URL of the Fastify sidecar (default: <code>http://localhost:3000</code>)</li>
+<li><code>api-key</code> &mdash; Shared secret matching the sidecar's <code>API_KEY</code></li>
+</ul>
 
-const fishingSpots = new Map&lt;string, FishingSpot[]&gt;();
+<!-- ===== TESTING ===== -->
+<h2 id="testing">Testing</h2>
+<p>The sidecar uses Vitest for testing. Tests run against the in-memory persistence layer.</p>
+<pre><code><span class="lang-badge">bash</span># Run all tests
+npm test
 
-export function castLine(token: string, regionId: string, x: number, z: number) {
-  const session = sessions.get(token);
-  if (!session) return { error: "unauthorized" };
-  // ... business logic
-  return { success: true, fish: "Golden Trout" };
-}
+# Run tests in watch mode
+npm run test:watch
 
-// 2. Add to src/world/store.ts
-export * from "./fishing-service.js";
+# Run a specific test file
+npx vitest run src/__tests__/objects.test.ts</code></pre>
+<p>Test files are in <code>src/__tests__/</code>. Each test file tests a specific domain (objects, parcels, economy, etc.) using the full sidecar stack.</p>
 
-// 3. Add types to src/contracts.ts
+<!-- ===== PROJECT STRUCTURE ===== -->
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>packetcraft/
+  src/
+    server.ts              # Fastify app entry point
+    contracts.ts           # Shared TypeScript types
+    routes/                # 25 route files (one per domain)
+      auth.ts, economy.ts, parcels.ts, social.ts,
+      achievements.ts, pets.ts, photos.ts, events (in server.ts),
+      guilds.ts, marketplace.ts, storefronts.ts, homes.ts,
+      home-ratings.ts, voice.ts, voice-status.ts, presence.ts,
+      admin.ts, avatar.ts, assets.ts, blueprints.ts,
+      chat.ts, emotes.ts, media.ts, objects.ts, regions.ts,
+      activity.ts
+    world/                 # Business logic services
+      store.ts             # Re-exports from persistence + services
+      _shared-state.ts     # In-memory world state
+      achievement-service.ts
+      event-service.ts
+      pet-service.ts
+      photo-service.ts
+      ...
+    data/
+      persistence.ts       # Dual persistence (memory + PostgreSQL)
+    middleware/             # Fastify middleware (auth, rate limiting)
+    __tests__/             # Vitest test suite
+  paper-plugin/
+    src/main/java/com/vibelife/paper/
+      VibeLifePlugin.java  # Plugin entry point
+      commands/             # /balance, /pay, /parcel, /friends, /market
+      bridge/               # SidecarClient HTTP bridge
+      parcels/              # ParcelManager, ParcelListener, AccountIdCache
+      auth/                 # LoginListener
+      chat/                 # ChatListener
+      achievements/         # AchievementHook
+      economy/              # VaultProvider
+      messaging/            # PluginMessageHandler
+  fabric-mod/
+    src/main/java/com/vibelife/fabric/
+      VibeLifeClient.java  # Mod entry point
+      keybind/              # KeybindManager
+      screen/               # EconomyScreen, SocialScreen, etc.
+      network/              # PluginChannelHandler, SidecarApi
+      hud/                  # AchievementToast
+  docs/
+    index.html             # Landing page + plugin guide
+    manual/index.html      # Game manual
+    devmanual/index.html   # This file
+  public/                  # Static assets served by Fastify</code></pre>
 
-// 4. Create src/routes/fishing.ts (see guide below)
+</div><!-- /main -->
 
-// 5. Register in src/server.ts
-import { registerFishingRoutes } from "./routes/fishing.js";
-registerFishingRoutes(app);</code></pre>
+<!-- ===== FOOTER ===== -->
+<footer>
+<div>PacketCraft &mdash; Open Source Minecraft MMORPG Platform &bull; 2026</div>
+<div class="foot-links">
+<a href="../">Main Site</a>
+<a href="../#plugin">Plugin Guide</a>
+<a href="../manual/">Game Manual</a>
+<a href="https://github.com">GitHub</a>
 </div>
-
-<h3 id="guide-new-route">Adding a New Route</h3>
-<pre><code><span class="lang-badge">TypeScript</span>
-// src/routes/fishing.ts
-import { FastifyInstance } from "fastify";
-import { resolveToken } from "../world/_shared-state.js";
-import { castLine, getFishingSpots } from "../world/store.js";
-
-export function registerFishingRoutes(app: FastifyInstance) {
-
-  // GET /api/fishing/spots?regionId=X
-  app.get("/api/fishing/spots", async (request, reply) =&gt; {
-    const { regionId } = request.query as { regionId: string };
-    return getFishingSpots(regionId);
-  });
-
-  // POST /api/fishing/cast
-  app.post("/api/fishing/cast", async (request, reply) =&gt; {
-    const { token, x, z } = request.body as { token: string; x: number; z: number };
-    const session = resolveToken(token);
-    if (!session) return reply.status(401).send({ error: "Unauthorized" });
-
-    const result = castLine(session.token, session.regionId, x, z);
-    return result;
-  });
-}</code></pre>
-
-<h3 id="guide-new-event">Adding a Region Event</h3>
-<p>Region events are now delivered through the Paper plugin to the Fabric mod via the <code>vibelife:main</code> plugin messaging channel, or polled via REST.</p>
-<pre><code><span class="lang-badge">TypeScript</span>
-// 1. Add the endpoint in the sidecar
-app.get("/api/fishing/recent-catches", async (request, reply) =&gt; {
-  const { regionId } = request.query as { regionId: string };
-  return getRecentCatches(regionId);
-});
-
-// 2. The Paper plugin can push notifications:
-// pluginMessageHandler.sendNotification(player, "fishing:catch", jsonData);
-
-// 3. The Fabric mod shows it in the UI or as a toast notification.</code></pre>
-
-<h3 id="guide-build-plugin">Building the Paper Plugin</h3>
-<div class="card">
-<h4>Paper Plugin Build &amp; Deploy</h4>
-<pre><code><span class="lang-badge">Shell</span>
-cd paper-plugin
-
-# Build the fat JAR (includes all dependencies)
-./gradlew shadowJar
-
-# Output location
-ls build/libs/vibelife-plugin-*-all.jar
-
-# Deploy to Paper server
-cp build/libs/vibelife-plugin-*-all.jar ../paper-server/plugins/
-
-# Restart or reload the Paper server
-# /reload confirm  (in MC console)</code></pre>
-<p>The plugin's <code>build.gradle.kts</code> uses the <code>com.github.johnrengelman.shadow</code> plugin to produce a fat JAR. Java 21 is required. The plugin targets Paper API 1.21+.</p>
-</div>
-
-<h3 id="guide-build-mod">Building the Fabric Mod</h3>
-<div class="card">
-<h4>Fabric Mod Build &amp; Install</h4>
-<pre><code><span class="lang-badge">Shell</span>
-cd fabric-mod
-
-# Build the mod JAR
-./gradlew build
-
-# Output location
-ls build/libs/vibelife-mod-*.jar
-
-# Install to Minecraft
-cp build/libs/vibelife-mod-*.jar ~/.minecraft/mods/
-
-# Requires:
-# - Fabric Loader (latest)
-# - Fabric API mod
-# - Java 21</code></pre>
-<p>The mod's <code>build.gradle</code> uses Fabric Loom. It depends on Fabric API for networking (plugin messaging) and rendering (GUI screens).</p>
-</div>
-</section>
-
-<!-- ================================================================ -->
-<section id="api-ref">
-<h2>HTTP API Reference</h2>
-<p>All endpoints are served by the sidecar (Fastify). Both the Paper plugin and Fabric mod call these endpoints.</p>
-
-<h3 id="api-auth">Authentication</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Body</th><th>Response</th></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/auth/mc-login</code></td><td><code>{mcUuid, username}</code></td><td>Session token + account + avatar</td></tr>
-</table>
-<div class="note"><strong>Note:</strong> The <code>mc-login</code> endpoint is called by the Paper plugin when a player joins. It creates the account if it does not exist, or resumes the existing session. No password is needed &mdash; the Minecraft server has already authenticated the player.</div>
-
-<h3 id="api-regions">Regions &amp; Objects</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/regions</code></td><td>No</td><td>List all regions with population</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/regions/:id/objects</code></td><td>Token</td><td>Get all objects in region</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/regions/:id/objects</code></td><td>Token</td><td>Create object (asset, x, y, z, rotationY, scale)</td></tr>
-<tr><td><span class="tag tag-http">PATCH</span></td><td><code>/api/regions/:id/objects/:objId</code></td><td>Token</td><td>Update object transform</td></tr>
-<tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/regions/:id/objects/:objId</code></td><td>Token</td><td>Delete object</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/regions/:id/chat-history</code></td><td>No</td><td>Last 50 chat messages</td></tr>
-</table>
-
-<h3 id="api-parcels">Parcels</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Body/Query</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/parcels/claim</code></td><td><code>{token, parcelId}</code></td><td>Claim unclaimed parcel</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/parcels/release</code></td><td><code>{token, parcelId}</code></td><td>Release owned parcel</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/parcels/collaborator</code></td><td><code>{token, parcelId, accountId}</code></td><td>Add collaborator</td></tr>
-<tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/parcels/collaborator</code></td><td><code>{token, parcelId, accountId}</code></td><td>Remove collaborator</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/parcels/permission?regionId=&amp;accountId=&amp;x=&amp;z=</code></td><td>&mdash;</td><td>Check build permission at coordinates</td></tr>
-</table>
-
-<h3 id="api-economy">Economy &amp; Marketplace</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/currency/balance?token=</code></td><td>Get balance</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/currency/send</code></td><td>Transfer currency</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/currency/transactions?token=&amp;limit=</code></td><td>Transaction history</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/list</code></td><td>Create listing</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/marketplace?kind=&amp;minPrice=&amp;maxPrice=&amp;sort=</code></td><td>Browse listings</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/:id/buy</code></td><td>Buy fixed-price item</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/marketplace/:id/bid</code></td><td>Place auction bid</td></tr>
-<tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/marketplace/:id</code></td><td>Cancel listing</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/marketplace/prices/:itemName</code></td><td>Price history</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/trades</code></td><td>Create trade offer</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/trades/:id/accept</code></td><td>Accept trade</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/trades/:id/decline</code></td><td>Decline trade</td></tr>
-</table>
-
-<h3 id="api-social">Social</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/friends</code></td><td>Add friend</td></tr>
-<tr><td><span class="tag tag-http">DELETE</span></td><td><code>/api/friends</code></td><td>Remove friend</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/friends?token=</code></td><td>List friends</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/friends/block</code></td><td>Block account</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/groups</code></td><td>Create group</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/groups?token=</code></td><td>List my groups</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/groups/members</code></td><td>Add member</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/messages/offline</code></td><td>Send offline message</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/messages/offline?token=</code></td><td>List offline messages</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/avatar/profile?token=</code></td><td>Get profile</td></tr>
-<tr><td><span class="tag tag-http">PATCH</span></td><td><code>/api/avatar/profile</code></td><td>Update profile</td></tr>
-<tr><td><span class="tag tag-http">PATCH</span></td><td><code>/api/avatar/appearance</code></td><td>Update appearance</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/presence/status</code></td><td>Set presence status</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/presence/friends?token=</code></td><td>Friends presence</td></tr>
-</table>
-
-<h3 id="api-combat">Combat Stats</h3>
-<table>
-<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/stats?token=</code></td><td>Player combat stats (kills, deaths, level, XP)</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/combat/report-kill</code></td><td>Report an entity kill (called by Paper plugin)</td></tr>
-<tr><td><span class="tag tag-http">POST</span></td><td><code>/api/combat/report-death</code></td><td>Report a player death (called by Paper plugin)</td></tr>
-<tr><td><span class="tag tag-http">GET</span></td><td><code>/api/combat/leaderboard?limit=</code></td><td>Top players by level/kills</td></tr>
-</table>
-
-<h3 id="api-misc">Everything Else</h3>
-<table>
-<tr><th>Category</th><th>Base Path</th><th>Key Endpoints</th></tr>
-<tr><td>Achievements</td><td><code>/api/achievements</code></td><td>GET list, GET /progress, GET /progress/challenges, GET /leaderboard, GET/POST /titles</td></tr>
-<tr><td>Emotes</td><td><code>/api/emotes</code></td><td>GET list</td></tr>
-<tr><td>Radio</td><td><code>/api/radio</code></td><td>GET /stations</td></tr>
-<tr><td>Voice</td><td><code>/api/voice</code></td><td>POST /join, /leave, /mute, /deafen</td></tr>
-<tr><td>Pets</td><td><code>/api/pets</code></td><td>POST /adopt, /summon, /dismiss, /feed, /play, /trick</td></tr>
-<tr><td>Photos</td><td><code>/api/photos</code></td><td>POST create, GET /feed, /gallery/:id, /featured, POST /:id/like, /:id/comment</td></tr>
-<tr><td>Events</td><td><code>/api/events</code></td><td>POST create, GET list, POST /:id/rsvp, DELETE /:id, GET /upcoming, /leaderboard</td></tr>
-<tr><td>Homes</td><td><code>/api/homes</code></td><td>POST /set, /teleport, PATCH /privacy, GET /featured, POST /:id/rate, /visit</td></tr>
-<tr><td>Seasonal</td><td><code>/api/seasonal</code></td><td>GET /current, /items, /leaderboard, POST /decorations, /collect</td></tr>
-<tr><td>Scripts</td><td><code>/api/scripts</code></td><td>POST create, PATCH update, DELETE, POST /trigger-zones</td></tr>
-<tr><td>NPCs</td><td><code>/api/npcs</code></td><td>GET list, POST /interact, GET/POST /quests, POST /quests/:id/complete</td></tr>
-<tr><td>Mobile</td><td><code>/api/mobile</code></td><td>POST /session, GET /dashboard, /feed, /world, /friends, /inventory</td></tr>
-<tr><td>Federation</td><td><code>/api/federation</code></td><td>GET /servers, POST /register, /teleport, GET /marketplace/search</td></tr>
-<tr><td>Creator</td><td><code>/api/creator</code></td><td>POST /submit, GET /analytics, POST /payout, /api-keys, /webhooks</td></tr>
-<tr><td>Admin</td><td><code>/api/admin</code></td><td>GET /audit-logs, POST /ban, DELETE /ban, POST /parcels/assign, /objects/delete</td></tr>
-<tr><td>Assets</td><td><code>/api/assets</code></td><td>GET list, POST create, DELETE</td></tr>
-<tr><td>Inventory</td><td><code>/api/inventory</code></td><td>POST /equip</td></tr>
-<tr><td>Guilds</td><td><code>/api/groups/:id</code></td><td>POST /treasury/deposit, /treasury/withdraw, PATCH /emblem, /banner, POST /parcels, /alliances</td></tr>
-</table>
-</section>
-
-<!-- ================================================================ -->
-<section>
-<h2>Architecture Patterns Summary</h2>
-<div class="grid">
-<div class="card">
-<h4>Sidecar + Plugin Model</h4>
-<p>The sidecar (Fastify/TS) owns all business logic and state. The Paper plugin bridges MC events to the sidecar via REST. The Fabric mod provides UI overlays.</p>
-</div>
-<div class="card">
-<h4>Barrel Re-exports</h4>
-<p><code>store.ts</code> re-exports all services. Routes import from <code>store.js</code> or <code>_shared-state.js</code> only.</p>
-</div>
-<div class="card">
-<h4>REST-Only Communication</h4>
-<p>No WebSockets. The Paper plugin and Fabric mod both communicate with the sidecar via HTTP/REST. Plugin messaging channel handles token handoff and notifications between plugin and mod.</p>
-</div>
-<div class="card">
-<h4>Dual Persistence</h4>
-<p>Same interface for memory and PostgreSQL. Switch via env var. Memory mode for dev, PostgreSQL for production.</p>
-</div>
-<div class="card">
-<h4>Permission Layering</h4>
-<p>Build permissions checked at service level before mutation. Public parcels are always open. The Paper plugin calls the sidecar to check permissions before allowing block placement.</p>
-</div>
-<div class="card">
-<h4>Contract-First Types</h4>
-<p>All types defined in <code>contracts.ts</code>. This is the single source of truth for the API contract between sidecar, plugin, and mod.</p>
-</div>
-</div>
-</section>
-
-<footer style="margin-top:64px;padding:20px 0;border-top:2px solid var(--forest-pale);color:var(--text2);font-size:11px;text-align:center;font-family:'Sora',sans-serif">
-VibeLife Developer Manual &bull; March 2026 &bull; Minecraft Paper Plugin System &bull; Fastify Sidecar + Paper Plugin + Fabric Mod
 </footer>
 
-</main>
 </body>
 </html>

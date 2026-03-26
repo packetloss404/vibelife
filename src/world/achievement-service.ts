@@ -6,7 +6,7 @@ export type Achievement = {
   id: string;
   name: string;
   description: string;
-  category: "explorer" | "builder" | "social" | "collector" | "warrior";
+  category: "explorer" | "builder" | "social" | "collector";
   icon: string;
   xpReward: number;
   requirement: { type: string; count: number };
@@ -26,8 +26,6 @@ export type PlayerProgress = {
     eventsAttended: number;
     itemsCollected: number;
     totalPlayTime: number;
-    enemiesDefeated: number;
-    combatLevel: number;
     blocksPlaced: number;
     blocksBroken: number;
   };
@@ -91,15 +89,9 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: "collector_silver", name: "Silver Earner", description: "Earn 500 currency", category: "collector", icon: "coin_silver", xpReward: 150, requirement: { type: "currency_earned", count: 500 } },
   { id: "collector_gold", name: "Gold Earner", description: "Earn 1000 currency", category: "collector", icon: "coin_gold", xpReward: 400, requirement: { type: "currency_earned", count: 1000 } },
 
-  // Warrior
-  { id: "warrior_first_blood", name: "First Blood", description: "Defeat your first enemy", category: "warrior", icon: "sword", xpReward: 50, requirement: { type: "enemies_defeated", count: 1 } },
-  { id: "warrior_monster_hunter", name: "Monster Hunter", description: "Defeat 25 enemies", category: "warrior", icon: "crosshair", xpReward: 150, requirement: { type: "enemies_defeated", count: 25 } },
-  { id: "warrior_dragonslayer", name: "Dragonslayer", description: "Defeat 100 enemies", category: "warrior", icon: "dragon", xpReward: 500, requirement: { type: "enemies_defeated", count: 100 } },
-  { id: "warrior_combat_level_5", name: "Apprentice Fighter", description: "Reach combat level 5", category: "warrior", icon: "shield", xpReward: 100, requirement: { type: "combat_level", count: 5 } },
-  { id: "warrior_combat_level_10", name: "Veteran Warrior", description: "Reach combat level 10", category: "warrior", icon: "shield_gold", xpReward: 300, requirement: { type: "combat_level", count: 10 } },
-  { id: "warrior_combat_level_25", name: "Legendary Champion", description: "Reach combat level 25", category: "warrior", icon: "crown_sword", xpReward: 750, requirement: { type: "combat_level", count: 25 } },
-  { id: "warrior_voxel_builder", name: "Block Builder", description: "Place 100 voxel blocks", category: "warrior", icon: "cube", xpReward: 100, requirement: { type: "blocks_placed", count: 100 } },
-  { id: "warrior_voxel_miner", name: "Master Miner", description: "Break 500 voxel blocks", category: "warrior", icon: "pickaxe", xpReward: 200, requirement: { type: "blocks_broken", count: 500 } },
+  // Builder (block)
+  { id: "builder_block_placer", name: "Block Builder", description: "Place 100 blocks", category: "builder", icon: "cube", xpReward: 100, requirement: { type: "blocks_placed", count: 100 } },
+  { id: "builder_block_breaker", name: "Master Miner", description: "Break 500 blocks", category: "builder", icon: "pickaxe", xpReward: 200, requirement: { type: "blocks_broken", count: 500 } },
 ];
 
 // ── Level System ───────────────────────────────────────────────────────────
@@ -134,7 +126,6 @@ const TITLE_DEFINITIONS: TitleEntry[] = [
   { title: "Master Builder", achievementCategory: "builder", achievementCount: 4 },
   { title: "Social Butterfly", achievementCategory: "social", achievementCount: 5 },
   { title: "Explorer", achievementCategory: "explorer", achievementCount: 3 },
-  { title: "Champion Warrior", achievementCategory: "warrior", achievementCount: 4 },
 ];
 
 // ── Daily/Weekly Challenge Templates ───────────────────────────────────────
@@ -179,8 +170,6 @@ function getOrCreateProgress(accountId: string): PlayerProgress {
         eventsAttended: 0,
         itemsCollected: 0,
         totalPlayTime: 0,
-        enemiesDefeated: 0,
-        combatLevel: 0,
         blocksPlaced: 0,
         blocksBroken: 0,
       },
@@ -205,8 +194,6 @@ function getStatValue(progress: PlayerProgress, statType: string): number {
     case "currency_earned": return 0; // tracked externally
     case "blueprints_created": return 0;
     case "unique_assets_used": return 0;
-    case "enemies_defeated": return progress.stats.enemiesDefeated;
-    case "combat_level": return progress.stats.combatLevel;
     case "blocks_placed": return progress.stats.blocksPlaced;
     case "blocks_broken": return progress.stats.blocksBroken;
     default: return 0;
@@ -271,8 +258,6 @@ export function incrementStat(accountId: string, statName: string, amount: numbe
     case "eventsAttended": progress.stats.eventsAttended += amount; break;
     case "itemsCollected": progress.stats.itemsCollected += amount; break;
     case "totalPlayTime": progress.stats.totalPlayTime += amount; break;
-    case "enemiesDefeated": progress.stats.enemiesDefeated += amount; break;
-    case "combatLevel": progress.stats.combatLevel = amount; break;
     case "blocksPlaced": progress.stats.blocksPlaced += amount; break;
     case "blocksBroken": progress.stats.blocksBroken += amount; break;
   }
@@ -285,7 +270,6 @@ export function incrementStat(accountId: string, statName: string, amount: numbe
     eventsAttended: "events_attended",
     itemsCollected: "items_collected",
     totalPlayTime: "distance_walked",
-    enemiesDefeated: "enemies_defeated",
     blocksPlaced: "blocks_placed",
     blocksBroken: "blocks_broken",
   };
@@ -492,17 +476,6 @@ export function onFriendAdded(accountId: string): Achievement[] {
  */
 export function onRegionVisited(accountId: string, regionId: string): Achievement[] {
   return visitRegion(accountId, regionId);
-}
-
-export function onEnemyDefeated(accountId: string): Achievement[] {
-  return incrementStat(accountId, "enemiesDefeated");
-}
-
-export function onCombatLevelUp(accountId: string, newLevel: number): Achievement[] {
-  // Set combat level directly (not increment)
-  const progress = getOrCreateProgress(accountId);
-  progress.stats.combatLevel = newLevel;
-  return checkAndAwardAchievements(accountId);
 }
 
 export function onBlockPlaced(accountId: string): Achievement[] {

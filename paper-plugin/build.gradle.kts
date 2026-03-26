@@ -3,7 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.6"
 }
 
-group = "com.vibelife"
+group = "com.packetcraft"
 version = "1.0.0-SNAPSHOT"
 
 java {
@@ -27,7 +27,7 @@ dependencies {
 
 tasks.shadowJar {
     archiveClassifier.set("")
-    relocate("com.google.gson", "com.vibelife.paper.libs.gson")
+    relocate("com.google.gson", "com.packetcraft.paper.libs.gson")
 }
 
 tasks.build {

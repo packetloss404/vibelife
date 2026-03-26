@@ -2,7 +2,7 @@
 // Voice Chat Signaling Service
 // ---------------------------------------------------------------------------
 //
-// ## WebSocket message types needed in server.ts:
+// ## REST endpoint / plugin message channel types needed in server.ts:
 //   - "voice:offer"         — relay SDP offer from sender to recipient
 //   - "voice:answer"        — relay SDP answer back
 //   - "voice:ice-candidate" — relay ICE candidate

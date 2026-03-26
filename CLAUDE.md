@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VibeLife is a social MMORPG platform built on Minecraft with three components:
+PacketCraft is a social MMORPG platform built on Minecraft with three components:
 - **TypeScript Sidecar** (`src/`) — Fastify HTTP server handling all business logic, persistence, and API
 - **Paper Plugin** (`paper-plugin/`) — Java plugin bridging Minecraft server to sidecar via HTTP
 - **Fabric Client Mod** (`fabric-mod/`) — Java client mod providing UI overlays, communicates directly with sidecar
@@ -25,12 +25,12 @@ npm start             # Run compiled output (dist/server.js)
 
 ### Paper Plugin (`paper-plugin/`)
 ```bash
-./gradlew shadowJar   # Build plugin JAR (output: build/libs/vibelife-*.jar)
+./gradlew shadowJar   # Build plugin JAR (output: build/libs/packetcraft-*.jar)
 ```
 
 ### Fabric Mod (`fabric-mod/`)
 ```bash
-./gradlew build        # Build mod JAR via Fabric Loom (output: build/libs/vibelife-*.jar)
+./gradlew build        # Build mod JAR via Fabric Loom (output: build/libs/packetcraft-*.jar)
 ```
 
 Both Java projects require **Java 21** and use the Gradle wrapper (gradlew).
@@ -58,6 +58,6 @@ Both Java projects require **Java 21** and use the Gradle wrapper (gradlew).
 - `ADMIN_BOOTSTRAP_TOKEN` — Bootstrap admin access
 
 ### Java Components
-- Plugin config: `paper-server/plugins/VibeLife/config.yml` (sidecar URL, API key, region mappings)
+- Plugin config: `paper-server/plugins/PacketCraft/config.yml` (sidecar URL, API key, region mappings)
 - Plugin syncs parcel permissions every 5 minutes and caches them locally for block protection
 - Both Java projects use Java 21 toolchain, Gson for JSON

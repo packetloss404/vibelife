@@ -1,8 +1,8 @@
 /**
  * Voice indicator service — tracks who is speaking per region and broadcasts state.
- * Integrates with the voice:speaking WebSocket event.
+ * Integrates with the voice:speaking REST endpoint / plugin message channel.
  *
- * NOTE: server.ts needs to import and use this service for voice:speaking WS events.
+ * NOTE: server.ts needs to import and use this service for voice:speaking events.
  */
 
 export type SpeakingState = {

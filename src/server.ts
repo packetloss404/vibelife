@@ -16,7 +16,6 @@ import socialRoutes from "./routes/social.js";
 import economyRoutes from "./routes/economy.js";
 import adminRoutes from "./routes/admin.js";
 import parcelRoutes from "./routes/parcels.js";
-import radioRoutes from "./routes/radio.js";
 import emoteRoutes from "./routes/emotes.js";
 import chatRoutes from "./routes/chat.js";
 import avatarRoutes from "./routes/avatar.js";
@@ -30,18 +29,11 @@ import { homeRoutes } from "./routes/homes.js";
 import { homeRatingRoutes } from "./routes/home-ratings.js";
 import { registerStorefrontRoutes } from "./routes/storefronts.js";
 import { registerAchievementRoutes } from "./routes/achievements.js";
-import scriptsPlugin from "./routes/scripts.js";
-import interactivesRoutes from "./routes/interactives.js";
 import voiceRoutes from "./routes/voice.js";
 import { registerVoiceStatusRoutes } from "./routes/voice-status.js";
 import petRoutes from "./routes/pets.js";
 import photosRoutes from "./routes/photos.js";
 import mediaRoutes from "./routes/media.js";
-import seasonalRoutes from "./routes/seasonal.js";
-import mobileRoutes from "./routes/mobile.js";
-import creatorToolsRoutes from "./routes/creator-tools.js";
-import { federationRoutes } from "./routes/federation.js";
-import npcRoutes from "./routes/npcs.js";
 import {
   createEvent,
   listEvents,
@@ -105,7 +97,6 @@ await app.register(socialRoutes);
 await app.register(economyRoutes);
 await app.register(adminRoutes);
 await app.register(parcelRoutes);
-await app.register(radioRoutes);
 await app.register(emoteRoutes);
 await app.register(chatRoutes);
 await app.register(avatarRoutes);
@@ -123,20 +114,11 @@ await registerStorefrontRoutes(app);
 await registerAchievementRoutes(app);
 
 // ── Tier 3 Route Plugins ──────────────────────────────────────────────────
-await app.register(scriptsPlugin);
-await app.register(interactivesRoutes);
 await app.register(voiceRoutes);
 registerVoiceStatusRoutes(app);
 await app.register(petRoutes);
 await app.register(photosRoutes);
 await app.register(mediaRoutes);
-await app.register(seasonalRoutes);
-
-// ── Tier 4 Route Plugins ──────────────────────────────────────────────────
-await app.register(mobileRoutes);
-await app.register(creatorToolsRoutes);
-await app.register(federationRoutes);
-await app.register(npcRoutes);
 
 // ── Events System ──────────────────────────────────────────────────────────
 

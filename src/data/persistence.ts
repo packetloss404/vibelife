@@ -167,53 +167,6 @@ export type AssetRecord = {
   updatedAt: string;
 };
 
-export type ChunkRecord = {
-  regionId: string;
-  chunkX: number;
-  chunkZ: number;
-  palette: number[];
-  blocks: string; // base64-encoded block data
-  version: number;
-};
-
-export type CombatStatsRecord = {
-  accountId: string;
-  level: number;
-  hp: number;
-  maxHp: number;
-  mana: number;
-  maxMana: number;
-  strength: number;
-  defense: number;
-  xp: number;
-  xpToNext: number;
-  kills: number;
-  deaths: number;
-};
-
-export type CustomBlockRecord = {
-  id: number;
-  name: string;
-  color: string;
-  transparent: boolean;
-  hardness: number;
-  creatorAccountId: string;
-  price: number;
-  createdAt: string;
-};
-
-export type VoxelBlueprintRecord = {
-  id: string;
-  name: string;
-  creatorAccountId: string;
-  creatorDisplayName: string;
-  blocks: Array<{ x: number; y: number; z: number; blockTypeId: number }>;
-  width: number;
-  height: number;
-  depth: number;
-  createdAt: string;
-};
-
 export type AvatarAppearanceRecord = {
   accountId: string;
   bodyColor: string;
@@ -359,19 +312,6 @@ export type PersistenceLayer = {
   listAssets(accountId: string): Promise<AssetRecord[]>;
   createAsset(asset: Omit<AssetRecord, "id" | "createdAt" | "updatedAt">): Promise<AssetRecord>;
   deleteAsset(assetId: string, accountId: string): Promise<boolean>;
-  // ── Voxel & Combat persistence ────────────────────────────────────────
-  getChunk(regionId: string, chunkX: number, chunkZ: number): Promise<ChunkRecord | undefined>;
-  saveChunk(chunk: ChunkRecord): Promise<void>;
-  listChunksInRange(regionId: string, minCX: number, maxCX: number, minCZ: number, maxCZ: number): Promise<ChunkRecord[]>;
-  getCombatStats(accountId: string): Promise<CombatStatsRecord | undefined>;
-  saveCombatStats(stats: CombatStatsRecord): Promise<void>;
-  getCustomBlock(blockId: number): Promise<CustomBlockRecord | undefined>;
-  saveCustomBlock(block: CustomBlockRecord): Promise<void>;
-  listCustomBlocks(): Promise<CustomBlockRecord[]>;
-  getVoxelBlueprint(blueprintId: string): Promise<VoxelBlueprintRecord | undefined>;
-  saveVoxelBlueprint(blueprint: VoxelBlueprintRecord): Promise<void>;
-  deleteVoxelBlueprint(blueprintId: string, accountId: string): Promise<boolean>;
-  listVoxelBlueprints(accountId?: string): Promise<VoxelBlueprintRecord[]>;
 };
 
 const seededRegions: RegionRecord[] = [
@@ -728,11 +668,6 @@ function createMemoryPersistence(): PersistenceLayer {
   const objectPermissions = new Map<string, RegionObjectPermissionRecord>();
   const objectScripts = new Map<string, ObjectScriptRecord>();
   const assets = new Map<string, AssetRecord>();
-  const memChunks = new Map<string, ChunkRecord>();
-  const memCombatStats = new Map<string, CombatStatsRecord>();
-  const memCustomBlocks = new Map<number, CustomBlockRecord>();
-  const memVoxelBlueprints = new Map<string, VoxelBlueprintRecord>();
-
   return {
     mode: "memory",
     async listRegions() {
@@ -1286,63 +1221,11 @@ function createMemoryPersistence(): PersistenceLayer {
       if (!asset || asset.accountId !== accountId) return false;
       return assets.delete(assetId);
     },
-    // ── Voxel & Combat memory persistence ──────────────────────────────
-    async getChunk(regionId, chunkX, chunkZ) {
-      return memChunks.get(`${regionId}:${chunkX}:${chunkZ}`);
-    },
-    async saveChunk(chunk) {
-      memChunks.set(`${chunk.regionId}:${chunk.chunkX}:${chunk.chunkZ}`, chunk);
-    },
-    async listChunksInRange(regionId, minCX, maxCX, minCZ, maxCZ) {
-      const result: ChunkRecord[] = [];
-      for (const [key, chunk] of memChunks) {
-        if (chunk.regionId === regionId && chunk.chunkX >= minCX && chunk.chunkX <= maxCX && chunk.chunkZ >= minCZ && chunk.chunkZ <= maxCZ) {
-          result.push(chunk);
-        }
-      }
-      return result;
-    },
-    async getCombatStats(accountId) {
-      return memCombatStats.get(accountId);
-    },
-    async saveCombatStats(stats) {
-      memCombatStats.set(stats.accountId, stats);
-    },
-    async getCustomBlock(blockId) {
-      return memCustomBlocks.get(blockId);
-    },
-    async saveCustomBlock(block) {
-      memCustomBlocks.set(block.id, block);
-    },
-    async listCustomBlocks() {
-      return [...memCustomBlocks.values()];
-    },
-    async getVoxelBlueprint(blueprintId) {
-      return memVoxelBlueprints.get(blueprintId);
-    },
-    async saveVoxelBlueprint(blueprint) {
-      memVoxelBlueprints.set(blueprint.id, blueprint);
-    },
-    async deleteVoxelBlueprint(blueprintId, accountId) {
-      const bp = memVoxelBlueprints.get(blueprintId);
-      if (!bp || bp.creatorAccountId !== accountId) return false;
-      return memVoxelBlueprints.delete(blueprintId);
-    },
-    async listVoxelBlueprints(accountId?) {
-      const all = [...memVoxelBlueprints.values()];
-      return accountId ? all.filter((bp) => bp.creatorAccountId === accountId) : all;
-    }
   };
 }
 
 async function createPostgresPersistence(databaseUrl: string): Promise<PersistenceLayer> {
   const pool = new Pool({ connectionString: databaseUrl });
-
-  // In-memory fallbacks for voxel/combat data (migrate to SQL tables later)
-  const pgChunks = new Map<string, ChunkRecord>();
-  const pgCombatStats = new Map<string, CombatStatsRecord>();
-  const pgCustomBlocks = new Map<number, CustomBlockRecord>();
-  const pgVoxelBlueprints = new Map<string, VoxelBlueprintRecord>();
 
   const readInventory = async (accountId: string): Promise<InventoryItemRecord[]> => {
     const result = await pool.query<{
@@ -2658,54 +2541,6 @@ async function createPostgresPersistence(databaseUrl: string): Promise<Persisten
       const result = await pool.query("DELETE FROM assets WHERE id = $1 AND account_id = $2", [assetId, accountId]);
       return (result.rowCount ?? 0) > 0;
     },
-    // ── Voxel & Combat postgres persistence (falls back to in-memory for now) ──
-    // These use in-memory maps since we haven't created the SQL tables yet.
-    // A future migration can move these to proper SQL tables.
-    async getChunk(regionId, chunkX, chunkZ) {
-      return pgChunks.get(`${regionId}:${chunkX}:${chunkZ}`);
-    },
-    async saveChunk(chunk) {
-      pgChunks.set(`${chunk.regionId}:${chunk.chunkX}:${chunk.chunkZ}`, chunk);
-    },
-    async listChunksInRange(regionId, minCX, maxCX, minCZ, maxCZ) {
-      const result: ChunkRecord[] = [];
-      for (const [, chunk] of pgChunks) {
-        if (chunk.regionId === regionId && chunk.chunkX >= minCX && chunk.chunkX <= maxCX && chunk.chunkZ >= minCZ && chunk.chunkZ <= maxCZ) {
-          result.push(chunk);
-        }
-      }
-      return result;
-    },
-    async getCombatStats(accountId) {
-      return pgCombatStats.get(accountId);
-    },
-    async saveCombatStats(stats) {
-      pgCombatStats.set(stats.accountId, stats);
-    },
-    async getCustomBlock(blockId) {
-      return pgCustomBlocks.get(blockId);
-    },
-    async saveCustomBlock(block) {
-      pgCustomBlocks.set(block.id, block);
-    },
-    async listCustomBlocks() {
-      return [...pgCustomBlocks.values()];
-    },
-    async getVoxelBlueprint(blueprintId) {
-      return pgVoxelBlueprints.get(blueprintId);
-    },
-    async saveVoxelBlueprint(blueprint) {
-      pgVoxelBlueprints.set(blueprint.id, blueprint);
-    },
-    async deleteVoxelBlueprint(blueprintId, accountId) {
-      const bp = pgVoxelBlueprints.get(blueprintId);
-      if (!bp || bp.creatorAccountId !== accountId) return false;
-      return pgVoxelBlueprints.delete(blueprintId);
-    },
-    async listVoxelBlueprints(accountId?) {
-      const all = [...pgVoxelBlueprints.values()];
-      return accountId ? all.filter((bp) => bp.creatorAccountId === accountId) : all;
-    }
   };
 }
 

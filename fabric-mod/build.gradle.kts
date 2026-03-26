@@ -3,7 +3,7 @@ plugins {
     java
 }
 
-group = "com.vibelife"
+group = "com.packetcraft"
 version = "1.0.0-SNAPSHOT"
 
 java {

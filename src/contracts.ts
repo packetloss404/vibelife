@@ -73,8 +73,6 @@ export type RegionSnapshotEvent = {
   objects: RegionObjectContract[];
   parcels: ParcelContract[];
   chatHistory: ChatHistoryEntry[];
-  enemies: EnemyStateContract[];
-  combatStats: CombatStatsContract;
 };
 
 export type RegionEvent =
@@ -101,7 +99,6 @@ export type RegionEvent =
   | { type: "voice:participant_joined"; sequence: number; participant: VoiceParticipantContract }
   | { type: "voice:participant_left"; sequence: number; accountId: string; regionId: string }
   | { type: "voice:speaking_changed"; sequence: number; accountId: string; speaking: boolean }
-  | { type: "radio:changed"; sequence: number; stationId: string; stationName: string; trackName: string; currentTrack: number }
   | { type: "avatar:emote"; sequence: number; avatarId: string; displayName: string; emoteName: string; duration_ms: number }
   | { type: "emote:combo"; sequence: number; avatarIds: string[]; comboName: string; position: { x: number; y: number; z: number } }
   | { type: "avatar:sit"; sequence: number; avatarId: string; objectId: string; position: { x: number; y: number; z: number } }
@@ -110,18 +107,7 @@ export type RegionEvent =
   | { type: "home:doorbell"; sequence: number; visitorAvatarId: string; visitorDisplayName: string; homeOwnerAccountId: string; parcelName: string }
   | { type: "event:started"; sequence: number; event: GameEventContract }
   | { type: "event:ended"; sequence: number; eventId: string }
-  | { type: "voxel:chunk_data"; sequence: number; chunk: VoxelChunkContract }
-  | { type: "voxel:block_placed"; sequence: number; regionId: string; x: number; y: number; z: number; blockTypeId: number; accountId: string }
-  | { type: "voxel:block_broken"; sequence: number; regionId: string; x: number; y: number; z: number; accountId: string }
-  | { type: "combat:damage"; sequence: number; attackerId: string; targetId: string; damage: number; critical: boolean; targetHp: number; targetMaxHp: number; attackStyle: string }
-  | { type: "combat:death"; sequence: number; accountId: string; killedBy: string; respawnX: number; respawnY: number; respawnZ: number }
-  | { type: "combat:respawn"; sequence: number; accountId: string; x: number; y: number; z: number }
-  | { type: "combat:loot"; sequence: number; accountId: string; enemyId: string; currency: number; items: string[] }
-  | { type: "combat:level_up"; sequence: number; accountId: string; newLevel: number }
-  | { type: "enemy:spawned"; sequence: number; enemy: EnemyStateContract }
-  | { type: "enemy:moved"; sequence: number; enemies: Array<{ id: string; x: number; y: number; z: number; state: string; hp: number }> }
-  | { type: "enemy:despawned"; sequence: number; enemyId: string }
-  | { type: "npc:positions"; sequence: number; npcs: Array<{ id: string; x: number; y: number; z: number; behaviorState: string; displayName: string; npcType: string; appearance: Record<string, string> }> };
+;
 
 export type ChatMessageContract = {
   type: "chat";
@@ -155,16 +141,12 @@ export type RegionCommand =
   | { type: "move"; x: number; y?: number; z: number }
   | { type: "chat"; message: string }
   | { type: "whisper"; targetDisplayName: string; message: string }
-  | { type: "radio:tune"; stationId: string }
-  | { type: "radio:skip" }
   | { type: "emote"; emoteName: string }
   | { type: "typing"; typing: boolean }
   | { type: "sit"; objectId: string }
   | { type: "stand" }
   | { type: "group_chat"; groupId: string; message: string }
-  | { type: "voxel:place_block"; x: number; y: number; z: number; blockTypeId: number }
-  | { type: "voxel:break_block"; x: number; y: number; z: number }
-  | { type: "combat:attack"; targetId: string; attackStyle: "melee" | "magic" };
+;
 
 export const AUTH_MODES: AuthMode[] = ["guest", "register", "login"];
 
@@ -187,14 +169,6 @@ export function isRegionCommand(value: unknown): value is RegionCommand {
     return typeof candidate.targetDisplayName === "string" && typeof candidate.message === "string";
   }
 
-  if (candidate.type === "radio:tune") {
-    return typeof candidate.stationId === "string";
-  }
-
-  if (candidate.type === "radio:skip") {
-    return true;
-  }
-
   if (candidate.type === "emote") {
     return typeof candidate.emoteName === "string";
   }
@@ -213,18 +187,6 @@ export function isRegionCommand(value: unknown): value is RegionCommand {
 
   if (candidate.type === "group_chat") {
     return typeof candidate.groupId === "string" && typeof candidate.message === "string";
-  }
-
-  if (candidate.type === "voxel:place_block") {
-    return Number.isFinite(candidate.x) && Number.isFinite(candidate.y) && Number.isFinite(candidate.z) && Number.isFinite(candidate.blockTypeId);
-  }
-
-  if (candidate.type === "voxel:break_block") {
-    return Number.isFinite(candidate.x) && Number.isFinite(candidate.y) && Number.isFinite(candidate.z);
-  }
-
-  if (candidate.type === "combat:attack") {
-    return typeof candidate.targetId === "string" && (candidate.attackStyle === "melee" || candidate.attackStyle === "magic");
   }
 
   return false;
@@ -329,15 +291,6 @@ export type TeleportRequest = {
   z: number;
 };
 
-export type RadioStationContract = {
-  id: string;
-  name: string;
-  genre: string;
-  tracks: string[];
-  currentTrack: number;
-  isPlaying: boolean;
-};
-
 export type EmoteContract = {
   name: string;
   category: "greetings" | "expressions" | "actions" | "fun";
@@ -429,7 +382,7 @@ export type AchievementContract = {
   id: string;
   name: string;
   description: string;
-  category: "explorer" | "builder" | "social" | "collector" | "warrior";
+  category: "explorer" | "builder" | "social" | "collector";
   icon: string;
   xpReward: number;
   requirement: { type: string; count: number };
@@ -549,94 +502,3 @@ export type VoiceChannelContract = {
   participants: VoiceParticipantContract[];
 };
 
-export type SeasonContract = "spring" | "summer" | "autumn" | "winter";
-
-export type SeasonalItemContract = {
-  id: string;
-  name: string;
-  description: string;
-  season: SeasonContract;
-  holiday?: string;
-  rarity: "common" | "uncommon" | "rare" | "legendary";
-  type: "decoration" | "wearable" | "emote" | "pet_accessory" | "consumable";
-  available: boolean;
-  expiresAt?: string;
-};
-
-export type SeasonalThemeContract = {
-  season: SeasonContract;
-  fogColor: string;
-  sunColor: string;
-  skyTint: string;
-  ambientParticles: string;
-  ambientIntensity: number;
-};
-
-// ── Voxel & Combat Contracts ──────────────────────────────────────────────
-
-export type BlockTypeContract = {
-  id: number;
-  name: string;
-  color: string;
-  transparent: boolean;
-  hardness: number;
-};
-
-export type VoxelChunkContract = {
-  chunkX: number;
-  chunkZ: number;
-  palette: BlockTypeContract[];
-  blocks: string; // base64 RLE-compressed
-  version: number;
-};
-
-export type CombatStatsContract = {
-  accountId: string;
-  level: number;
-  hp: number;
-  maxHp: number;
-  mana: number;
-  maxMana: number;
-  strength: number;
-  defense: number;
-  xp: number;
-  xpToNext: number;
-  kills: number;
-  deaths: number;
-};
-
-export type EnemyStateContract = {
-  id: string;
-  regionId: string;
-  variant: "slime" | "skeleton" | "golem" | "shadow" | "drake";
-  level: number;
-  hp: number;
-  maxHp: number;
-  x: number;
-  y: number;
-  z: number;
-  state: "idle" | "patrol" | "aggro" | "chase" | "attack" | "dead";
-};
-
-export type VoxelBlueprintContract = {
-  id: string;
-  name: string;
-  creatorAccountId: string;
-  creatorDisplayName: string;
-  blocks: Array<{ x: number; y: number; z: number; blockTypeId: number }>;
-  width: number;
-  height: number;
-  depth: number;
-  createdAt: string;
-};
-
-export type CustomBlockContract = {
-  id: number;
-  name: string;
-  color: string;
-  transparent: boolean;
-  hardness: number;
-  creatorAccountId: string;
-  price: number;
-  createdAt: string;
-};

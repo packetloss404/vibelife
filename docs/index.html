@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VibeLife — Build. Battle. Belong.</title>
+<title>PacketCraft — Build. Battle. Belong.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,8 +43,8 @@ h1,h2,h3,h4,h5,h6{font-family:'Sora',system-ui,sans-serif}
 /* ===== NAV ===== */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;background:rgba(250,246,240,.92);backdrop-filter:blur(12px);border-bottom:3px solid var(--forest)}
 nav .logo-sm{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px}
-nav .logo-sm .vibe{color:var(--forest)}
-nav .logo-sm .life{color:var(--amber)}
+nav .logo-sm .pkt{color:var(--forest)}
+nav .logo-sm .craft{color:var(--amber)}
 nav .logo-sm .cube{display:inline-flex;gap:2px;flex-wrap:wrap;width:20px;margin-right:4px}
 nav .logo-sm .cube span{display:block;width:8px;height:8px}
 nav .logo-sm .cube .c1{background:var(--forest)}
@@ -62,17 +62,14 @@ nav .links a:hover{color:var(--forest);border-bottom-color:var(--forest)}
 background:linear-gradient(180deg,var(--warm-white) 0%,var(--paper) 40%,var(--cream) 100%)}
 .hero canvas{position:absolute;inset:0;z-index:0}
 .hero>*{position:relative;z-index:1}
-
 .logo-main{margin-bottom:24px}
 .logo-main h1.brand{font-family:'Sora',sans-serif;font-size:clamp(56px,10vw,96px);font-weight:800;letter-spacing:-1px;line-height:1}
-.logo-main .brand .v{color:var(--forest)}
-.logo-main .brand .l{color:var(--amber)}
+.logo-main .brand .p{color:var(--forest)}
+.logo-main .brand .c{color:var(--amber)}
 .logo-main .subtitle{font-family:'Inter',sans-serif;font-size:clamp(11px,1.5vw,14px);font-weight:600;color:var(--text3);letter-spacing:6px;text-transform:uppercase;margin-top:8px}
-/* pixel blocks decoration around logo */
 .logo-blocks{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
 .logo-blocks span{display:block;width:clamp(12px,2vw,18px);height:clamp(12px,2vw,18px);opacity:.7}
 .logo-blocks .b1{background:var(--forest)}.logo-blocks .b2{background:var(--amber)}.logo-blocks .b3{background:var(--terra)}.logo-blocks .b4{background:var(--navy)}.logo-blocks .b5{background:var(--honey)}.logo-blocks .b6{background:var(--forest-light)}.logo-blocks .b7{background:var(--brown-light)}
-
 .hero .tagline-big{font-family:'Sora',sans-serif;font-size:clamp(18px,3vw,26px);font-weight:600;color:var(--text);margin-bottom:12px}
 .hero .tagline{font-size:clamp(14px,1.8vw,16px);color:var(--text2);max-width:580px;line-height:1.8;margin-bottom:36px}
 .hero-actions{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
@@ -95,7 +92,6 @@ background:linear-gradient(180deg,var(--warm-white) 0%,var(--paper) 40%,var(--cr
 .split{display:grid;grid-template-columns:1fr 1fr;min-height:80vh;position:relative}
 .split-text{padding:clamp(60px,8vw,100px) clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;background:var(--warm-white)}
 .split-visual{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
-
 .eyebrow{font-family:'Sora',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:3px;color:var(--amber);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .eyebrow::before{content:'';display:block;width:20px;height:3px;background:var(--amber)}
 .split-text h2{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.15;margin-bottom:20px;color:var(--navy)}
@@ -167,6 +163,60 @@ background:linear-gradient(180deg,var(--warm-white) 0%,var(--paper) 40%,var(--cr
 .season-node.spring .season-label{color:var(--terra)}.season-node.summer .season-label{color:var(--amber)}.season-node.autumn .season-label{color:var(--brown)}.season-node.winter .season-label{color:var(--navy)}
 .season-items{font-size:11.5px;color:var(--text3);line-height:1.9;font-weight:500}
 
+/* ===== PLUGIN GUIDE SECTION ===== */
+.plugin-section{max-width:860px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.plugin-hero{min-height:30vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 40px;
+background:linear-gradient(180deg,var(--cream) 0%,var(--paper) 50%,var(--cream) 100%);position:relative;overflow:hidden}
+.plugin-hero .pixel-row{display:flex;gap:4px;justify-content:center;margin-bottom:24px}
+.plugin-hero .pixel-row span{display:block;width:10px;height:10px;opacity:.6}
+.plugin-hero h2{font-size:clamp(28px,5vw,44px);font-weight:800;color:var(--navy);margin-bottom:12px}
+.plugin-hero h2 .accent{color:var(--amber)}
+.plugin-hero .psubtitle{font-size:clamp(14px,2vw,17px);color:var(--text2);max-width:520px;line-height:1.7}
+.psection{padding:60px 0;border-bottom:2px solid var(--border-light)}
+.psection:last-of-type{border-bottom:none}
+.psection-icon{font-size:36px;margin-bottom:12px;display:block}
+.psection h3{font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.psection h3 .sq{display:inline-block;width:8px;height:100%;min-height:28px;background:var(--forest);flex-shrink:0}
+.psection > p{font-size:15px;color:var(--text2);line-height:1.8;margin-bottom:20px;max-width:720px}
+
+/* ===== COMMAND CARDS ===== */
+.cmd-group{margin-bottom:28px}
+.cmd-group h4{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.cmd-group h4::before{content:'';width:14px;height:3px;background:var(--amber);display:block}
+.cmd-card{display:flex;gap:16px;align-items:baseline;padding:14px 18px;background:var(--warm-white);border:2px solid var(--border);margin-bottom:6px;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.cmd-card:hover{border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--border-light)}
+.cmd-code{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--forest);white-space:nowrap;min-width:200px;background:var(--forest-pale);padding:4px 10px;border:1px solid rgba(27,67,50,.15)}
+.cmd-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.cmd-alias{font-size:11px;color:var(--text3);margin-top:3px;font-style:italic}
+
+/* ===== KEYBIND CARDS ===== */
+.keybind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:16px}
+.keybind-card{background:var(--warm-white);border:2px solid var(--border);padding:20px;box-shadow:3px 3px 0 var(--border-light);transition:.2s}
+.keybind-card:hover{border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--border-light)}
+.keybind-key{display:inline-block;font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--warm-white);background:var(--navy);width:44px;height:44px;line-height:44px;text-align:center;margin-bottom:10px;box-shadow:2px 2px 0 var(--border)}
+.keybind-name{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--navy);margin-bottom:4px}
+.keybind-desc{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ===== INFO CARDS ===== */
+.info-card{background:var(--warm-white);border:2px solid var(--border);padding:28px;margin-bottom:20px;box-shadow:4px 4px 0 var(--border-light);position:relative}
+.info-card::before{content:'';position:absolute;top:-2px;left:-2px;width:14px;height:14px;border-top:3px solid var(--forest);border-left:3px solid var(--forest)}
+.info-card::after{content:'';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-bottom:3px solid var(--forest);border-right:3px solid var(--forest)}
+.info-card h4{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:10px}
+.info-card p{font-size:14px;color:var(--text2);line-height:1.8}
+.info-card ul{margin:12px 0 0 20px;font-size:14px;color:var(--text2);line-height:2}
+.info-card ul li::marker{color:var(--amber)}
+
+/* ===== HIGHLIGHT BOX ===== */
+.highlight-box{background:var(--amber-pale);border:2px solid var(--amber);padding:18px 22px;margin:16px 0;font-size:14px;color:var(--brown);line-height:1.7;box-shadow:3px 3px 0 var(--border)}
+.highlight-box strong{color:var(--amber)}
+
+/* ===== PET GRID ===== */
+.pet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:16px}
+.pet-card{background:var(--warm-white);border:2px solid var(--border);padding:16px 10px;text-align:center;box-shadow:2px 2px 0 var(--border-light);transition:.2s}
+.pet-card:hover{transform:translateY(-3px);border-color:var(--amber);box-shadow:3px 5px 0 var(--border-light)}
+.pet-card .pet-icon{font-size:32px;display:block;margin-bottom:6px}
+.pet-card .pet-name{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--navy)}
+
 /* ===== BOTTOM CTA ===== */
 .bottom-cta{text-align:center;padding:clamp(80px,10vw,140px) 24px;position:relative;background:linear-gradient(180deg,var(--cream) 0%,var(--paper) 100%)}
 .bottom-cta>*{position:relative}
@@ -191,8 +241,14 @@ footer a{color:rgba(255,255,255,.5)}footer a:hover{color:var(--honey)}
 .feature-wall{grid-template-columns:repeat(2,1fr)}
 .season-node{padding-top:60px}
 }
-@media(max-width:600px){
+@media(max-width:700px){
 nav .links{display:none}
+.cmd-card{flex-direction:column;gap:6px}
+.cmd-code{min-width:auto}
+.keybind-grid{grid-template-columns:1fr 1fr}
+.pet-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:600px){
 .feature-wall{grid-template-columns:1fr 1fr}
 .timeline-track{flex-direction:column;gap:24px}
 .timeline-track::before{display:none}
@@ -200,6 +256,9 @@ nav .links{display:none}
 .season-node::before{display:none}
 .enemies-strip{flex-direction:column}
 .enemy-col{min-width:100%}
+}
+@media(max-width:480px){
+.keybind-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -209,15 +268,13 @@ nav .links{display:none}
 <nav>
 <a href="#" class="logo-sm">
 <span class="cube"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></span>
-<span><span class="vibe">Vibe</span><span class="life">Life</span></span>
+<span><span class="pkt">Packet</span><span class="craft">Craft</span></span>
 </a>
 <div class="links">
 <a href="#world">World</a>
-<a href="#combat">Combat</a>
 <a href="#social">Social</a>
+<a href="#plugin">Plugin Guide</a>
 <a href="#opensource">Open Source</a>
-<a href="plugin.html">Plugin Guide</a>
-<a href="deploy.html">Deploy Guide</a>
 <a href="manual/">Game Manual</a>
 <a href="devmanual/" class="cta-sm">Dev Docs</a>
 </div>
@@ -226,24 +283,19 @@ nav .links{display:none}
 <!-- =============== HERO =============== -->
 <section class="hero">
 <canvas id="particles"></canvas>
-
 <div class="logo-blocks">
 <span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="b5"></span><span class="b6"></span><span class="b7"></span>
 </div>
-
 <div class="logo-main">
-<h1 class="brand"><span class="v">Vibe</span><span class="l">Life</span></h1>
+<h1 class="brand"><span class="p">Packet</span><span class="c">Craft</span></h1>
 <div class="subtitle">Minecraft Social MMORPG Platform</div>
 </div>
-
 <div class="tagline-big">Build. Battle. Belong.</div>
 <p class="tagline">A community-owned Minecraft platform where you claim land, level up, adopt pets, trade in a player-driven economy, and keep your data forever. No corporate overlord. Just vibes.</p>
-
 <div class="hero-actions">
-<a href="plugin.html" class="btn-hero btn-primary">Get the Plugin</a>
+<a href="#plugin" class="btn-hero btn-primary">Get the Plugin</a>
 <a href="devmanual/" class="btn-hero btn-ghost">Read the Source</a>
 </div>
-
 <div class="scroll-hint">scroll to explore</div>
 </section>
 
@@ -254,28 +306,24 @@ nav .links{display:none}
 <span><i class="dot"></i>RPG Combat</span>
 <span><i class="dot"></i>5 Enemy Types</span>
 <span><i class="dot"></i>8 Pet Species</span>
-<span><i class="dot"></i>Voice Chat</span>
 <span><i class="dot"></i>Player Marketplace</span>
-<span><i class="dot"></i>33 Achievements</span>
-<span><i class="dot"></i>7 Seasonal Holidays</span>
+<span><i class="dot"></i>27 Achievements</span>
 <span><i class="dot"></i>Guild System</span>
 <span><i class="dot"></i>14 Emotes</span>
 <span><i class="dot"></i>Open Source</span>
 <span><i class="dot"></i>Fabric Client Mod</span>
-<span><i class="dot"></i>Federation</span>
+<span><i class="dot"></i>8 Event Types</span>
 <span><i class="dot"></i>Paper Plugin</span>
 <span><i class="dot"></i>RPG Combat</span>
 <span><i class="dot"></i>5 Enemy Types</span>
 <span><i class="dot"></i>8 Pet Species</span>
-<span><i class="dot"></i>Voice Chat</span>
 <span><i class="dot"></i>Player Marketplace</span>
-<span><i class="dot"></i>33 Achievements</span>
-<span><i class="dot"></i>7 Seasonal Holidays</span>
+<span><i class="dot"></i>27 Achievements</span>
 <span><i class="dot"></i>Guild System</span>
 <span><i class="dot"></i>14 Emotes</span>
 <span><i class="dot"></i>Open Source</span>
 <span><i class="dot"></i>Fabric Client Mod</span>
-<span><i class="dot"></i>Federation</span>
+<span><i class="dot"></i>8 Event Types</span>
 </div>
 </div>
 
@@ -284,7 +332,7 @@ nav .links{display:none}
 <div class="split-text">
 <div class="eyebrow">Minecraft Building</div>
 <h2>Your world.<br>Block by block.</h2>
-<p>Minecraft's infinite terrain with VibeLife's parcel protection on top. Mine ores, place blocks, terraform mountains, flood valleys. Every block you place is protected on your claimed land and persists for everyone.</p>
+<p>Minecraft's infinite terrain with PacketCraft's parcel protection on top. Mine ores, place blocks, terraform mountains, flood valleys. Every block you place is protected on your claimed land and persists for everyone.</p>
 <p>Claim a parcel, invite collaborators, and build whatever you can imagine. Save blueprints. Sell them on the marketplace. This is your land.</p>
 <div class="stat-row">
 <div class="stat"><div class="num c">Infinite</div><div class="label">Block Types</div></div>
@@ -319,7 +367,7 @@ nav .links{display:none}
 <div class="split-text" style="direction:ltr">
 <div class="eyebrow">RPG Combat</div>
 <h2>Level up.<br>Fight everything.</h2>
-<p>Melee or magic — your choice. Crit chance, mana management, defense scaling. Five enemy types from squishy slimes to dragon-tier drakes with full AI state machines patrolling, chasing, attacking.</p>
+<p>Melee or magic &mdash; your choice. Crit chance, mana management, defense scaling. Five enemy types from squishy slimes to dragon-tier drakes with full AI state machines patrolling, chasing, attacking.</p>
 <p>Die? Lose 5% gold. Win? Loot drops, XP, and the leaderboard glory. Level cap is 100. Good luck.</p>
 <div class="stat-row">
 <div class="stat"><div class="num r">100</div><div class="label">Max Level</div></div>
@@ -329,9 +377,7 @@ nav .links{display:none}
 </div>
 <div class="split-visual" style="direction:ltr;background:linear-gradient(135deg,#f0e0d8,#f5ead8,#e8e0f0)">
 <div style="text-align:center;padding:40px">
-<div style="font-size:120px;line-height:1;filter:drop-shadow(4px 4px 0 rgba(192,87,49,.3))">
-&#x1F409;
-</div>
+<div style="font-size:120px;line-height:1;filter:drop-shadow(4px 4px 0 rgba(192,87,49,.3))">&#x1F409;</div>
 <div style="font-family:'Sora',sans-serif;font-size:14px;color:var(--terra);margin-top:16px;letter-spacing:2px;font-weight:700">DRAKE // LVL 5 BOSS</div>
 <div style="margin:16px auto;width:200px;height:10px;background:var(--terra-pale);border:2px solid var(--terra);overflow:hidden">
 <div style="width:100%;height:100%;background:var(--terra)"></div>
@@ -376,13 +422,13 @@ nav .links{display:none}
 <div class="split-text">
 <div class="eyebrow">Social Living</div>
 <h2>Not just a game.<br>A place to be.</h2>
-<p>Spatial voice chat that fades with distance. Emote combos when you and a friend dance in sync. Guilds with shared treasuries and alliance politics. Seasonal events from Valentine's hearts to Halloween ghost pets.</p>
+<p>Emote combos when you and a friend dance in sync. Guilds with shared treasuries and alliance politics. Seasonal events from Valentine's hearts to Halloween ghost pets.</p>
 <p>Host a build competition. Throw a concert. Open a marketplace stall. Screenshot it all with 8 photo filters and share to the feed.</p>
 <div class="stat-row">
 <div class="stat"><div class="num c">8</div><div class="label">Pet Species</div></div>
 <div class="stat"><div class="num p">14</div><div class="label">Emotes</div></div>
-<div class="stat"><div class="num g">7</div><div class="label">Holidays</div></div>
-<div class="stat"><div class="num gr">33</div><div class="label">Achievements</div></div>
+<div class="stat"><div class="num g">8</div><div class="label">Event Types</div></div>
+<div class="stat"><div class="num gr">27</div><div class="label">Achievements</div></div>
 </div>
 </div>
 <div class="split-visual" style="background:linear-gradient(135deg,#f0ead8,#e8f0e4,#f5f0e0)">
@@ -399,9 +445,7 @@ nav .links{display:none}
 <span class="chat-name" style="color:var(--amber)">BlockWizard</span><span class="chat-time">&bull; just now</span>
 <div class="chat-msg">I'm in. need those drake scales for my blueprint</div>
 </div>
-<div class="chat-event">
-&#9829; Dance Sync combo activated! &bull; +15 XP
-</div>
+<div class="chat-event">&#9829; Dance Sync combo activated! &bull; +15 XP</div>
 </div>
 </div>
 </section>
@@ -411,13 +455,13 @@ nav .links{display:none}
 <div class="feature-cell"><span class="icon">&#9874;</span><span class="fname">Build Mode</span><span class="fdesc">Claim parcels, protect builds, invite collaborators</span></div>
 <div class="feature-cell"><span class="icon">&#127760;</span><span class="fname">Regions</span><span class="fdesc">Multiple worlds with unique terrain and communities</span></div>
 <div class="feature-cell"><span class="icon">&#128176;</span><span class="fname">Economy</span><span class="fdesc">Player-driven marketplace, auctions, direct trading</span></div>
-<div class="feature-cell"><span class="icon">&#127925;</span><span class="fname">Radio</span><span class="fdesc">In-world stations with genre playlists and skip controls</span></div>
+<div class="feature-cell"><span class="icon">&#127942;</span><span class="fname">Achievements</span><span class="fdesc">27 achievements across 5 categories with XP rewards</span></div>
 <div class="feature-cell"><span class="icon">&#128247;</span><span class="fname">Photos</span><span class="fdesc">8 filters, visibility settings, likes, comments, gallery</span></div>
 <div class="feature-cell"><span class="icon">&#128220;</span><span class="fname">Blueprints</span><span class="fdesc">Save creations as templates, sell them on marketplace</span></div>
 <div class="feature-cell"><span class="icon">&#127968;</span><span class="fname">Homes</span><span class="fdesc">Set home, privacy controls, ratings, doorbell alerts</span></div>
 <div class="feature-cell"><span class="icon">&#128101;</span><span class="fname">Guilds</span><span class="fdesc">Treasury, emblems, alliances, shared parcels, officer ranks</span></div>
-<div class="feature-cell"><span class="icon">&#128225;</span><span class="fname">Mobile</span><span class="fdesc">Companion app: inventory, friends, quick teleport, push alerts</span></div>
-<div class="feature-cell"><span class="icon">&#127759;</span><span class="fname">Federation</span><span class="fdesc">Link servers together, cross-server teleport and marketplace</span></div>
+<div class="feature-cell"><span class="icon">&#128062;</span><span class="fname">Pets</span><span class="fdesc">8 species, 4 rarities, tricks, feeding, and bonding</span></div>
+<div class="feature-cell"><span class="icon">&#127881;</span><span class="fname">Events</span><span class="fdesc">Build comps, concerts, workshops, market days, and more</span></div>
 </div>
 
 <!-- =============== SEASONAL TIMELINE =============== -->
@@ -448,24 +492,24 @@ nav .links{display:none}
 <div class="eyebrow" style="margin-bottom:12px;justify-content:center">100% Open Source</div>
 <h2 style="font-family:'Sora',sans-serif;font-size:clamp(24px,3.5vw,38px);text-align:center;margin-bottom:8px;color:var(--navy)">Fork it. Host it. Own it.</h2>
 <p style="color:var(--text2);text-align:center;margin-bottom:32px;max-width:520px;font-size:15px">
-Paper plugin + Fabric mod. Every line of code is yours to read, modify, and deploy. Run your own world with your own rules.
+Paper plugin + Fabric mod + Fastify sidecar. Every line of code is yours to read, modify, and deploy. Run your own world with your own rules.
 </p>
 <div class="terminal">
 <div class="terminal-bar">
 <span class="terminal-dot r"></span>
 <span class="terminal-dot y"></span>
 <span class="terminal-dot g"></span>
-<span class="terminal-title">vibelife &mdash; bash</span>
+<span class="terminal-title">packetcraft &mdash; bash</span>
 </div>
 <div class="terminal-body">
-<span class="comment"># Clone and run your own VibeLife server</span><br>
-<span class="prompt">$ </span><span class="cmd">git clone https://github.com/vibelife/vibelife.git</span><br>
-<span class="prompt">$ </span><span class="cmd">cd vibelife && npm install</span><br>
+<span class="comment"># Clone and run your own PacketCraft server</span><br>
+<span class="prompt">$ </span><span class="cmd">git clone https://github.com/packetcraft/packetcraft.git</span><br>
+<span class="prompt">$ </span><span class="cmd">cd packetcraft && npm install</span><br>
 <span class="prompt">$ </span><span class="cmd">npm run dev</span><br>
 <br>
 <span class="output">&#9889; Fastify 5 listening on http://localhost:3000</span><br>
 <span class="output">&#9889; API routes registered (40+ endpoints)</span><br>
-<span class="output">&#9889; 3 regions loaded, 0 players online</span><br>
+<span class="output">&#9889; 6 regions loaded, 0 players online</span><br>
 <span class="output">&#9889; Plugin bridge ready, waiting for Paper server</span><br>
 <span class="output">&#9889; Health check: OK</span><br>
 <br>
@@ -482,12 +526,263 @@ Paper plugin + Fabric mod. Every line of code is yours to read, modify, and depl
 </div>
 </section>
 
+<!-- =============== PLUGIN GUIDE (INLINE) =============== -->
+<section class="plugin-hero" id="plugin">
+<div class="pixel-row">
+<span style="background:var(--forest)"></span>
+<span style="background:var(--amber)"></span>
+<span style="background:var(--terra)"></span>
+<span style="background:var(--navy)"></span>
+<span style="background:var(--honey)"></span>
+<span style="background:var(--forest-light)"></span>
+<span style="background:var(--brown-light)"></span>
+</div>
+<h2>PacketCraft <span class="accent">Plugin Guide</span></h2>
+<p class="psubtitle">Everything you can do on a PacketCraft server. Commands, keybinds, features, and all the fun stuff waiting for you.</p>
+</section>
+
+<div class="plugin-section">
+
+<!-- WHAT IS PACKETCRAFT -->
+<div class="psection" id="what">
+<span class="psection-icon">&#127918;</span>
+<h3><span class="sq"></span>What is PacketCraft?</h3>
+<p>PacketCraft adds social features, an economy, land ownership, achievements, pets, events, and much more to your Minecraft experience. It turns a regular server into a living world with things to do, stuff to earn, and people to meet.</p>
+<div class="highlight-box">
+When you join a PacketCraft server, <strong>you're automatically set up</strong> &mdash; no registration needed. Just hop in and start playing. Your balance, friends, parcels, and achievements are all tracked from the moment you arrive.
+</div>
+</div>
+
+<!-- COMMANDS -->
+<div class="psection" id="commands">
+<span class="psection-icon">&#128221;</span>
+<h3><span class="sq"></span>Commands</h3>
+<p>These are all the commands available to you as a player. Type them in chat to use them.</p>
+
+<div class="cmd-group">
+<h4>Land &amp; Parcels</h4>
+<div class="cmd-card">
+<span class="cmd-code">/parcel info</span>
+<div><span class="cmd-desc">See info about the land you're standing on &mdash; who owns it, whether it's public, and who can build.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel claim</span>
+<div><span class="cmd-desc">Claim the unclaimed land you're standing on as yours. You become the owner and can control who builds there.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel release</span>
+<div><span class="cmd-desc">Give up your claimed land. It becomes unclaimed and available for someone else.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/parcel list</span>
+<div>
+<span class="cmd-desc">See all parcels in the current region &mdash; who owns what and where.</span>
+<div class="cmd-alias">Aliases: /plot, /land</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-group">
+<h4>Friends &amp; Social</h4>
+<div class="cmd-card">
+<span class="cmd-code">/friends list</span>
+<div><span class="cmd-desc">See your current friends and any pending friend requests waiting for you.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends add &lt;player&gt;</span>
+<div><span class="cmd-desc">Send a friend request to another player. They'll get a notification.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends remove &lt;player&gt;</span>
+<div><span class="cmd-desc">Remove someone from your friends list.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/friends messages</span>
+<div>
+<span class="cmd-desc">Read messages people sent you while you were offline.</span>
+<div class="cmd-alias">Alias: /friends msg</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-group">
+<h4>Economy</h4>
+<div class="cmd-card">
+<span class="cmd-code">/balance</span>
+<div><span class="cmd-desc">Check how many Vibes (currency) you currently have.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/pay &lt;player&gt; &lt;amount&gt;</span>
+<div><span class="cmd-desc">Send Vibes to another player. Great for buying items or tipping builders.</span></div>
+</div>
+<div class="cmd-card">
+<span class="cmd-code">/market</span>
+<div><span class="cmd-desc">Browse what other players are selling on the marketplace.</span></div>
+</div>
+</div>
+</div>
+
+<!-- KEYBINDS -->
+<div class="psection" id="keybinds">
+<span class="psection-icon">&#9000;&#65039;</span>
+<h3><span class="sq"></span>Fabric Mod Keybinds</h3>
+<p>If you have the PacketCraft Fabric mod installed, these keys open full feature screens right in-game. No commands needed.</p>
+<div class="keybind-grid">
+<div class="keybind-card">
+<div class="keybind-key">V</div>
+<div class="keybind-name">Economy</div>
+<div class="keybind-desc">Check your balance, view recent transactions, send Vibes to other players</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">N</div>
+<div class="keybind-name">Social</div>
+<div class="keybind-desc">Friends list, groups, direct messages, player profiles and online status</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">M</div>
+<div class="keybind-name">Marketplace</div>
+<div class="keybind-desc">Buy and sell items, place bids on auctions, manage your storefront</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">J</div>
+<div class="keybind-name">Achievements</div>
+<div class="keybind-desc">View your progress, browse challenges, check leaderboards, equip titles</div>
+</div>
+<div class="keybind-card">
+<div class="keybind-key">K</div>
+<div class="keybind-name">Events</div>
+<div class="keybind-desc">See upcoming events, RSVP, view event leaderboards and rewards</div>
+</div>
+</div>
+</div>
+
+<!-- ECONOMY -->
+<div class="psection" id="economy">
+<span class="psection-icon">&#128176;</span>
+<h3><span class="sq"></span>Economy</h3>
+<p>The PacketCraft economy runs on <strong>Vibes</strong> &mdash; the universal currency across the entire platform.</p>
+<div class="info-card">
+<h4>How Vibes Work</h4>
+<p>You earn Vibes by playing &mdash; completing achievements, participating in events, selling items on the marketplace, and more. You can spend them just as easily:</p>
+<ul>
+<li>Pay other players directly with <strong>/pay</strong></li>
+<li>Buy items, blueprints, and resources on the marketplace</li>
+<li>Bid on auctions for rare and seasonal items</li>
+<li>Tip builders whose work you admire</li>
+</ul>
+<p style="margin-top:12px">Vibes are shared across all PacketCraft servers, so your wealth travels with you.</p>
+</div>
+</div>
+
+<!-- YOUR LAND -->
+<div class="psection" id="land">
+<span class="psection-icon">&#127968;</span>
+<h3><span class="sq"></span>Your Land</h3>
+<p>The world is divided into parcels. Here's how land ownership works from your perspective as a player.</p>
+<div class="info-card">
+<h4>Claiming Land</h4>
+<p>Walk around and find a spot you like. Use <strong>/parcel info</strong> to check if it's unclaimed. If it is, use <strong>/parcel claim</strong> to make it yours. That's it &mdash; you now own that land.</p>
+<ul>
+<li>Only you and collaborators you invite can build on your parcel</li>
+<li>Public parcels exist where anyone can build</li>
+<li>You cannot build outside of parcels &mdash; find one to claim or use a public one</li>
+<li>Use <strong>/parcel release</strong> if you want to give up your land</li>
+<li>Use <strong>/parcel list</strong> to see all parcels in your region</li>
+</ul>
+</div>
+</div>
+
+<!-- FRIENDS & SOCIAL -->
+<div class="psection" id="social-guide">
+<span class="psection-icon">&#128102;</span>
+<h3><span class="sq"></span>Friends &amp; Social</h3>
+<p>PacketCraft has a built-in social system so you can connect with people you meet in-game.</p>
+<div class="info-card">
+<h4>Staying Connected</h4>
+<ul>
+<li>Send friend requests with <strong>/friends add &lt;player&gt;</strong></li>
+<li>See who's online from your friends list</li>
+<li>Send offline messages that players receive next time they log in</li>
+<li>Join groups to organize with larger teams</li>
+<li>Your online status is visible to your friends so they know when you're around</li>
+</ul>
+</div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="psection" id="achievements">
+<span class="psection-icon">&#127942;</span>
+<h3><span class="sq"></span>Achievements</h3>
+<p>Just play the game and achievements unlock automatically. No need to activate or track them &mdash; the system watches what you do.</p>
+<div class="info-card">
+<h4>Things That Earn Achievements</h4>
+<ul>
+<li><strong>Building</strong> &mdash; Place blocks, complete structures, use blueprints</li>
+<li><strong>Mining</strong> &mdash; Break blocks, find ores, dig deep</li>
+<li><strong>Combat</strong> &mdash; Kill mobs, defeat bosses, survive close calls</li>
+<li><strong>Exploration</strong> &mdash; Visit new regions, discover landmarks, travel far</li>
+<li><strong>Social</strong> &mdash; Chat with players, make friends, join guilds</li>
+</ul>
+<p style="margin-top:12px">When you unlock an achievement, you'll get a notification on screen. Some achievements grant titles you can equip, and your progress shows on leaderboards.</p>
+</div>
+</div>
+
+<!-- EVENTS -->
+<div class="psection" id="events">
+<span class="psection-icon">&#127881;</span>
+<h3><span class="sq"></span>Events</h3>
+<p>Throughout the year, servers host special events that anyone can join. There are 8 event types:</p>
+<div class="info-card">
+<h4>Event Types</h4>
+<ul>
+<li><strong>Build Competitions</strong> &mdash; Themed building challenges with prizes</li>
+<li><strong>Dance Parties</strong> &mdash; Emote sync events with bonus XP</li>
+<li><strong>Grand Openings</strong> &mdash; Celebrate new builds and storefronts</li>
+<li><strong>Workshops</strong> &mdash; Learn building techniques from experienced players</li>
+<li><strong>Meetups</strong> &mdash; Community gatherings and social hangouts</li>
+<li><strong>Concerts</strong> &mdash; In-world music events at special venues</li>
+<li><strong>Market Days</strong> &mdash; Boosted marketplace activity with special deals</li>
+<li><strong>Explorations</strong> &mdash; Group adventures to discover new regions together</li>
+</ul>
+<p style="margin-top:12px">Check the events screen (press <strong>K</strong> with the Fabric mod) to see what's coming up and RSVP.</p>
+</div>
+</div>
+
+<!-- PETS -->
+<div class="psection" id="pets">
+<span class="psection-icon">&#128062;</span>
+<h3><span class="sq"></span>Pets</h3>
+<p>Adopt a companion that follows you around the world. There are 8 species to choose from, each with their own personality.</p>
+<div class="pet-grid">
+<div class="pet-card"><span class="pet-icon">&#128049;</span><span class="pet-name">Cat</span></div>
+<div class="pet-card"><span class="pet-icon">&#128054;</span><span class="pet-name">Dog</span></div>
+<div class="pet-card"><span class="pet-icon">&#128038;</span><span class="pet-name">Bird</span></div>
+<div class="pet-card"><span class="pet-icon">&#128048;</span><span class="pet-name">Bunny</span></div>
+<div class="pet-card"><span class="pet-icon">&#129418;</span><span class="pet-name">Fox</span></div>
+<div class="pet-card"><span class="pet-icon">&#128009;</span><span class="pet-name">Dragon</span></div>
+<div class="pet-card"><span class="pet-icon">&#x1F7E2;</span><span class="pet-name">Slime</span></div>
+<div class="pet-card"><span class="pet-icon">&#129417;</span><span class="pet-name">Owl</span></div>
+</div>
+<div class="info-card" style="margin-top:20px">
+<h4>Taking Care of Your Pet</h4>
+<ul>
+<li><strong>Feed them</strong> to keep them happy and active</li>
+<li><strong>Play with them</strong> to build your bond level</li>
+<li><strong>Teach them tricks</strong> &mdash; sit, roll over, dance, jump, spin, wave, play dead, fetch</li>
+<li><strong>Customize their look</strong> with accessories and color variations</li>
+<li>Your pet follows you everywhere &mdash; through regions, into buildings, on adventures</li>
+</ul>
+</div>
+</div>
+
+</div><!-- /plugin-section -->
+
 <!-- =============== BOTTOM CTA =============== -->
 <section class="bottom-cta">
-<h2>Ready to <span class="grad">vibe</span>?</h2>
-<p>Get the plugin, fork the repo, or just read the source. VibeLife belongs to everyone who builds it.</p>
+<h2>Ready to <span class="grad">craft</span>?</h2>
+<p>Get the plugin, fork the repo, or just read the source. PacketCraft belongs to everyone who builds it.</p>
 <div class="actions">
-<a href="plugin.html" class="btn-hero btn-primary">Get Started</a>
+<a href="#plugin" class="btn-hero btn-primary">Get Started</a>
 <a href="manual/" class="btn-hero btn-ghost">Game Manual</a>
 <a href="devmanual/" class="btn-hero btn-ghost">Developer Manual</a>
 </div>
@@ -501,11 +796,10 @@ Paper plugin + Fabric mod. Every line of code is yours to read, modify, and depl
 
 <!-- =============== FOOTER =============== -->
 <footer>
-<div>VibeLife &mdash; Open Source Minecraft MMORPG Platform &bull; 2026</div>
+<div>PacketCraft &mdash; Open Source Minecraft MMORPG Platform &bull; 2026</div>
 <div class="foot-links">
 <a href="manual/">Game Manual</a>
-<a href="plugin.html">Plugin Guide</a>
-<a href="deploy.html">Deploy Guide</a>
+<a href="#plugin">Plugin Guide</a>
 <a href="devmanual/">Dev Docs</a>
 <a href="https://github.com">GitHub</a>
 </div>
